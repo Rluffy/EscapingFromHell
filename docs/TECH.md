@@ -41,6 +41,10 @@ Ein Slot. Felder: Magic-Byte, Version, Bitmaske geschaffter Dungeons (10 Bit), B
 - Lua kann den Speicher lesen/schreiben (`emu.read`, `emu.write`, `emu.getState`). Smoke-Tests prüfen Speicherstellen, z. B. „Titel erreicht", „Herz −1 bei Treffer", „Speicherstand geschrieben".
 - Screenshots pro Meilenstein nach `docs/screenshots/`.
 
+## Bekannte Stolperfalle: Git "dubious ownership"
+
+Der Projektordner gehört UID 1000, Agenten laufen als root. Git meldet dann `dubious ownership`. Dauerhafte Lösung (vom Nutzer einmal auszuführen, ändert die globale Git-Config): `! git config --global --add safe.directory /root/SoftwareApplications/EscapingFromHell`. Bis dahin pro Befehl `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0=$PWD git …` verwenden. Agenten ändern die globale Config nicht selbst.
+
 ## Entscheidungslog
 
 (Agenten tragen hier technische Entscheidungen ein: Datum, Entscheidung, Grund.)
