@@ -14,6 +14,7 @@ Ein männlicher Held muss aus der Hölle fliehen. Er läuft durch eine sichere O
 - Jeder Dungeon ist von außen ein Gebäude (Tempel-Rechteck) mit dem Dämon als Figur davor oder darin.
 - Der Spieler muss die Dungeons der Reihe nach schaffen. Der nächste ist durch ein Tor/Siegel gesperrt, bis der vorherige geschafft ist. Geschaffte Dungeons sind wiederholbar.
 - Dungeon betreten: Spieler steht am Eingang, **A**.
+- Umsetzung v0.2: 4 Bildschirme (1024 px), Tempel-Raster und Steuerung siehe `TECH.md` „Overworld (v0.2)". Spieler läuft mit 2 px/Frame in 8 Richtungen, Tore sind fest (verschlossen = Hindernis, offen = begehbar). Im Dungeon-Platzhalter (bis v0.3) bringt **B** oder **Start** zurück zum Eingang.
 
 ## Dungeon (Boss-Arena)
 

@@ -3,12 +3,23 @@
 .import __CSTACK_START__, __CSTACK_SIZE__
 .importzp sp
 .import _frame_count
-.export _wait_vblank, __STARTUP__: absolute = 1
+.export _wait_vblank, _ppu_flush, __STARTUP__: absolute = 1
+.export _colbuf, _attrbuf, _col_pending, _col_addr, _attr_addr, _ppu_ctrl, _scroll_x
 
 .export _oam
 
 .segment "OAM"
 _oam: .res 256         ; $0200, DMA source
+
+; Background streaming state, filled by C (see docs/TECH.md "Overworld-Scrolling").
+.segment "BSS"
+_colbuf:      .res 60   ; two tile columns of 30 tiles (left, right)
+_attrbuf:     .res 8    ; attribute bytes of the 4-tile-wide attribute column
+_col_pending: .res 1    ; 1 = NMI must flush colbuf/attrbuf
+_col_addr:    .res 2    ; PPU address of the left tile column (row 0)
+_attr_addr:   .res 2    ; PPU address of the attribute byte of row 0 (clobbered by flush)
+_ppu_ctrl:    .res 1    ; $2000 value for the frame (incl. NMI bit, nametable bit)
+_scroll_x:    .res 1    ; $2005 X value for the frame
 
 .segment "HEADER"
     .byte "NES", $1A
@@ -48,6 +59,14 @@ reset:
     lda #$80
     sta $A001
     sta $E000           ; IRQ disable (value irrelevant)
+    ; CHR: R0..R5 = linear 8 KB (2 KB banks at $0000/$0800, 1 KB banks at $1000-$1FFF)
+    ldx #0
+:   stx $8000
+    lda chr_banks,x
+    sta $8001
+    inx
+    cpx #6
+    bne :-
 
     ; clear RAM $0000-$07FF, sprites ($0200 page) hidden
     lda #0
@@ -86,6 +105,18 @@ nmi:
     pha
     lda #$02
     sta $4014           ; OAM DMA from $0200
+    lda _col_pending
+    beq :+
+    jsr _ppu_flush
+    lda #0
+    sta _col_pending
+:   lda $2002           ; reset the address latch
+    lda _ppu_ctrl
+    sta $2000
+    lda _scroll_x
+    sta $2005
+    lda #0
+    sta $2005
     inc _frame_count
     bne :+
     inc _frame_count+1
@@ -96,6 +127,52 @@ nmi:
     pla
 irq:
     rti
+
+; Write colbuf as two tile columns and attrbuf as one attribute column. NMI off or in vblank.
+_ppu_flush:
+    lda _ppu_ctrl
+    and #$7F            ; never enable NMI from here
+    ora #$04            ; +32 per write: vertical runs
+    sta $2000
+    lda $2002
+    lda _col_addr+1
+    sta $2006
+    lda _col_addr
+    sta $2006
+    ldx #0
+:   lda _colbuf,x
+    sta $2007
+    inx
+    cpx #30
+    bne :-
+    lda $2002
+    lda _col_addr+1
+    sta $2006
+    lda _col_addr
+    ora #1              ; right tile column (left one is even)
+    sta $2006
+:   lda _colbuf,x
+    sta $2007
+    inx
+    cpx #60
+    bne :-
+    ldx #0
+:   lda _attr_addr+1
+    sta $2006
+    lda _attr_addr
+    sta $2006
+    lda _attrbuf,x
+    sta $2007
+    lda _attr_addr
+    clc
+    adc #8
+    sta _attr_addr
+    inx
+    cpx #8
+    bne :-
+    rts
+
+chr_banks: .byte 0, 2, 4, 5, 6, 7
 
 _wait_vblank:
     lda _frame_count

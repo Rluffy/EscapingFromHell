@@ -2,7 +2,7 @@ NAME   := EscapingFromHell
 ROM    := build/$(NAME).nes
 CFG    := cfg/mmc3.cfg
 CFLAGS := -t none -O --cpu 6502 -Isrc
-# Mesen: portable mode via tools/mesen/settings.json (skips the first-run wizard);
+# Mesen: portable mode via tools/mesen/settings.json (skips the first-run wizard, enables controller 1);
 # invariant globalization avoids a std::bad_cast crash at startup.
 MESEN  := env DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 xvfb-run -a tools/mesen/Mesen
 
@@ -22,12 +22,21 @@ build/%.s: src/%.c src/nes.h | build
 build/%.o: src/%.s | build
 	ca65 --cpu 6502 -o $@ $<
 
+build/%.chr: assets/sprites/%.png tools/png2chr.py | build
+	python3 tools/png2chr.py $< $@ --pad 4096
+
+build/overworld.bin: assets/overworld.txt tools/mapconv.py | build
+	python3 tools/mapconv.py $< $@
+
+build/chr.o: build/tiles.chr build/player.chr
+build/map.o: build/overworld.bin
+
 build:
 	mkdir -p build
 
 # Every tests/*.lua must exit 0.
 test: $(ROM)
-	@[ -f tools/mesen/settings.json ] || echo '{}' > tools/mesen/settings.json
+	@grep -q NesController tools/mesen/settings.json 2>/dev/null || echo '{"Nes":{"Port1":{"Type":"NesController"}}}' > tools/mesen/settings.json
 	@set -e; for t in tests/*.lua; do \
 	  echo "== $$t"; \
 	  timeout 60 $(MESEN) --testRunner $$t $(ROM); \
