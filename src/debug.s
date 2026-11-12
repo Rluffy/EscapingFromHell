@@ -5,7 +5,7 @@
 .export _hearts, _invuln, _on_ground, _sword_t, _vy, _en, _paused
 .export _boss_phase, _boss_dead, _intro, _fb_x, _fb_y, _boss_fx
 .export _abilities, _dash_t, _dash_cd, _victory, _cur_bank, _boss_hide, _iair
-.export _pf_x, _pf_y, _pf_cd
+.export _pf_x, _pf_y, _pf_cd, _mcx, _mcur
 
 .segment "DEBUG"
 _frame_count:      .res 2   ; $0300
@@ -39,3 +39,5 @@ _iair:            .res 1   ; $0328 boss state (Ghost / Bone hound state machine)
 _pf_x:            .res 1   ; $0329 player fireball x (0 = none)
 _pf_y:            .res 1   ; $032A player fireball y
 _pf_cd:           .res 1   ; $032B player fireball cooldown frames left
+_mcx:            .res 3   ; $032C Mirror demon: copies' x (0 = none / popped)
+_mcur:           .res 1   ; $032F Mirror demon: spot of the original (0 floor, 1/2 side platforms, 3 top)

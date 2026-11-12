@@ -10,7 +10,7 @@
 #define SWORD_CD   14
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
-#define NBOSS      5                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define NBOSS      6                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -42,7 +42,8 @@ static const struct boss bosses[NBOSS] = {
     { "GHOST", 12, 1, 16, 24, 104, ghost_ai, ghost_ph },
     { "BONE HOUND", 14, 2, 24, 16, FLOOR_Y - 16, hound_ai, hound_ph },
     { "LAVA SNAKE", 14, 3, 16, 16, FLOOR_Y - 16, snake_ai, snake_ph },
-    { "WINGED DEMON", 14, 4, 16, 24, 56, winged_ai, winged_ph }
+    { "WINGED DEMON", 14, 4, 16, 24, 56, winged_ai, winged_ph },
+    { "MIRROR DEMON", 14, 5, 16, 24, FLOOR_Y - 24, mirror_ai, mirror_ph }
 };
 const struct boss *bs;                 /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
@@ -60,7 +61,7 @@ signed char   ivx, ivy, fb_vx[3], fb_vy[3];     /* boss state shared with the ba
 unsigned char ig, ai_t, rng;                      /* iair lives in debug.s ($0328) */
 unsigned      fb_t;
 
-static unsigned char facing;           /* 0 right, 1 left */
+unsigned char facing;                  /* 0 right, 1 left (boss.h) */
 static unsigned char air_jumped;       /* double jump used in this airtime */
 static unsigned char sword_cd, gtick;
 static signed char   pf_vx;           /* player fireball px/frame, signed */
@@ -405,7 +406,7 @@ static void draw(void)
     oam[O_PF + 2] = 3 | (pf_vx < 0 ? 0x40 : 0);
     oam[O_PF + 3] = pf_x;
     for (i = 0; i < 3; ++i) oam[O_HEART + i * 4 + 1] = i < hearts ? 14 : 15;
-    if (!en.hp) for (i = O_BODY; i < O_BODY + 64; i += 4) oam[i] = 0xFF;      /* dead: hide a boss's body segments */
+    if (!en.hp) for (i = O_BODY; i < 212; i += 4) oam[i] = 0xFF;      /* dead: hide a boss's body segments / copies (up to O_COPY + 72) */
 }
 
 /* Demon (or dummy) beaten and the victory screen is over: clear the dungeon, grant the ability, autosave. */

@@ -25,7 +25,7 @@ struct boss {
 
 extern const struct boss *bs;          /* current boss, 0 = test dummy */
 extern signed char   ivx, ivy, fb_vx[3], fb_vy[3];
-extern unsigned char ig, iair, ai_t, rng;   /* iair = boss state, debug byte $0328 */
+extern unsigned char ig, iair, ai_t, rng, facing;   /* iair = boss state, debug byte $0328; facing: player, 0 right / 1 left */
 extern unsigned      fb_t;
 
 void __fastcall__ bank_set(unsigned char b);        /* crt0.s: map PRG bank b at $8000, remember it in cur_bank */
@@ -45,5 +45,7 @@ void snake_ai(void);
 extern const struct phase snake_ph[3];
 void winged_ai(void);
 extern const struct phase winged_ph[3];
+void mirror_ai(void);
+extern const struct phase mirror_ph[3];
 
 #endif
