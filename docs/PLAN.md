@@ -20,7 +20,7 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | erledigt |
 | v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | erledigt |
 | v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | erledigt |
-| v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | offen |
+| v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | in Arbeit |
 | v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | offen |
 | v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | offen |
 | v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | offen |
@@ -58,7 +58,15 @@ Hinweis für v0.4: Code im festen 16-KB-Bereich belegt nach v0.3 ca. 9,3 KB. Ab 
 
 Schwierigkeit: Nutzer fand den Imp mit 20 HP zu schwer, mit 10 HP passend. Neue Bosse daher in derselben Größenordnung (Geist ca. 12, Knochenhund ca. 14 HP), Angriffe gut lesbar und ausweichbar.
 
-Pakete für v0.5 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
+## Arbeitspakete v0.5
+
+1. Dämon 4 Lavaschlange (Dungeon 4, Bank 3): groß und lang, schlängelt am Arena-Rand (Boden/Wände), taucht in Lava ab und wieder auf, spuckt Feuer, 3 Phasen, ca. 14 HP. Sonnet.
+2. Dämon 5 Geflügelter Dämon (Dungeon 5, Bank 4): fliegt, stürzt herab, 3 Phasen, ca. 14 HP. Gibt **Feuerball** (Steuerung: **Hoch + B**, ein Projektil geradeaus, Abklingzeit). Sonnet.
+3. Tests, Screenshots, Docs, Bericht. Orchestrator.
+
+Entscheidung: Feuerball auf Hoch + B (B bleibt Schwert, Select bleibt Dash). Test-Dummy wandert in Dungeon 6.
+
+Pakete für v0.6 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
 ## Parallel-Aufgabe des Nutzers
 
