@@ -104,8 +104,7 @@ co = coroutine.create(function()
   wr16(PX, ex); wr(PY, FLOOR_Y); wr(HEARTS, 3); wr(INV, 0); frames(10)
   check(rd(HEARTS) == 3 and rd(STATE) == 3, "defeated boss is harmless, arena stays")
 
-  hold({select = true}, 3); frames(5)
-  check(rd(STATE) == 2 and rd(CUR) == 0, "Select returns to the overworld")
+  check(wait_until(function() return rd(STATE) == 2 end, 200), "victory sequence ends in the overworld (see progress.lua)")
 
   print("boss test OK")
   emu.stop(0)

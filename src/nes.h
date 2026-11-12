@@ -36,14 +36,18 @@ extern unsigned char paused;                /* $0317 */
 extern unsigned char boss_phase, boss_dead, intro;         /* $0318..$031A, boss fight (en.hp = boss hp) */
 extern unsigned char fb_x[3], fb_y[3];      /* $031B..$0320 fireballs, x = 0 = free */
 extern unsigned char boss_fx;               /* $0321 */
+extern unsigned char abilities;             /* $0322 bit 0 Dash, 1 Double jump, 2 Fireball, 3 Shield, 4 Sword wave */
+extern unsigned char dash_t, dash_cd, victory;   /* $0323..$0325 */
+#define AB_DASH 1
 
 /* Shared with dungeon.c (main.c). */
 extern unsigned char pad, pad_prev;
 #define PRESSED(b) (pad & ~pad_prev & (b))
 void screen_off(void);
 void screen_on(unsigned char ctrl);
+void save_game(void);                       /* main.c: write dungeons_cleared + abilities to PRG-RAM $6000 */
 void dungeon_enter(void);                   /* cur_dungeon = 1..10 */
-unsigned char dungeon_frame(void);          /* 1 = leave the dungeon */
+unsigned char dungeon_frame(void);          /* 1 = leave the dungeon (Start+Select, or victory done) */
 
 /* Background streaming buffers, consumed by NMI / ppu_flush (src/crt0.s). */
 extern unsigned char colbuf[60];

@@ -34,11 +34,12 @@ build/map.o: build/overworld.bin
 build:
 	mkdir -p build
 
-# Every tests/*.lua must exit 0.
+# Every tests/*.lua must exit 0, each starting without a battery save (Mesen keeps the .sav between runs).
 test: $(ROM)
 	@grep -q NesController tools/mesen/settings.json 2>/dev/null || echo '{"Nes":{"Port1":{"Type":"NesController"}}}' > tools/mesen/settings.json
 	@set -e; for t in tests/*.lua; do \
 	  echo "== $$t"; \
+	  rm -f tools/mesen/Saves/$(NAME).sav; \
 	  timeout 60 $(MESEN) --testRunner $$t $(ROM); \
 	done
 

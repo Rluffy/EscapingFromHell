@@ -24,6 +24,35 @@ unsigned char pad, pad_prev;
 static unsigned char drawn_col;          /* leftmost streamed metatile column; 255 = nothing drawn */
 static unsigned int  drawn_mask;         /* dungeons_cleared the gate tiles were drawn with */
 
+/* Autosave in battery PRG-RAM, layout in docs/TECH.md "Speicherstand": 'E','H', version, cleared lo/hi, abilities, sum of bytes 0..5. */
+#define SAVE ((volatile unsigned char *)0x6000)
+#define SAVE_VER 1
+
+static unsigned char save_sum(void)
+{
+    unsigned char i, s = 0;
+    for (i = 0; i < 6; ++i) s += SAVE[i];
+    return s;
+}
+
+/* The checksum goes in last: a write cut short by a power loss reads as "no save". */
+void save_game(void)
+{
+    SAVE[0] = 'E'; SAVE[1] = 'H'; SAVE[2] = SAVE_VER;
+    SAVE[3] = dungeons_cleared; SAVE[4] = dungeons_cleared >> 8;
+    SAVE[5] = abilities;
+    SAVE[6] = save_sum();
+}
+
+/* No title menu yet (v0.9): a valid save is loaded at boot, anything else is a new game. */
+static void load_game(void)
+{
+    if (SAVE[0] == 'E' && SAVE[1] == 'H' && SAVE[2] == SAVE_VER && SAVE[6] == save_sum()) {
+        dungeons_cleared = (SAVE[3] | ((unsigned int)SAVE[4] << 8)) & 0x3FF;
+        abilities = SAVE[5];
+    }
+}
+
 /* Dungeon n0 (0-based) is open if it is the first or the previous one is cleared. */
 static unsigned char is_open(unsigned char n0)
 {
@@ -206,6 +235,7 @@ void main(void)
     player_x = 32;
     player_y = 144;
     game_state = ST_OVERWORLD;
+    load_game();
     ppu_ctrl = 0x88;
     PPU_CTRL = 0x88;                   /* NMI on, so screen_off can wait for vblank */
     redraw_overworld();

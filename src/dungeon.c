@@ -15,6 +15,9 @@
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define FB_MAX     3
+#define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
+#define DASH_CD    30                  /* frames from dash start until the next one */
+#define VICTORY_LEN 120                /* victory screen, 2 s */
 
 /* One-way platforms, 48 px wide (6 tiles); x and y are multiples of 8. */
 static const unsigned char plat_x[3] = { 32, 176, 104 };
@@ -50,7 +53,13 @@ static const struct boss bosses[NBOSS] = {
         { 24, 3, 14,  75, 3, 2, { 0x16, 0x06, 0x28 } } } }
 };
 static const struct boss *bs;          /* 0 = test dummy */
-static const char font[] = "             IMP0123456789DUNGEO";     /* index = BG tile */
+/* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
+static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
+static const char *const gotname[10] = { "GOT DASH" };     /* only Dash exists so far: no text, no effect for the rest */
+/* BG tile of the letter A..Z (0 = not in the font sheet). */
+static const unsigned char ftile[26] = {
+    37, 0, 33, 26, 30, 0, 29, 39, 13, 0, 0, 0, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 0, 0, 36, 0
+};
 static const unsigned char white = 0x30;
 static unsigned char ph_t2, ph_t3;     /* phase 2 / 3 start at hp <= these */
 static unsigned char pal_ph, pal_bg;   /* what the PPU currently shows */
@@ -106,7 +115,7 @@ static void arena_reset(void)
     en.x = 160; en.y = FLOOR_Y - 16; en.w = 16; en.h = 16;
     en.hp = ENEMY_HP; en.flash = 0; en.dir = -1;
     boss_phase = bs ? 1 : 0;
-    boss_dead = boss_fx = ivx = ivy = ig = iair = 0;
+    boss_dead = boss_fx = ivx = ivy = ig = iair = dash_t = dash_cd = victory = 0;
     clear_fb();
     if (bs) {
         en.hp = bs->hp;
@@ -131,19 +140,29 @@ static void pal_sync(void)
     if (w != pal_bg) { pal_bg = w; setpal(0, w ? &white : &dpal[cur_dungeon - 1][0], 1); }
 }
 
-/* Boss name centered on nametable row 10 (on) or erased again (off). shortcut: a missing letter shows 'O'. */
-static void text(unsigned char on)
+/* Text (A-Z and spaces, max 16 letters) centered on the nametable row at row_addr, or erased again (on = 0).
+   The tiles are prepared into tb[] during the frame and written by text_flush() at the start of the next
+   one, while vblank is still on: the vblank is too short to do the letter lookup there.
+   shortcut: a letter missing from ftile[] shows blank. */
+static unsigned char tb[18], tb_n;     /* PPU addr hi, lo, tiles; tb_n = end index, 0 = nothing pending */
+
+static void text_prep(const char *n, unsigned int row_addr, unsigned char on)
 {
-    const char *n = bs->name;
-    unsigned char l = 0, t;
+    unsigned char l = 0;
     while (n[l]) ++l;
-    PPU_ADDR = 0x21; PPU_ADDR = 0x40 + ((32 - l) >> 1);
-    for (; *n; ++n) {
-        t = 0;
-        if (on) for (t = 0; t < 31 && font[t] != *n; ++t) ;     /* erasing must stay cheap: vblank is short */
-        PPU_DATA = t;
-    }
+    row_addr += (32 - l) >> 1;
+    tb[0] = row_addr >> 8; tb[1] = row_addr;
+    for (tb_n = 2; *n; ++n) tb[tb_n++] = on && *n > ' ' ? ftile[*n - 'A'] : 0;
+}
+
+static void text_flush(void)
+{
+    unsigned char i;
+    if (!tb_n) return;
+    PPU_ADDR = tb[0]; PPU_ADDR = tb[1];
+    for (i = 2; i < tb_n; ++i) PPU_DATA = tb[i];
     PPU_ADDR = 0; PPU_ADDR = 0;
+    tb_n = 0;
 }
 
 void dungeon_enter(void)
@@ -184,7 +203,7 @@ void dungeon_enter(void)
     }
     arena_reset();
     intro = 0;
-    if (bs) { intro = INTRO_LEN; text(1); }
+    if (bs) { intro = INTRO_LEN; text_prep(bs->name, 0x2140, 1); text_flush(); }
     scroll_x = 0;
     game_state = ST_DUNGEON;
     screen_on(0x88);
@@ -199,8 +218,16 @@ static void update_player(void)
     if (invuln) --invuln;
     if (sword_cd) --sword_cd;
     if (sword_t) --sword_t;
+    if (dash_cd) --dash_cd;
 
-    if (kb_t) {
+    if (PRESSED(PAD_SELECT) && (abilities & AB_DASH) && !dash_cd && !kb_t) {
+        dash_t = DASH_LEN; dash_cd = DASH_CD;
+        if (invuln < DASH_LEN) invuln = DASH_LEN;       /* invulnerable (and blinking) while dashing */
+    }
+    if (dash_t) {                       /* gravity keeps working: in the air the dash is a flat arc */
+        --dash_t;
+        dx = facing ? -4 : 4;
+    } else if (kb_t) {
         --kb_t;
         dx = kb_dir;
     } else {
@@ -359,17 +386,34 @@ static void draw(void)
     for (i = 0; i < 3; ++i) oam[O_HEART + i * 4 + 1] = i < hearts ? 14 : 15;
 }
 
+/* Demon (or dummy) beaten and the victory screen is over: clear the dungeon, grant the ability, autosave. */
+static void win(void)
+{
+    dungeons_cleared |= 1u << (cur_dungeon - 1);
+    abilities |= grant[cur_dungeon - 1];
+    save_game();
+}
+
 unsigned char dungeon_frame(void)
 {
-    if (PRESSED(PAD_SELECT)) return 1;  /* temporary way out until the victory screen (v0.3 package 3) */
+    text_flush();                       /* PPU writes first: still in vblank */
+    if (victory) {                      /* input ignored */
+        if (victory == VICTORY_LEN - 1 && (grant[cur_dungeon - 1] & ~abilities) && gotname[cur_dungeon - 1])
+            text_prep(gotname[cur_dungeon - 1], 0x21A0, 1);
+        if (!--victory) { win(); return 1; }
+        draw();
+        return 0;
+    }
+    if (paused && PRESSED(PAD_SELECT)) return 1;    /* Start, then Select: give up the fight */
     if (PRESSED(PAD_START)) paused ^= 1;
     if (bs) pal_sync();                 /* PPU writes first: still in vblank */
     if (intro) {
-        if (!--intro) text(0);
+        if (!--intro) text_prep(bs->name, 0x2140, 0);
     } else if (!paused) {
         update_player();
         update_enemy();
         combat();
+        if (!en.hp) { victory = VICTORY_LEN; text_prep("VICTORY", 0x2140, 1); }
     }
     draw();
     return 0;

@@ -4,6 +4,7 @@
 .export _dungeons_cleared, _cur_dungeon
 .export _hearts, _invuln, _on_ground, _sword_t, _vy, _en, _paused
 .export _boss_phase, _boss_dead, _intro, _fb_x, _fb_y, _boss_fx
+.export _abilities, _dash_t, _dash_cd, _victory
 
 .segment "DEBUG"
 _frame_count:      .res 2   ; $0300
@@ -27,3 +28,7 @@ _intro:            .res 1   ; $031A boss fight: intro frames left (player and bo
 _fb_x:             .res 3   ; $031B fireball x (0 = slot free)
 _fb_y:             .res 3   ; $031E fireball y
 _boss_fx:          .res 1   ; $0321 phase-change effect frames left (boss frozen and harmless)
+_abilities:        .res 1   ; $0322 bit 0 Dash, 1 Double jump, 2 Fireball, 3 Shield, 4 Sword wave
+_dash_t:           .res 1   ; $0323 dungeon: dash frames left (0 = not dashing)
+_dash_cd:          .res 1   ; $0324 dungeon: dash cooldown frames left
+_victory:          .res 1   ; $0325 dungeon: victory frames left (0 = fight running)

@@ -1,4 +1,4 @@
--- Dungeon arena test (dungeon 2 = test dummy, no boss yet): entry, jump/platforms, pause, contact damage + invulnerability, restart, sword, Select.
+-- Dungeon arena test (dungeon 2 = test dummy, no boss yet): entry, jump/platforms, pause, contact damage + invulnerability, restart, sword, dummy victory.
 -- Addresses: docs/TECH.md "Debug-Adressen".
 local M = emu.memType.nesMemory
 local held = {}
@@ -41,8 +41,8 @@ co = coroutine.create(function()
   check(rd(GROUND) == 1 and rd(PY) == FLOOR_Y, "standing on the floor, y=" .. rd(PY))
   check(rd(EHP) == 5, "enemy hp 5, hp=" .. rd(EHP))
 
-  -- jump (enemy parked dead so nothing interferes): y goes up, then back to the floor
-  wr(EHP, 0)
+  -- jump (enemy parked at the ceiling so nothing interferes): y goes up, then back to the floor
+  wr(EY, 0)
   wr16(PX, 84)                            -- the gap between platforms 1 and 3
   frames(2)
   local miny, air = 255, false
@@ -116,12 +116,13 @@ co = coroutine.create(function()
   wr16(PX, ex); wr(PY, FLOOR_Y); wr(HEARTS, 3); frames(10)
   check(rd(HEARTS) == 3 and rd(EX) == ex, "dead dummy is harmless and still")
 
-  -- B does not leave; Select returns to the overworld and restores the overworld sprites
+  -- dummy dead = victory (no ability): B does not leave, then the sequence returns to the overworld, dungeon 2 cleared
+  check(rd(0x325) > 0, "victory running")
   press({b = true})
   check(rd(STATE) == 3, "B does not leave the dungeon")
-  press({select = true})
-  frames(5)
-  check(rd(STATE) == 2 and rd(CUR) == 0, "Select returns to the overworld")
+  check(wait_until(function() return rd(STATE) == 2 end, 200), "victory returns to the overworld")
+  check(rd(CUR) == 0 and rd16(0x308) == 3 and rd(0x322) == 0, "dungeon 2 cleared (mask 3), no ability, mask=" .. rd16(0x308))
+  check(rd16(PX) == 144 and rd(PY) == 48, "back at entrance 2")
   check(rd(0x201) == 0 and rd(0x202) == 0 and rd(0x200 + 24) == 0xFF, "overworld sprites restored")
 
   print("dungeon test OK")
