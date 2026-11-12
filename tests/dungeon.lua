@@ -1,4 +1,4 @@
--- Dungeon arena test: entry, jump/platforms, pause, contact damage + invulnerability, restart, sword, Select.
+-- Dungeon arena test (dungeon 2 = test dummy, no boss yet): entry, jump/platforms, pause, contact damage + invulnerability, restart, sword, Select.
 -- Addresses: docs/TECH.md "Debug-Adressen".
 local M = emu.memType.nesMemory
 local held = {}
@@ -30,11 +30,12 @@ end
 co = coroutine.create(function()
   frames(60)
   check(rd(STATE) == 2, "boot reaches overworld")
-  wr16(PX, 48); wr(PY, 80)                -- door of dungeon 1 (col 3, row 5)
+  wr16(0x308, 1)                          -- dungeon 1 cleared: gate 2 open
+  wr16(PX, 144); wr(PY, 48)               -- door of dungeon 2 (col 9, row 3)
   frames(30)
   press({a = true})
   frames(20)                              -- building the arena takes a few frames
-  check(rd(STATE) == 3 and rd(CUR) == 1, "dungeon 1 entered, state=" .. rd(STATE) .. " px=" .. rd16(PX) .. " py=" .. rd(PY))
+  check(rd(STATE) == 3 and rd(CUR) == 2, "dungeon 2 entered, state=" .. rd(STATE) .. " px=" .. rd16(PX) .. " py=" .. rd(PY))
   frames(5)
   check(rd(HEARTS) == 3 and rd(INV) == 0, "3 hearts on entry, hearts=" .. rd(HEARTS))
   check(rd(GROUND) == 1 and rd(PY) == FLOOR_Y, "standing on the floor, y=" .. rd(PY))

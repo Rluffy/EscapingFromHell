@@ -19,7 +19,7 @@ Ein männlicher Held muss aus der Hölle fliehen. Er läuft durch eine sichere O
 ## Dungeon (Boss-Arena)
 
 - Ein Dungeon = **ein Bildschirm**, kein Scrollen, keine Vorräume. Kurzes Intro (Boss-Name), dann Kampf.
-- Side-View, Springen, Schwert. Umsetzung v0.3: Boden, Seitenwände, 3 einseitige Plattformen (von unten durchspringbar), Spieler läuft 2 px/Frame, Sprung ca. 63 px hoch (A loslassen = niedriger), Schwert 8 Frames sichtbar mit 20 Frames Abklingzeit. Details und Zahlen: `TECH.md` „Dungeon (v0.3)". Bis der Imp fertig ist, steht ein Test-Dummy (5 HP, läuft hin und her) als Gegner da.
+- Side-View, Springen, Schwert. Umsetzung v0.3: Boden, Seitenwände, 3 einseitige Plattformen (von unten durchspringbar), Spieler läuft 2 px/Frame, Sprung ca. 63 px hoch (A loslassen = niedriger), Schwert 8 Frames sichtbar mit 20 Frames Abklingzeit. Details und Zahlen: `TECH.md` „Dungeon (v0.3)". Dungeon 1 hat den Imp (siehe unten), Dungeons 2–10 vorläufig einen Test-Dummy (5 HP, läuft hin und her). Intro: Boss-Name groß in der Bildmitte, 1,25 s, alles steht.
 - **3 Herzen.** Pro Treffer −1 Herz, danach ca. 1,5 s (90 Frames) unverwundbar (Spieler blinkt) plus kleiner Rückstoß weg vom Gegner. Herzen stehen als HUD oben links. Bei 0 Herzen: Dungeon startet sofort neu, Boss wieder auf vollen HP.
 - Kein Heilen im Dungeon. Bei jedem (Wieder-)Betreten gibt es wieder 3 Herzen.
 - Sieg: kurzer Sieg-Moment, Fähigkeit (falls vorhanden), **Autosave**, zurück in die Overworld.
@@ -42,6 +42,8 @@ Ein männlicher Held muss aus der Hölle fliehen. Er läuft durch eine sichere O
 | 8 | Spinnenkönigin | groß | klettert an der Decke, Netze | – |
 | 9 | Oni-Kriegsherr | groß | rennt, schlägt, Schockwellen | **Schwertwelle** |
 | 10 | Höllenfürst | riesig | Teleport, Flug, Feuer, Unsichtbarkeit | – (Ende) |
+
+**Imp (umgesetzt, v0.3):** 20 HP (1 Schaden pro Schwertschlag), 16x16, hüpft nur am Boden, Kontakt = −1 Herz. Phase 1 (20–15 HP, grün, schlicht): hüpft langsam (1 px/Frame, Pause 40 Frames), spuckt alle 100 Frames einen langsamen Feuerball. Phase 2 (14–11 HP, orange, Hörner): Tempo 2, Pause 24, Feuerball alle 60 Frames, schneller. Phase 3 (10–0 HP, rot-gelb, große Hörner): Tempo 3, Pause 14, alle 75 Frames ein Dreifach-Fächer. Phasenwechsel: 0,5 s Blinken, Imp steht und ist harmlos, Feuerbälle verschwinden. Feuerbälle (max. 3) sind per Sprung zu überspringen. Genaue Zahlen: `TECH.md` „Boss-Rahmen (v0.3)". Noch nicht von Hand durchgespielt, Werte beim Balancing prüfen.
 
 Jeder Dungeon hat eine eigene Farbpalette. Namen und Details dürfen später geändert werden (dann hier eintragen).
 

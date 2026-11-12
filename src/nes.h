@@ -27,12 +27,15 @@ extern unsigned int  cam_x;                 /* $0306/$0307 camera x, 0..768 */
 extern unsigned int  dungeons_cleared;      /* $0308/$0309 bit n-1 = dungeon n cleared */
 extern unsigned char cur_dungeon;           /* $030A 1..10 in a dungeon, else 0 */
 
-/* Dungeon state, $030B..$0317 (src/dungeon.c). Tests may write all of it. */
+/* Dungeon state, $030B..$0321 (src/dungeon.c). Tests may write all of it. */
 extern unsigned char hearts, invuln, on_ground, sword_t;   /* $030B..$030E */
 extern signed char   vy;                    /* $030F */
 struct enemy { unsigned char x, y, w, h, hp, flash; signed char dir; };   /* generic enemy, package 2: boss table */
 extern struct enemy en;                     /* $0310..$0316 */
 extern unsigned char paused;                /* $0317 */
+extern unsigned char boss_phase, boss_dead, intro;         /* $0318..$031A, boss fight (en.hp = boss hp) */
+extern unsigned char fb_x[3], fb_y[3];      /* $031B..$0320 fireballs, x = 0 = free */
+extern unsigned char boss_fx;               /* $0321 */
 
 /* Shared with dungeon.c (main.c). */
 extern unsigned char pad, pad_prev;

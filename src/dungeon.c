@@ -11,6 +11,10 @@
 #define SWORD_CD   20
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
+#define NBOSS      1                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
+#define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
+#define FB_MAX     3
 
 /* One-way platforms, 48 px wide (6 tiles); x and y are multiples of 8. */
 static const unsigned char plat_x[3] = { 32, 176, 104 };
@@ -25,6 +29,34 @@ static const unsigned char dpal[10][4] = {
 /* Sprite palettes 0..3 without the backdrop: player, enemy, heart + sword, unused. */
 static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x30,0x10, 0x17,0x21,0x36 };
 
+/* Boss table (docs/TECH.md "Boss-Rahmen"). Phase 1 = 100..71 %, 2 = 70..51 %, 3 = 50..0 % of max hp. */
+struct phase {
+    unsigned char tile;                /* first of 4 sprite tiles (TL, TR, BL, BR) */
+    unsigned char spd, wait;           /* hop speed px/frame, frames standing between hops */
+    unsigned char rate, shots, fspd;   /* frames between spits, fireballs per spit, fireball px/frame */
+    unsigned char pal[3];              /* sprite palette 1 */
+};
+struct boss {
+    const char *name;                  /* letters must exist in font[] */
+    unsigned char hp;
+    void (*ai)(void);
+    struct phase ph[3];
+};
+static void imp_ai(void);
+static const struct boss bosses[NBOSS] = {
+    { "IMP", 20, imp_ai, {
+        { 16, 1, 40, 100, 1, 1, { 0x2A, 0x1A, 0x30 } },
+        { 20, 2, 24,  60, 1, 2, { 0x27, 0x17, 0x30 } },
+        { 24, 3, 14,  75, 3, 2, { 0x16, 0x06, 0x28 } } } }
+};
+static const struct boss *bs;          /* 0 = test dummy */
+static const char font[] = "             IMP0123456789DUNGEO";     /* index = BG tile */
+static const unsigned char white = 0x30;
+static unsigned char ph_t2, ph_t3;     /* phase 2 / 3 start at hp <= these */
+static unsigned char pal_ph, pal_bg;   /* what the PPU currently shows */
+static signed char   ivx, ivy, fb_vx[3], fb_vy[3];
+static unsigned char ig, iair, ai_t, fb_t, rng;
+
 static unsigned char facing;           /* 0 right, 1 left */
 static unsigned char sword_cd, gtick;
 static signed char   kb_dir;           /* knockback px/frame, signed */
@@ -34,6 +66,7 @@ static unsigned char kb_t;
 #define O_SWORD  16
 #define O_ENEMY  24
 #define O_HEART  40
+#define O_FB     52
 
 static unsigned char arena_tile(unsigned char r, unsigned char c)
 {
@@ -55,6 +88,12 @@ static unsigned char overlap(unsigned char ax, unsigned char ay, unsigned char a
 }
 
 /* Fresh fight: also the restart after the last heart. The screen stays as it is. */
+static void clear_fb(void)
+{
+    unsigned char i;
+    for (i = 0; i < FB_MAX; ++i) fb_x[i] = 0;
+}
+
 static void arena_reset(void)
 {
     hearts = HEARTS_MAX;
@@ -66,6 +105,45 @@ static void arena_reset(void)
     player_y = FLOOR_Y - 16;
     en.x = 160; en.y = FLOOR_Y - 16; en.w = 16; en.h = 16;
     en.hp = ENEMY_HP; en.flash = 0; en.dir = -1;
+    boss_phase = bs ? 1 : 0;
+    boss_dead = boss_fx = ivx = ivy = ig = iair = 0;
+    clear_fb();
+    if (bs) {
+        en.hp = bs->hp;
+        ph_t2 = (unsigned)en.hp * 70 / 100;
+        ph_t3 = en.hp / 2;
+        ai_t = 40; fb_t = 70;
+    }
+}
+
+/* PPU palette write; only in vblank (start of the frame). Leaves the scroll at 0/0 (the arena never scrolls). */
+static void setpal(unsigned char a, const unsigned char *c, unsigned char n)
+{
+    PPU_ADDR = 0x3F; PPU_ADDR = a;
+    while (n--) PPU_DATA = *c++;
+    PPU_ADDR = 0; PPU_ADDR = 0;
+}
+
+static void pal_sync(void)
+{
+    unsigned char w = (boss_fx & 4) != 0;       /* flash: 4 frames white, 4 normal */
+    if (pal_ph != boss_phase) { pal_ph = boss_phase; setpal(0x15, bs->ph[pal_ph - 1].pal, 3); }
+    if (w != pal_bg) { pal_bg = w; setpal(0, w ? &white : &dpal[cur_dungeon - 1][0], 1); }
+}
+
+/* Boss name centered on nametable row 10 (on) or erased again (off). shortcut: a missing letter shows 'O'. */
+static void text(unsigned char on)
+{
+    const char *n = bs->name;
+    unsigned char l = 0, t;
+    while (n[l]) ++l;
+    PPU_ADDR = 0x21; PPU_ADDR = 0x40 + ((32 - l) >> 1);
+    for (; *n; ++n) {
+        t = 0;
+        if (on) for (t = 0; t < 31 && font[t] != *n; ++t) ;     /* erasing must stay cheap: vblank is short */
+        PPU_DATA = t;
+    }
+    PPU_ADDR = 0; PPU_ADDR = 0;
 }
 
 void dungeon_enter(void)
@@ -73,6 +151,8 @@ void dungeon_enter(void)
     unsigned char i, j, r, c;
     const unsigned char *p = dpal[cur_dungeon - 1];
 
+    bs = cur_dungeon <= NBOSS ? &bosses[cur_dungeon - 1] : 0;
+    pal_ph = pal_bg = 0;
     screen_off();
     PPU_ADDR = 0x3F;
     PPU_ADDR = 0x00;
@@ -88,10 +168,13 @@ void dungeon_enter(void)
         for (c = 0; c < 32; ++c) PPU_DATA = arena_tile(r, c);
     for (i = 0; i < 64; ++i) PPU_DATA = 0;      /* attributes: palette 0 everywhere */
 
-    for (i = 0; i < 4; ++i) {           /* sprite tiles/palettes: player 4..7, sword 12/13, enemy 8..11, hearts */
+    for (i = 0; i < 4; ++i) {           /* sprite tiles/palettes: player 4..7, sword 12/13, enemy tiles set in draw(), hearts */
         oam[i * 4 + 1] = 4 + i;
-        oam[O_ENEMY + i * 4 + 1] = 8 + i;
         oam[O_ENEMY + i * 4 + 2] = 1;
+    }
+    for (i = 0; i < FB_MAX; ++i) {
+        oam[O_FB + i * 4 + 1] = 28;
+        oam[O_FB + i * 4 + 2] = 2;
     }
     for (i = 0; i < 2; ++i) oam[O_SWORD + i * 4 + 1] = 12 + i;
     for (i = 0; i < 3; ++i) {
@@ -100,6 +183,8 @@ void dungeon_enter(void)
         oam[O_HEART + i * 4 + 3] = 24 + i * 10;
     }
     arena_reset();
+    intro = 0;
+    if (bs) { intro = INTRO_LEN; text(1); }
     scroll_x = 0;
     game_state = ST_DUNGEON;
     screen_on(0x88);
@@ -148,29 +233,100 @@ static void update_player(void)
     if (PRESSED(PAD_B) && !sword_cd) { sword_t = SWORD_LEN; sword_cd = SWORD_CD; }
 }
 
+static void hurt(unsigned char sx)     /* player hit by something at x = sx */
+{
+    if (--hearts == 0) { arena_reset(); return; }
+    invuln = INVULN;
+    kb_t = KNOCK;
+    kb_dir = (player_x + 8 < sx) ? -3 : 3;
+    vy = -3;
+    gtick = 0;
+}
+
+/* Imp: hops (floor only) toward the player (1 in 4 away), spits fireballs at him. */
+static void imp_ai(void)
+{
+    const struct phase *p = &bs->ph[boss_phase - 1];
+    signed char d, v;
+    unsigned char k, s;
+    int nx;
+
+    rng = rng * 5 + 17 + (unsigned char)frame_count;
+    if (fb_t) --fb_t;
+    else {
+        fb_t = p->rate;
+        d = player_x > en.x ? 1 : -1;
+        v = d > 0 ? (signed char)p->fspd : -(signed char)p->fspd;
+        for (s = 0; s < p->shots; ++s)
+            for (k = 0; k < FB_MAX; ++k)
+                if (!fb_x[k]) {
+                    fb_x[k] = en.x + 4;
+                    fb_y[k] = en.y + 4;
+                    fb_vx[k] = v;
+                    fb_vy[k] = p->shots > 1 ? (signed char)s - 1 : (player_y + 8 < en.y ? -1 : 0);
+                    break;
+                }
+    }
+    if (!iair) {
+        if (ai_t) { --ai_t; return; }
+        d = player_x > en.x ? 1 : -1;
+        if (!(rng & 0xC0)) d = -d;
+        ivx = d > 0 ? (signed char)p->spd : -(signed char)p->spd;
+        ivy = -4; ig = 0; iair = 1; ai_t = p->wait;
+    }
+    nx = en.x + ivx;
+    if (nx < WALL) nx = WALL;
+    if (nx > 256 - WALL - 16) nx = 256 - WALL - 16;
+    en.x = nx;
+    en.y += ivy;
+    if (++ig == 3) { ig = 0; ++ivy; }
+    if (ivy >= 0 && en.y + 16 >= FLOOR_Y) { en.y = FLOOR_Y - 16; ivx = ivy = iair = 0; }
+}
+
+static void fireballs(void)
+{
+    unsigned char k;
+    for (k = 0; k < FB_MAX; ++k) {
+        if (!fb_x[k]) continue;
+        fb_x[k] += fb_vx[k];
+        if (frame_count & 1) fb_y[k] += fb_vy[k];       /* vertical at half speed: shallow spread */
+        if (fb_x[k] <= WALL || fb_x[k] >= 256 - WALL - 8 || fb_y[k] < 8 || fb_y[k] + 8 >= FLOOR_Y)
+            fb_x[k] = 0;
+        else if (!invuln && overlap(player_x + 3, player_y + 2, 10, 14, fb_x[k], fb_y[k], 8, 8)) {
+            hurt(fb_x[k] + 4);
+            fb_x[k] = 0;
+        }
+    }
+}
+
 static void update_enemy(void)
 {
     if (en.flash) --en.flash;
     if (!en.hp) return;
+    if (bs) {
+        if (boss_fx) --boss_fx;
+        else { bs->ai(); fireballs(); }
+        return;
+    }
     en.x += en.dir;
     if (en.x <= WALL || en.x >= 256 - WALL - en.w) en.dir = -en.dir;
 }
 
 static void combat(void)
 {
-    if (en.hp && sword_t && !en.flash &&
+    unsigned char ph;
+    if (en.hp && sword_t && !en.flash && !boss_fx &&
         overlap(facing ? player_x - 12 : player_x + 12, player_y + 6, 16, 8, en.x, en.y, en.w, en.h)) {
         --en.hp;
         en.flash = ENEMY_HIT;
+        if (bs) {
+            ph = en.hp <= ph_t3 ? 3 : en.hp <= ph_t2 ? 2 : 1;
+            if (!en.hp) { boss_dead = 1; clear_fb(); }
+            else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); }
+        }
     }
-    if (en.hp && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h)) {
-        if (--hearts == 0) { arena_reset(); return; }
-        invuln = INVULN;
-        kb_t = KNOCK;
-        kb_dir = (player_x + 8 < en.x + en.w / 2) ? -3 : 3;
-        vy = -3;
-        gtick = 0;
-    }
+    if (en.hp && !boss_fx && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
+        hurt(en.x + en.w / 2);
 }
 
 static void draw(void)
@@ -195,6 +351,11 @@ static void draw(void)
     oam[O_ENEMY + 3] = oam[O_ENEMY + 11] = en.x;
     oam[O_ENEMY + 7] = oam[O_ENEMY + 15] = en.x + 8;
 
+    for (i = 0; i < 4; ++i) oam[O_ENEMY + i * 4 + 1] = (bs ? bs->ph[boss_phase - 1].tile : 8) + i;
+    for (i = 0; i < FB_MAX; ++i) {
+        oam[O_FB + i * 4] = fb_x[i] ? fb_y[i] - 1 : 0xFF;
+        oam[O_FB + i * 4 + 3] = fb_x[i];
+    }
     for (i = 0; i < 3; ++i) oam[O_HEART + i * 4 + 1] = i < hearts ? 14 : 15;
 }
 
@@ -202,7 +363,10 @@ unsigned char dungeon_frame(void)
 {
     if (PRESSED(PAD_SELECT)) return 1;  /* temporary way out until the victory screen (v0.3 package 3) */
     if (PRESSED(PAD_START)) paused ^= 1;
-    if (!paused) {
+    if (bs) pal_sync();                 /* PPU writes first: still in vblank */
+    if (intro) {
+        if (!--intro) text(0);
+    } else if (!paused) {
         update_player();
         update_enemy();
         combat();

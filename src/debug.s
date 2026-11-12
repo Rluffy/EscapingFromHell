@@ -3,6 +3,7 @@
 .export _frame_count, _game_state, _player_x, _player_y, _cam_x
 .export _dungeons_cleared, _cur_dungeon
 .export _hearts, _invuln, _on_ground, _sword_t, _vy, _en, _paused
+.export _boss_phase, _boss_dead, _intro, _fb_x, _fb_y, _boss_fx
 
 .segment "DEBUG"
 _frame_count:      .res 2   ; $0300
@@ -19,3 +20,10 @@ _sword_t:          .res 1   ; $030E dungeon: sword swing frames left
 _vy:               .res 1   ; $030F dungeon: vertical speed (signed, px/frame)
 _en:               .res 7   ; $0310 enemy struct: x, y, w, h, hp, flash, dir (see src/nes.h)
 _paused:           .res 1   ; $0317 dungeon: 1 = paused
+
+_boss_phase:       .res 1   ; $0318 boss fight: phase 1..3 (0 = no boss, test dummy)
+_boss_dead:        .res 1   ; $0319 boss fight: 1 = boss defeated
+_intro:            .res 1   ; $031A boss fight: intro frames left (player and boss frozen)
+_fb_x:             .res 3   ; $031B fireball x (0 = slot free)
+_fb_y:             .res 3   ; $031E fireball y
+_boss_fx:          .res 1   ; $0321 phase-change effect frames left (boss frozen and harmless)
