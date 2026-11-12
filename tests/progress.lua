@@ -1,4 +1,4 @@
--- Progress test: pause+Select exit, Dash lock/use/cooldown, Imp victory flow, autosave at $6000, boot load / corrupt save.
+-- Progress test: pause+Select exit, Dash lock/use/cooldown, Double jump, Imp victory flow, autosave at $6000, boot load / corrupt save.
 -- Addresses and save layout: docs/TECH.md "Debug-Adressen", "Speicherstand".
 local M = emu.memType.nesMemory
 local held = {}
@@ -11,6 +11,7 @@ local HEARTS, INV, PAUSED = 0x30B, 0x30C, 0x317
 local EX, EY, EHP, EFLASH = 0x310, 0x311, 0x314, 0x315
 local INTRO, DEAD = 0x31A, 0x319
 local ABIL, DASH, DCD, VICT = 0x322, 0x323, 0x324, 0x325
+local VY = 0x30F
 local SAVE = 0x6000
 local FLOOR_Y = 176
 
@@ -108,6 +109,37 @@ co = coroutine.create(function()
   held = {select = true}; frames(1); held = {}
   frames(12)
   check(x0 - rd16(PX) >= 36, "dash to the left works again, dx=" .. (x0 - rd16(PX)))
+
+  -- Double jump: a second A in the air jumps again (once per airtime), only with the ability bit; Dash still works
+  local function signed(v) return v >= 128 and v - 256 or v end
+  local function jump_and_air_a(ability)
+    wr(ABIL, ability)
+    wr(HEARTS, 3); wr(INV, 99); wr16(PX, 100); wr(PY, FLOOR_Y); wr(VY, 0); wr(EX, 200); wr(EY, FLOOR_Y)
+    frames(3)
+    held = {a = true}; frames(12)         -- full jump, hold A while rising
+    held = {}
+    check(wait_until(function() wr(INV, 99); return signed(rd(VY)) >= 0 end, 40), "first jump reaches its apex")
+    local apex = rd(PY)
+    held = {a = true}; frames(2)          -- second A in the air, still held (a tap cuts the jump short)
+    return apex
+  end
+  local apex = jump_and_air_a(1)          -- Dash only
+  check(signed(rd(VY)) >= 0 and rd(PY) >= apex, "no Double jump without the ability, vy=" .. signed(rd(VY)))
+  held = {}
+  check(wait_until(function() wr(INV, 99); return rd(PY) == FLOOR_Y end, 60), "lands")
+  apex = jump_and_air_a(3)                -- Dash + Double jump
+  check(signed(rd(VY)) < 0 and rd(PY) < apex, "second A in the air jumps again, vy=" .. signed(rd(VY)))
+  frames(6); held = {}
+  local top = rd(PY)
+  check(top < apex - 15, "second jump adds height, " .. apex .. " -> " .. top)
+  check(wait_until(function() wr(INV, 99); return signed(rd(VY)) >= 0 end, 40), "second jump reaches its apex")
+  held = {a = true}; frames(2); held = {}   -- third A: only one air jump per airtime
+  check(signed(rd(VY)) >= 0, "no third jump in the same airtime, vy=" .. signed(rd(VY)))
+  wr(INV, 99); held = {select = true}; frames(1); held = {}; frames(1)
+  check(rd(DASH) > 0, "Dash still works in the air after a double jump")
+  check(wait_until(function() wr(INV, 99); return rd(0x30D) == 1 end, 80), "lands again (the dash may end on a platform)")
+  held = {a = true}; frames(2); held = {}
+  check(signed(rd(VY)) < 0, "landing resets: the next jump works, vy=" .. signed(rd(VY)))
 
   print("progress test OK")
   emu.stop(0)

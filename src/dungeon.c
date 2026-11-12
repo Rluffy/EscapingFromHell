@@ -10,7 +10,7 @@
 #define SWORD_CD   14
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
-#define NBOSS      2                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define NBOSS      3                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -36,26 +36,28 @@ static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x3
 /* Boss table (docs/TECH.md "Boss-Rahmen"). Phase 1 = 100..71 %, 2 = 70..51 %, 3 = 50..0 % of max hp.
    Behavior function and phase data live in the boss's PRG bank (src/boss.h); the table itself stays fixed. */
 static const struct boss bosses[NBOSS] = {
-    { "IMP", 10, 0, 16, FLOOR_Y - 16, imp_ai, imp_ph },
-    { "GHOST", 12, 1, 24, 104, ghost_ai, ghost_ph }
+    { "IMP", 10, 0, 16, 16, FLOOR_Y - 16, imp_ai, imp_ph },
+    { "GHOST", 12, 1, 16, 24, 104, ghost_ai, ghost_ph },
+    { "BONE HOUND", 14, 2, 24, 16, FLOOR_Y - 16, hound_ai, hound_ph }
 };
 const struct boss *bs;                 /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
 static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
-static const char *const gotname[10] = { "GOT DASH" };     /* only Dash exists so far: no text, no effect for the rest */
+static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP" };   /* only Dash and Double jump act so far */
 /* BG tile of the letter A..Z (0 = not in the font sheet). */
 static const unsigned char ftile[26] = {
-    37, 0, 33, 26, 30, 0, 29, 39, 13, 0, 0, 0, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 0, 0, 36, 0
+    37, 43, 33, 26, 30, 0, 29, 39, 13, 45, 0, 44, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 0, 0, 36, 0
 };
 static const unsigned char white = 0x30;
 static unsigned char hp_max, bar_hp;   /* max hp of the enemy; hp the bar shows (255 = redraw) */
 static unsigned char ph_t2, ph_t3;     /* phase 2 / 3 start at hp <= these */
 static unsigned char pal_ph, pal_bg;   /* what the PPU currently shows */
 signed char   ivx, ivy, fb_vx[3], fb_vy[3];     /* boss state shared with the banked AI (boss.h) */
-unsigned char ig, iair, ai_t, rng;
+unsigned char ig, ai_t, rng;                      /* iair lives in debug.s ($0328) */
 unsigned      fb_t;
 
 static unsigned char facing;           /* 0 right, 1 left */
+static unsigned char air_jumped;       /* double jump used in this airtime */
 static unsigned char sword_cd, gtick;
 static signed char   kb_dir;           /* knockback px/frame, signed */
 static unsigned char kb_t;
@@ -96,7 +98,7 @@ static void clear_fb(void)
 static void arena_reset(void)
 {
     hearts = HEARTS_MAX;
-    invuln = sword_t = sword_cd = kb_t = gtick = paused = 0;
+    invuln = sword_t = sword_cd = kb_t = gtick = paused = air_jumped = 0;
     vy = 0;
     on_ground = 1;
     facing = 0;
@@ -109,7 +111,7 @@ static void arena_reset(void)
     clear_fb();
     if (bs) {
         en.hp = hp_max = bs->hp;
-        en.h = bs->h; en.y = bs->y0;
+        en.w = bs->w; en.h = bs->h; en.y = bs->y0;
         ph_t2 = (unsigned)en.hp * 70 / 100;
         ph_t3 = en.hp / 2;
         ai_t = 40; fb_t = 70;
@@ -248,7 +250,10 @@ static void update_player(void)
     if (nx > 256 - WALL - 16) nx = 256 - WALL - 16;
     player_x = nx;
 
-    if (PRESSED(PAD_A) && on_ground) { vy = -6; gtick = 0; }
+    if (PRESSED(PAD_A) && (on_ground || ((abilities & AB_DJUMP) && !air_jumped))) {
+        air_jumped |= !on_ground;       /* double jump: once per airtime (also after a ledge or a knockback), a bit lower */
+        vy = on_ground ? -6 : -5; gtick = 0;
+    }
     else if (!(pad & PAD_A) && vy < -2) vy = -2;        /* variable jump height */
     if (++gtick == 3) {
         gtick = 0;
@@ -262,7 +267,7 @@ static void update_player(void)
             if (player_y + 16 <= plat_y[i] && ny + 16 >= plat_y[i] &&
                 player_x + 3 < plat_x[i] + 48 && player_x + 13 > plat_x[i]) land = plat_y[i];
         if (!land && ny + 16 >= FLOOR_Y) land = FLOOR_Y;
-        if (land) { ny = land - 16; vy = 0; on_ground = 1; }
+        if (land) { ny = land - 16; vy = 0; on_ground = 1; air_jumped = 0; }
     }
     player_y = ny;
 
@@ -318,7 +323,7 @@ static void combat(void)
         en.flash = ENEMY_HIT;
         if (bs) {
             nx = (int)en.x + (en.x >= player_x ? BOSS_KNOCK : -BOSS_KNOCK);
-            en.x = nx < WALL ? WALL : nx > 256 - WALL - 16 ? 256 - WALL - 16 : nx;
+            en.x = nx < WALL ? WALL : nx > 256 - WALL - en.w ? 256 - WALL - en.w : nx;
             ph = en.hp <= ph_t3 ? 3 : en.hp <= ph_t2 ? 2 : 1;
             if (!en.hp) { boss_dead = 1; clear_fb(); }
             else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); }
@@ -354,9 +359,17 @@ static void draw(void)
     oam[O_ENEMY + 7] = oam[O_ENEMY + 15] = en.x + 8;
 
     for (i = 0; i < 4; ++i) oam[O_ENEMY + i * 4 + 1] = t + i;
-    oam[O_ENEMY2] = oam[O_ENEMY2 + 4] = (ey != 0xFF && en.h > 16) ? en.y + 15 : 0xFF;
+    oam[O_ENEMY2] = oam[O_ENEMY2 + 4] = 0xFF;       /* 24 px high: third row; 24 px wide: third column (tiles t+4, t+5) */
     oam[O_ENEMY2 + 1] = t + 4; oam[O_ENEMY2 + 5] = t + 5;
-    oam[O_ENEMY2 + 3] = en.x; oam[O_ENEMY2 + 7] = en.x + 8;
+    if (ey != 0xFF) {
+        if (en.h > 16) {
+            oam[O_ENEMY2] = oam[O_ENEMY2 + 4] = en.y + 15;
+            oam[O_ENEMY2 + 3] = en.x; oam[O_ENEMY2 + 7] = en.x + 8;
+        } else if (en.w > 16) {
+            oam[O_ENEMY2] = ey; oam[O_ENEMY2 + 4] = en.y + 7;
+            oam[O_ENEMY2 + 3] = oam[O_ENEMY2 + 7] = en.x + 16;
+        }
+    }
     for (i = 0; i < FB_MAX; ++i) {
         oam[O_FB + i * 4] = fb_x[i] ? fb_y[i] - 1 : 0xFF;
         oam[O_FB + i * 4 + 3] = fb_x[i];

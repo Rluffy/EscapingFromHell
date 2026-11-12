@@ -41,6 +41,7 @@ extern unsigned char dash_t, dash_cd, victory;   /* $0323..$0325 */
 extern unsigned char cur_bank;               /* $0326 PRG bank at $8000 (set by bank_set) */
 extern unsigned char boss_hide;              /* $0327 bit 0 = boss untouchable (no hit, no contact), bit 1 = not drawn */
 #define AB_DASH 1
+#define AB_DJUMP 2
 
 /* Shared with dungeon.c (main.c). */
 extern unsigned char pad, pad_prev;
