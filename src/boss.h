@@ -1,0 +1,36 @@
+/* Boss framework shared by dungeon.c (fixed bank) and the per-boss files in switchable banks.
+   Docs: docs/TECH.md "PRG-Banking". Banked code may call fixed-bank code and its own bank only. */
+#ifndef BOSS_H
+#define BOSS_H
+
+#define FLOOR_Y 192                    /* top of the floor = feet position of a standing player */
+#define WALL    16                     /* wall width in px */
+#define FB_MAX  3
+
+struct phase {
+    unsigned char tile;                /* first of 4 sprite tiles (TL, TR, BL, BR) */
+    unsigned char spd, wait;           /* hop speed px/frame, frames standing between hops */
+    unsigned rate;                     /* frames between spits (16 bit: up to 300) */
+    unsigned char shots, fspd;         /* fireballs per spit, fireball px/frame */
+    unsigned char pal[3];              /* sprite palette 1 */
+};
+struct boss {
+    const char *name;                  /* letters must exist in ftile[] */
+    unsigned char hp;
+    unsigned char bank;                /* PRG bank at $8000 holding ai and ph */
+    void (*ai)(void);                  /* runs every frame; in bank `bank` */
+    const struct phase *ph;            /* 3 phases; in bank `bank` */
+};
+
+extern const struct boss *bs;          /* current boss, 0 = test dummy */
+extern signed char   ivx, ivy, fb_vx[3], fb_vy[3];
+extern unsigned char ig, iair, ai_t, rng;
+extern unsigned      fb_t;
+
+void __fastcall__ bank_set(unsigned char b);        /* crt0.s: map PRG bank b at $8000, remember it in cur_bank */
+
+/* One line per boss: its behavior function and phase data (defined in src/<boss>.c, banked). */
+void imp_ai(void);
+extern const struct phase imp_ph[3];
+
+#endif

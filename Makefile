@@ -16,7 +16,7 @@ $(ROM): $(OBJ) $(CFG)
 build/%.o: build/%.s
 	ca65 --cpu 6502 -o $@ $<
 
-build/%.s: src/%.c src/nes.h | build
+build/%.s: src/%.c src/nes.h src/boss.h | build
 	cc65 $(CFLAGS) -o $@ $<
 
 build/%.o: src/%.s | build

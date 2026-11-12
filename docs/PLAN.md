@@ -51,7 +51,7 @@ Hinweis für v0.4: Code im festen 16-KB-Bereich belegt nach v0.3 ca. 9,3 KB. Ab 
 
 ## Arbeitspakete v0.4
 
-1. PRG-Banking: Boss-Code/-Daten in umschaltbare Bänke ($8000/$A000), fester Bereich nur Kern (NMI, Hauptschleife, Overworld, Arena-Grundlage). Sonnet.
+1. PRG-Banking: Boss-Code/-Daten in umschaltbare Bänke ($8000/$A000), fester Bereich nur Kern (NMI, Hauptschleife, Overworld, Arena-Grundlage). Sonnet. **Erledigt** (Details `TECH.md` „PRG-Banking (v0.4)").
 2. Dämon 2 Geist (Dungeon 2): schwebt, flackert, zeitweise unsichtbar, 3 Phasen, HP-Balken. Sonnet.
 3. Dämon 3 Knochenhund (Dungeon 3): rennt quer durch die Arena, Biss/Sprungangriff, 3 Phasen. Gibt Doppelsprung (zweites A in der Luft). Sonnet.
 4. Tests, Screenshots, Docs, Bericht. Orchestrator.

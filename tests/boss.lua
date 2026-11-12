@@ -10,6 +10,7 @@ local STATE, PX, PY, CUR = 0x302, 0x303, 0x305, 0x30A
 local HEARTS, INV = 0x30B, 0x30C
 local EX, EY, EHP, EFLASH = 0x310, 0x311, 0x314, 0x315
 local PHASE, DEAD, INTRO, FBX, FBY, FX = 0x318, 0x319, 0x31A, 0x31B, 0x31E, 0x321
+local BANK = 0x326                       -- cur_bank: PRG bank at $8000 (13 = none after reset)
 local FLOOR_Y = 176
 
 local co
@@ -39,11 +40,13 @@ local function swing() hold({b = true}, 3); frames(25) end   -- 25: cooldown ove
 co = coroutine.create(function()
   frames(60)
   check(rd(STATE) == 2, "boot reaches overworld")
+  check(rd(BANK) == 13 and rd(0x8000) == 0, "no boss bank mapped in the overworld")
   wr16(PX, 48); wr(PY, 80)                -- door of dungeon 1
   frames(30)
   hold({a = true}, 3)
   frames(20)
   check(rd(STATE) == 3 and rd(CUR) == 1, "dungeon 1 entered")
+  check(rd(BANK) == 0 and rd(0x8000) ~= 0, "imp bank 0 mapped, cur_bank=" .. rd(BANK))
 
   -- intro: boss name drawn, everything frozen, then the fight starts and the name is erased
   check(rd(INTRO) > 0 and rd(INTRO) <= 75, "intro running, intro=" .. rd(INTRO))

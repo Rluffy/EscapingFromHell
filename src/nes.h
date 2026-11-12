@@ -38,6 +38,7 @@ extern unsigned char fb_x[3], fb_y[3];      /* $031B..$0320 fireballs, x = 0 = f
 extern unsigned char boss_fx;               /* $0321 */
 extern unsigned char abilities;             /* $0322 bit 0 Dash, 1 Double jump, 2 Fireball, 3 Shield, 4 Sword wave */
 extern unsigned char dash_t, dash_cd, victory;   /* $0323..$0325 */
+extern unsigned char cur_bank;               /* $0326 PRG bank at $8000 (set by bank_set) */
 #define AB_DASH 1
 
 /* Shared with dungeon.c (main.c). */

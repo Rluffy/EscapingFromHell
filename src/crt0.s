@@ -2,11 +2,13 @@
 .import _main, copydata, zerobss
 .import __CSTACK_START__, __CSTACK_SIZE__
 .importzp sp
-.import _frame_count
-.export _wait_vblank, _ppu_flush, __STARTUP__: absolute = 1
+.import _frame_count, _cur_bank
+.export _wait_vblank, _ppu_flush, _bank_set, __STARTUP__: absolute = 1
 .export _colbuf, _attrbuf, _col_pending, _col_addr, _attr_addr, _ppu_ctrl, _scroll_x
 
 .export _oam
+
+BANK_NONE = 13          ; unused PRG bank mapped at $8000 after reset
 
 .segment "OAM"
 _oam: .res 256         ; $0200, DMA source
@@ -48,7 +50,7 @@ reset:
     ; MMC3: PRG mode 0, boot banks 0/1 at $8000/$A000; vertical mirroring; PRG-RAM on; IRQ off
     lda #$06
     sta $8000
-    lda #0
+    lda #BANK_NONE      ; empty bank until a boss bank is mapped (cur_bank is set after the RAM clear)
     sta $8001
     lda #$07
     sta $8000
@@ -88,6 +90,8 @@ reset:
 :   bit $2002           ; 2nd vblank
     bpl :-
 
+    lda #BANK_NONE
+    sta _cur_bank
     lda #<(__CSTACK_START__ + __CSTACK_SIZE__)
     sta sp
     lda #>(__CSTACK_START__ + __CSTACK_SIZE__)
@@ -173,6 +177,15 @@ _ppu_flush:
     rts
 
 chr_banks: .byte 0, 2, 4, 5, 6, 7
+
+; void bank_set(unsigned char b): map PRG bank b at $8000 (MMC3 R6), remember it in cur_bank.
+; Main loop only: NMI never touches $8000, so no select-register race and no banked code in NMI.
+_bank_set:
+    sta _cur_bank
+    ldx #$06
+    stx $8000
+    sta $8001
+    rts
 
 _wait_vblank:
     lda _frame_count

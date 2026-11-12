@@ -1,9 +1,8 @@
 /* Dungeon arena: one screen, side view. Docs: docs/TECH.md "Dungeon (v0.3)". */
 #include "nes.h"
+#include "boss.h"
 
 #define ST_DUNGEON 3
-#define FLOOR_Y    192                 /* top of the floor = feet position of a standing player */
-#define WALL       16                  /* wall width in px */
 #define HEARTS_MAX 3
 #define INVULN     120
 #define KNOCK      8                   /* knockback frames, 3 px/frame */
@@ -14,7 +13,6 @@
 #define NBOSS      1                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
-#define FB_MAX     3
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
 #define DASH_CD    30                  /* frames from dash start until the next one */
 #define VICTORY_LEN 120                /* victory screen, 2 s */
@@ -35,28 +33,12 @@ static const unsigned char dpal[10][4] = {
 /* Sprite palettes 0..3 without the backdrop: player, enemy, heart + sword, unused. */
 static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x30,0x10, 0x17,0x21,0x36 };
 
-/* Boss table (docs/TECH.md "Boss-Rahmen"). Phase 1 = 100..71 %, 2 = 70..51 %, 3 = 50..0 % of max hp. */
-struct phase {
-    unsigned char tile;                /* first of 4 sprite tiles (TL, TR, BL, BR) */
-    unsigned char spd, wait;           /* hop speed px/frame, frames standing between hops */
-    unsigned rate;                     /* frames between spits (16 bit: up to 300) */
-    unsigned char shots, fspd;         /* fireballs per spit, fireball px/frame */
-    unsigned char pal[3];              /* sprite palette 1 */
-};
-struct boss {
-    const char *name;                  /* letters must exist in font[] */
-    unsigned char hp;
-    void (*ai)(void);
-    struct phase ph[3];
-};
-static void imp_ai(void);
+/* Boss table (docs/TECH.md "Boss-Rahmen"). Phase 1 = 100..71 %, 2 = 70..51 %, 3 = 50..0 % of max hp.
+   Behavior function and phase data live in the boss's PRG bank (src/boss.h); the table itself stays fixed. */
 static const struct boss bosses[NBOSS] = {
-    { "IMP", 10, imp_ai, {
-        { 16, 1, 120, 300, 1, 1, { 0x2A, 0x1A, 0x30 } },
-        { 20, 1, 80, 200, 1, 1, { 0x27, 0x17, 0x30 } },
-        { 24, 2, 56, 240, 3, 1, { 0x16, 0x06, 0x28 } } } }
+    { "IMP", 10, 0, imp_ai, imp_ph }
 };
-static const struct boss *bs;          /* 0 = test dummy */
+const struct boss *bs;                 /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
 static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
 static const char *const gotname[10] = { "GOT DASH" };     /* only Dash exists so far: no text, no effect for the rest */
@@ -68,9 +50,9 @@ static const unsigned char white = 0x30;
 static unsigned char hp_max, bar_hp;   /* max hp of the enemy; hp the bar shows (255 = redraw) */
 static unsigned char ph_t2, ph_t3;     /* phase 2 / 3 start at hp <= these */
 static unsigned char pal_ph, pal_bg;   /* what the PPU currently shows */
-static signed char   ivx, ivy, fb_vx[3], fb_vy[3];
-static unsigned char ig, iair, ai_t, rng;
-static unsigned      fb_t;
+signed char   ivx, ivy, fb_vx[3], fb_vy[3];     /* boss state shared with the banked AI (boss.h) */
+unsigned char ig, iair, ai_t, rng;
+unsigned      fb_t;
 
 static unsigned char facing;           /* 0 right, 1 left */
 static unsigned char sword_cd, gtick;
@@ -191,6 +173,7 @@ void dungeon_enter(void)
     const unsigned char *p = dpal[cur_dungeon - 1];
 
     bs = cur_dungeon <= NBOSS ? &bosses[cur_dungeon - 1] : 0;
+    if (bs) bank_set(bs->bank);         /* stays mapped for the whole fight */
     pal_ph = pal_bg = 0;
     screen_off();
     PPU_ADDR = 0x3F;
@@ -290,46 +273,6 @@ static void hurt(unsigned char sx)     /* player hit by something at x = sx */
     kb_dir = (player_x + 8 < sx) ? -3 : 3;
     vy = -3;
     gtick = 0;
-}
-
-/* Imp: hops (floor only) toward the player (1 in 4 away), spits fireballs at him. */
-static void imp_ai(void)
-{
-    const struct phase *p = &bs->ph[boss_phase - 1];
-    signed char d, v;
-    unsigned char k, s;
-    int nx;
-
-    rng = rng * 5 + 17 + (unsigned char)frame_count;
-    if (fb_t) --fb_t;
-    else {
-        fb_t = p->rate;
-        d = player_x > en.x ? 1 : -1;
-        v = d > 0 ? (signed char)p->fspd : -(signed char)p->fspd;
-        for (s = 0; s < p->shots; ++s)
-            for (k = 0; k < FB_MAX; ++k)
-                if (!fb_x[k]) {
-                    fb_x[k] = en.x + 4;
-                    fb_y[k] = en.y + 4;
-                    fb_vx[k] = v;
-                    fb_vy[k] = p->shots > 1 ? (signed char)s - 1 : (player_y + 8 < en.y ? -1 : 0);
-                    break;
-                }
-    }
-    if (!iair) {
-        if (ai_t) { --ai_t; return; }
-        d = player_x > en.x ? 1 : -1;
-        if (!(rng & 0xC0)) d = -d;
-        ivx = d > 0 ? (signed char)p->spd : -(signed char)p->spd;
-        ivy = -4; ig = 0; iair = 1; ai_t = p->wait;
-    }
-    nx = en.x + ivx;
-    if (nx < WALL) nx = WALL;
-    if (nx > 256 - WALL - 16) nx = 256 - WALL - 16;
-    en.x = nx;
-    en.y += ivy;
-    if (++ig == 3) { ig = 0; ++ivy; }
-    if (ivy >= 0 && en.y + 16 >= FLOOR_Y) { en.y = FLOOR_Y - 16; ivx = ivy = iair = 0; }
 }
 
 static void fireballs(void)
