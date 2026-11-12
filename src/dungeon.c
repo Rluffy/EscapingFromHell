@@ -10,7 +10,7 @@
 #define SWORD_CD   14
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
-#define NBOSS      4                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define NBOSS      5                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -18,6 +18,8 @@
 #define VICTORY_LEN 120                /* victory screen, 2 s */
 #define BAR_ADDR   0x2054              /* boss hp bar: row 2, columns 20..29 (10 tiles = 20 half steps) */
 #define BAR_N      10
+#define FIRE_CD    40                  /* player fireball cooldown (Up + B) */
+#define FIRE_VX    3                   /* player fireball px/frame */
 #define BOSS_KNOCK 16                  /* px the boss is pushed away from the player by a sword hit */
 
 /* One-way platforms, 48 px wide (6 tiles); x and y are multiples of 8. */
@@ -30,8 +32,8 @@ static const unsigned char dpal[10][4] = {
     {0x08,0x18,0x07,0x28}, {0x03,0x13,0x02,0x23}, {0x0C,0x1C,0x0B,0x2C}, {0x09,0x19,0x0A,0x29},
     {0x05,0x15,0x04,0x25}, {0x0F,0x00,0x2D,0x10}
 };
-/* Sprite palettes 0..3 without the backdrop: player, enemy, heart + sword, unused. */
-static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x30,0x10, 0x17,0x21,0x36 };
+/* Sprite palettes 0..3 without the backdrop: player, enemy, heart + sword, player fireball. */
+static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x30,0x10, 0x21,0x31,0x30 };
 
 /* Boss table (docs/TECH.md "Boss-Rahmen"). Phase 1 = 100..71 %, 2 = 70..51 %, 3 = 50..0 % of max hp.
    Behavior function and phase data live in the boss's PRG bank (src/boss.h); the table itself stays fixed. */
@@ -39,15 +41,16 @@ static const struct boss bosses[NBOSS] = {
     { "IMP", 10, 0, 16, 16, FLOOR_Y - 16, imp_ai, imp_ph },
     { "GHOST", 12, 1, 16, 24, 104, ghost_ai, ghost_ph },
     { "BONE HOUND", 14, 2, 24, 16, FLOOR_Y - 16, hound_ai, hound_ph },
-    { "LAVA SNAKE", 14, 3, 16, 16, FLOOR_Y - 16, snake_ai, snake_ph }
+    { "LAVA SNAKE", 14, 3, 16, 16, FLOOR_Y - 16, snake_ai, snake_ph },
+    { "WINGED DEMON", 14, 4, 16, 24, 56, winged_ai, winged_ph }
 };
 const struct boss *bs;                 /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
 static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
-static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP" };   /* only Dash and Double jump act so far */
+static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP", 0, "GOT FIREBALL" };   /* Dash, Double jump, Fireball act so far */
 /* BG tile of the letter A..Z (0 = not in the font sheet). */
 static const unsigned char ftile[26] = {
-    37, 43, 33, 26, 30, 0, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 0, 0, 36, 0
+    37, 43, 33, 26, 30, 48, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 47, 0, 36, 0
 };
 static const unsigned char white = 0x30;
 static unsigned char hp_max, bar_hp;   /* max hp of the enemy; hp the bar shows (255 = redraw) */
@@ -60,6 +63,7 @@ unsigned      fb_t;
 static unsigned char facing;           /* 0 right, 1 left */
 static unsigned char air_jumped;       /* double jump used in this airtime */
 static unsigned char sword_cd, gtick;
+static signed char   pf_vx;           /* player fireball px/frame, signed */
 static signed char   kb_dir;           /* knockback px/frame, signed */
 static unsigned char kb_t;
 
@@ -69,7 +73,8 @@ static unsigned char kb_t;
 #define O_HEART  40
 #define O_FB     52
 #define O_ENEMY2 64                    /* third sprite row of a 24 px boss */
-#define O_BODY   72                    /* body segments of a long boss (snake.c, 8 x 2 sprites) */
+#define O_BODY   72                    /* body segments of a long boss (snake.c, 8 x 2 sprites, up to byte 135) */
+#define O_PF     136                   /* player fireball */
 
 static unsigned char arena_tile(unsigned char r, unsigned char c)
 {
@@ -101,7 +106,7 @@ static void clear_fb(void)
 static void arena_reset(void)
 {
     hearts = HEARTS_MAX;
-    invuln = sword_t = sword_cd = kb_t = gtick = paused = air_jumped = 0;
+    invuln = sword_t = sword_cd = kb_t = gtick = paused = air_jumped = pf_x = pf_cd = 0;
     vy = 0;
     on_ground = 1;
     facing = 0;
@@ -208,6 +213,7 @@ void dungeon_enter(void)
         oam[O_FB + i * 4 + 2] = 2;
     }
     for (i = 0; i < 2; ++i) oam[O_SWORD + i * 4 + 1] = 12 + i;
+    oam[O_PF + 1] = 29;
     for (i = 0; i < 3; ++i) {
         oam[O_HEART + i * 4]     = 15;
         oam[O_HEART + i * 4 + 2] = 2;
@@ -233,6 +239,7 @@ static void update_player(void)
     if (sword_cd) --sword_cd;
     if (sword_t) --sword_t;
     if (dash_cd) --dash_cd;
+    if (pf_cd) --pf_cd;
 
     if (PRESSED(PAD_SELECT) && (abilities & AB_DASH) && !dash_cd && !kb_t) {
         dash_t = DASH_LEN; dash_cd = DASH_CD;
@@ -274,7 +281,23 @@ static void update_player(void)
     }
     player_y = ny;
 
-    if (PRESSED(PAD_B) && !sword_cd) { sword_t = SWORD_LEN; sword_cd = SWORD_CD; }
+    if (PRESSED(PAD_B)) {
+        if ((pad & PAD_UP) && (abilities & AB_FIRE)) {      /* Up + B with the ability: fireball instead of a sword swing */
+            if (!pf_x && !pf_cd) {
+                pf_x = facing ? player_x - 4 : player_x + 12;
+                pf_y = player_y + 4;
+                pf_vx = facing ? -FIRE_VX : FIRE_VX;
+                pf_cd = FIRE_CD;
+            }
+        } else if (!sword_cd) { sword_t = SWORD_LEN; sword_cd = SWORD_CD; }
+    }
+}
+
+static void pfire(void)
+{
+    if (!pf_x) return;
+    pf_x += pf_vx;
+    if (pf_x <= WALL || pf_x >= 256 - WALL - 8) pf_x = 0;     /* gone at the wall */
 }
 
 void hurt(unsigned char sx)     /* player hit by something at x = sx */
@@ -318,10 +341,11 @@ static void update_enemy(void)
 
 static void combat(void)
 {
-    unsigned char ph;
+    unsigned char ph, ok = en.hp && !(boss_hide & 1) && !en.flash && !boss_fx, hit = 0;
     int nx;
-    if (en.hp && !(boss_hide & 1) && sword_t && !en.flash && !boss_fx &&
-        overlap(facing ? player_x - 16 : player_x + 12, player_y + 6, 20, 8, en.x, en.y, en.w, en.h)) {
+    if (ok && pf_x && overlap(pf_x, pf_y, 8, 8, en.x, en.y, en.w, en.h)) { pf_x = 0; hit = 1; }
+    else if (ok && sword_t && overlap(facing ? player_x - 16 : player_x + 12, player_y + 6, 20, 8, en.x, en.y, en.w, en.h)) hit = 1;
+    if (hit) {
         --en.hp;
         en.flash = ENEMY_HIT;
         if (bs) {
@@ -377,6 +401,9 @@ static void draw(void)
         oam[O_FB + i * 4] = fb_x[i] ? fb_y[i] - 1 : 0xFF;
         oam[O_FB + i * 4 + 3] = fb_x[i];
     }
+    oam[O_PF] = pf_x && en.hp ? pf_y - 1 : 0xFF;
+    oam[O_PF + 2] = 3 | (pf_vx < 0 ? 0x40 : 0);
+    oam[O_PF + 3] = pf_x;
     for (i = 0; i < 3; ++i) oam[O_HEART + i * 4 + 1] = i < hearts ? 14 : 15;
     if (!en.hp) for (i = O_BODY; i < O_BODY + 64; i += 4) oam[i] = 0xFF;      /* dead: hide a boss's body segments */
 }
@@ -406,6 +433,7 @@ unsigned char dungeon_frame(void)
         if (!--intro) text_prep(bs->name, 0x2140, 0);
     } else if (!paused) {
         update_player();
+        pfire();
         update_enemy();
         combat();
         if (!en.hp) { victory = VICTORY_LEN; text_prep("VICTORY", 0x2140, 1); }

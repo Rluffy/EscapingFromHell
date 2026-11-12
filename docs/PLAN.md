@@ -63,7 +63,7 @@ Schwierigkeit: Nutzer fand den Imp mit 20 HP zu schwer, mit 10 HP passend. Neue 
 ## Arbeitspakete v0.5
 
 1. Dämon 4 Lavaschlange (Dungeon 4, Bank 3): groß und lang, schlängelt am Arena-Rand (Boden/Wände), taucht in Lava ab und wieder auf, spuckt Feuer, 3 Phasen, ca. 14 HP. Sonnet. **Erledigt** (`src/snake.c` in Bank 3, `tests/snake.lua`, Screenshots `v0.5-snake-phase1.png`, `v0.5-snake-phase3.png`; Test-Dummy-Tests nach Dungeon 6 verschoben).
-2. Dämon 5 Geflügelter Dämon (Dungeon 5, Bank 4): fliegt, stürzt herab, 3 Phasen, ca. 14 HP. Gibt **Feuerball** (Steuerung: **Hoch + B**, ein Projektil geradeaus, Abklingzeit). Sonnet.
+2. Dämon 5 Geflügelter Dämon (Dungeon 5, Bank 4): fliegt, stürzt herab, 3 Phasen, ca. 14 HP. Gibt **Feuerball** (Steuerung: **Hoch + B**, ein Projektil geradeaus, Abklingzeit). Sonnet. **Erledigt** (`src/winged.c` in Bank 4, `tests/winged.lua`, `tests/fireball.lua`, Screenshots `v0.5-winged-phase1.png`, `v0.5-winged-phase3.png`, `v0.5-fireball.png`; Test-Dummy bleibt in Dungeon 6).
 3. Tests, Screenshots, Docs, Bericht. Orchestrator.
 
 Entscheidung: Feuerball auf Hoch + B (B bleibt Schwert, Select bleibt Dash). Test-Dummy wandert in Dungeon 6.

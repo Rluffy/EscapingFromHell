@@ -5,6 +5,7 @@
 .export _hearts, _invuln, _on_ground, _sword_t, _vy, _en, _paused
 .export _boss_phase, _boss_dead, _intro, _fb_x, _fb_y, _boss_fx
 .export _abilities, _dash_t, _dash_cd, _victory, _cur_bank, _boss_hide, _iair
+.export _pf_x, _pf_y, _pf_cd
 
 .segment "DEBUG"
 _frame_count:      .res 2   ; $0300
@@ -35,3 +36,6 @@ _victory:          .res 1   ; $0325 dungeon: victory frames left (0 = fight runn
 _cur_bank:        .res 1   ; $0326 PRG bank mapped at $8000 (13 = none after reset, 0 = Imp)
 _boss_hide:       .res 1   ; $0327 boss: bit 0 untouchable (no hit, no contact damage), bit 1 not drawn
 _iair:            .res 1   ; $0328 boss state (Ghost / Bone hound state machine)
+_pf_x:            .res 1   ; $0329 player fireball x (0 = none)
+_pf_y:            .res 1   ; $032A player fireball y
+_pf_cd:           .res 1   ; $032B player fireball cooldown frames left

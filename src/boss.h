@@ -43,5 +43,7 @@ void hound_ai(void);
 extern const struct phase hound_ph[3];
 void snake_ai(void);
 extern const struct phase snake_ph[3];
+void winged_ai(void);
+extern const struct phase winged_ph[3];
 
 #endif
