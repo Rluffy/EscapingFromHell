@@ -39,7 +39,8 @@ static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x3
 struct phase {
     unsigned char tile;                /* first of 4 sprite tiles (TL, TR, BL, BR) */
     unsigned char spd, wait;           /* hop speed px/frame, frames standing between hops */
-    unsigned char rate, shots, fspd;   /* frames between spits, fireballs per spit, fireball px/frame */
+    unsigned rate;                     /* frames between spits (16 bit: up to 300) */
+    unsigned char shots, fspd;         /* fireballs per spit, fireball px/frame */
     unsigned char pal[3];              /* sprite palette 1 */
 };
 struct boss {
@@ -50,10 +51,10 @@ struct boss {
 };
 static void imp_ai(void);
 static const struct boss bosses[NBOSS] = {
-    { "IMP", 16, imp_ai, {
-        { 16, 1, 60, 150, 1, 1, { 0x2A, 0x1A, 0x30 } },
-        { 20, 2, 40, 100, 1, 1, { 0x27, 0x17, 0x30 } },
-        { 24, 2, 28, 120, 3, 1, { 0x16, 0x06, 0x28 } } } }
+    { "IMP", 10, imp_ai, {
+        { 16, 1, 120, 300, 1, 1, { 0x2A, 0x1A, 0x30 } },
+        { 20, 1, 80, 200, 1, 1, { 0x27, 0x17, 0x30 } },
+        { 24, 2, 56, 240, 3, 1, { 0x16, 0x06, 0x28 } } } }
 };
 static const struct boss *bs;          /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
@@ -68,7 +69,8 @@ static unsigned char hp_max, bar_hp;   /* max hp of the enemy; hp the bar shows 
 static unsigned char ph_t2, ph_t3;     /* phase 2 / 3 start at hp <= these */
 static unsigned char pal_ph, pal_bg;   /* what the PPU currently shows */
 static signed char   ivx, ivy, fb_vx[3], fb_vy[3];
-static unsigned char ig, iair, ai_t, fb_t, rng;
+static unsigned char ig, iair, ai_t, rng;
+static unsigned      fb_t;
 
 static unsigned char facing;           /* 0 right, 1 left */
 static unsigned char sword_cd, gtick;

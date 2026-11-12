@@ -47,7 +47,7 @@ co = coroutine.create(function()
 
   -- intro: boss name drawn, everything frozen, then the fight starts and the name is erased
   check(rd(INTRO) > 0 and rd(INTRO) <= 75, "intro running, intro=" .. rd(INTRO))
-  check(rd(EHP) == 16 and rd(PHASE) == 1 and rd(DEAD) == 0, "imp: 16 hp, phase 1, alive")
+  check(rd(EHP) == 10 and rd(PHASE) == 1 and rd(DEAD) == 0, "imp: 10 hp, phase 1, alive")
   check(bar() == "FFFFFFFFFF", "full hp bar during the intro, bar=" .. bar())
   check(emu.read(0x2000 + 10 * 32 + 14, emu.memType.nesPpuMemory) == 13, "name 'I' on screen")
   local x0, y0, px0 = rd(EX), rd(EY), rd16(PX)
@@ -71,31 +71,31 @@ co = coroutine.create(function()
 
   -- sword: one swing = exactly one hp (boss put next to the player each time, the AI keeps running)
   hold({right = true}, 2)                 -- face right
-  for hp = 15, 13, -1 do
+  for hp = 9, 8, -1 do
     duel(hp + 1); wr(EX, 112)
     frames(1)
     hold({b = true}, 3)
     frames(25)
     check(rd(EHP) == hp, "one swing = one hp, hp=" .. rd(EHP) .. " want " .. hp)
-    if hp == 15 then check(bar() == "FFFFFFFFFH", "one hit = one half step, bar=" .. bar()) end
+    if hp == 9 then check(bar() == "FFFFFFFFF.", "one hit = two half steps at max hp 10, bar=" .. bar()) end
   end
   -- the hit boss is pushed 16 px away from the player (112 -> 128) and its flash blocks contact damage
   check(rd(EX) >= 128, "boss knocked back, x=" .. rd(EX))
   duel(5); wr(EX, 100); wr(EFLASH, 10); frames(1)
   check(rd(HEARTS) == 3, "no contact damage during the boss hit-flash")
 
-  -- phase thresholds from max hp 16: phase 2 at hp <= 11, phase 3 at hp <= 8
-  duel(12); frames(1); wr(EX, 112); hold({b = true}, 3); frames(2)
-  check(rd(EHP) == 11 and rd(PHASE) == 2 and rd(FX) > 0, "hp 11 -> phase 2 with effect, phase=" .. rd(PHASE))
-  check(bar() == "FFFFFFF...", "phase change frame: bar updated too (ceil(11*20/16)=14 steps), bar=" .. bar())
+  -- phase thresholds from max hp 10: phase 2 at hp <= 7, phase 3 at hp <= 5
+  duel(8); frames(1); wr(EX, 112); hold({b = true}, 3); frames(2)
+  check(rd(EHP) == 7 and rd(PHASE) == 2 and rd(FX) > 0, "hp 7 -> phase 2 with effect, phase=" .. rd(PHASE))
+  check(bar() == "FFFFFFF...", "phase change frame: bar updated too (ceil(7*20/10)=14 steps), bar=" .. bar())
   check(emu.read(0x3F15, emu.memType.nesPpuMemory) == 0x27, "phase 2 palette applied")
   local ex = rd(EX)
   frames(10)
   check(rd(EX) == ex, "boss frozen during phase change")
   frames(40)
   check(rd(FX) == 0, "phase effect ends")
-  duel(9); frames(1); wr(EX, 112); hold({b = true}, 3); frames(2)
-  check(rd(EHP) == 8 and rd(PHASE) == 3, "hp 8 -> phase 3, phase=" .. rd(PHASE))
+  duel(6); frames(1); wr(EX, 112); hold({b = true}, 3); frames(2)
+  check(rd(EHP) == 5 and rd(PHASE) == 3, "hp 5 -> phase 3, phase=" .. rd(PHASE))
   check(bar() == "FFFFF.....", "half hp = half bar, bar=" .. bar())
   frames(45)
   check(emu.read(0x3F15, emu.memType.nesPpuMemory) == 0x16, "phase 3 palette applied")
