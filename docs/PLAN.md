@@ -17,7 +17,7 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | Version | Inhalt | Status |
 |---|---|---|
 | v0.1 | Rough Design: Repo, Docs, Regeln, Plan | erledigt |
-| v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | offen |
+| v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | fertig, wartet auf Okay |
 | v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | offen |
 | v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | offen |
 | v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | offen |
@@ -37,6 +37,8 @@ Musik (Overworld, Dungeon, Boss) ist ein Folge-Meilenstein nach v1.0 oder, falls
 4. `tools/png2chr.py` plus Platzhalter-PNGs (Spieler, Kacheln). Haiku.
 5. Overworld: Scrolling-Karte, Spieler läuft, Kollision, 10 Dungeon-Tore (gesperrt/offen), Dungeon betreten mit A (Platzhalter-Bildschirm). Sonnet.
 6. Tests und Screenshot, Docs aktualisieren, Bericht. Orchestrator.
+
+Umsetzung v0.2: Paket 1 hat der Orchestrator selbst erledigt (nur Installationen). Pakete 2 und 3 liefen als ein Sonnet-Auftrag und ein Commit, weil sich ihre TECH.md-Abschnitte überschneiden. Screenshots: `docs/screenshots/v0.2-overworld.png`, `v0.2-dungeon.png`.
 
 Pakete für v0.3 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
