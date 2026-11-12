@@ -10,7 +10,7 @@
 #define SWORD_CD   14
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
-#define NBOSS      3                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define NBOSS      4                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -26,7 +26,7 @@ static const unsigned char plat_y[3] = { 152, 152, 112 };
 
 /* Per-dungeon BG palette 0 (backdrop, floor, mortar, edge); sprite palettes are shared. */
 static const unsigned char dpal[10][4] = {
-    {0x02,0x11,0x01,0x21}, {0x0F,0x16,0x06,0x26}, {0x01,0x14,0x04,0x24}, {0x0A,0x1A,0x0B,0x2A},
+    {0x02,0x11,0x01,0x21}, {0x0F,0x16,0x06,0x26}, {0x01,0x14,0x04,0x24}, {0x06,0x16,0x07,0x27},
     {0x08,0x18,0x07,0x28}, {0x03,0x13,0x02,0x23}, {0x0C,0x1C,0x0B,0x2C}, {0x09,0x19,0x0A,0x29},
     {0x05,0x15,0x04,0x25}, {0x0F,0x00,0x2D,0x10}
 };
@@ -38,7 +38,8 @@ static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x3
 static const struct boss bosses[NBOSS] = {
     { "IMP", 10, 0, 16, 16, FLOOR_Y - 16, imp_ai, imp_ph },
     { "GHOST", 12, 1, 16, 24, 104, ghost_ai, ghost_ph },
-    { "BONE HOUND", 14, 2, 24, 16, FLOOR_Y - 16, hound_ai, hound_ph }
+    { "BONE HOUND", 14, 2, 24, 16, FLOOR_Y - 16, hound_ai, hound_ph },
+    { "LAVA SNAKE", 14, 3, 16, 16, FLOOR_Y - 16, snake_ai, snake_ph }
 };
 const struct boss *bs;                 /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
@@ -46,7 +47,7 @@ static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
 static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP" };   /* only Dash and Double jump act so far */
 /* BG tile of the letter A..Z (0 = not in the font sheet). */
 static const unsigned char ftile[26] = {
-    37, 43, 33, 26, 30, 0, 29, 39, 13, 45, 0, 44, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 0, 0, 36, 0
+    37, 43, 33, 26, 30, 0, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 0, 0, 36, 0
 };
 static const unsigned char white = 0x30;
 static unsigned char hp_max, bar_hp;   /* max hp of the enemy; hp the bar shows (255 = redraw) */
@@ -68,10 +69,12 @@ static unsigned char kb_t;
 #define O_HEART  40
 #define O_FB     52
 #define O_ENEMY2 64                    /* third sprite row of a 24 px boss */
+#define O_BODY   72                    /* body segments of a long boss (snake.c, 8 x 2 sprites) */
 
 static unsigned char arena_tile(unsigned char r, unsigned char c)
 {
     unsigned char i, c0;
+    if (r == 24 && cur_dungeon == 4 && (c < 6 || c >= 26)) return 3;    /* dungeon 4: lava pools at both walls (decoration) */
     if (r >= 24) return r == 24 ? 11 : 10;
     if (c < 2 || c >= 30) return 10;
     if (r != 14 && r != 19) return 0;      /* platform rows only: keeps the redraw short */
@@ -82,7 +85,7 @@ static unsigned char arena_tile(unsigned char r, unsigned char c)
     return 0;
 }
 
-static unsigned char overlap(unsigned char ax, unsigned char ay, unsigned char aw, unsigned char ah,
+unsigned char overlap(unsigned char ax, unsigned char ay, unsigned char aw, unsigned char ah,
                              unsigned char bx, unsigned char by, unsigned char bw, unsigned char bh)
 {
     return ax < bx + bw && bx < ax + aw && ay < by + bh && by < ay + ah;
@@ -274,7 +277,7 @@ static void update_player(void)
     if (PRESSED(PAD_B) && !sword_cd) { sword_t = SWORD_LEN; sword_cd = SWORD_CD; }
 }
 
-static void hurt(unsigned char sx)     /* player hit by something at x = sx */
+void hurt(unsigned char sx)     /* player hit by something at x = sx */
 {
     if (--hearts == 0) { arena_reset(); return; }
     invuln = INVULN;
@@ -375,6 +378,7 @@ static void draw(void)
         oam[O_FB + i * 4 + 3] = fb_x[i];
     }
     for (i = 0; i < 3; ++i) oam[O_HEART + i * 4 + 1] = i < hearts ? 14 : 15;
+    if (!en.hp) for (i = O_BODY; i < O_BODY + 64; i += 4) oam[i] = 0xFF;      /* dead: hide a boss's body segments */
 }
 
 /* Demon (or dummy) beaten and the victory screen is over: clear the dungeon, grant the ability, autosave. */

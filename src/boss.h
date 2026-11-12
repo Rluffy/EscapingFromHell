@@ -30,6 +30,10 @@ extern unsigned      fb_t;
 
 void __fastcall__ bank_set(unsigned char b);        /* crt0.s: map PRG bank b at $8000, remember it in cur_bank */
 
+unsigned char overlap(unsigned char ax, unsigned char ay, unsigned char aw, unsigned char ah,
+                      unsigned char bx, unsigned char by, unsigned char bw, unsigned char bh);   /* dungeon.c */
+void hurt(unsigned char sx);                        /* dungeon.c: player hit by something at x = sx */
+
 /* One line per boss: its behavior function and phase data (defined in src/<boss>.c, banked). */
 void imp_ai(void);
 extern const struct phase imp_ph[3];
@@ -37,5 +41,7 @@ void ghost_ai(void);
 extern const struct phase ghost_ph[3];
 void hound_ai(void);
 extern const struct phase hound_ph[3];
+void snake_ai(void);
+extern const struct phase snake_ph[3];
 
 #endif

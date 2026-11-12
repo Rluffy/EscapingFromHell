@@ -1,4 +1,4 @@
--- Dungeon arena test (dungeon 4 = test dummy, no boss yet): entry, jump/platforms, pause, contact damage + invulnerability, restart, sword, dummy victory.
+-- Dungeon arena test (dungeon 6 = test dummy, no boss yet): entry, jump/platforms, pause, contact damage + invulnerability, restart, sword, dummy victory.
 -- Addresses: docs/TECH.md "Debug-Adressen".
 local M = emu.memType.nesMemory
 local held = {}
@@ -30,12 +30,12 @@ end
 co = coroutine.create(function()
   frames(60)
   check(rd(STATE) == 2, "boot reaches overworld")
-  wr16(0x308, 7)                          -- dungeons 1-3 cleared: gate 4 open
-  wr16(PX, 336); wr(PY, 48)               -- door of dungeon 4 (col 21, row 3)
+  wr16(0x308, 31)                         -- dungeons 1-5 cleared: gate 6 open
+  wr16(PX, 528); wr(PY, 48)               -- door of dungeon 6 (col 33, row 3)
   frames(30)
   press({a = true})
   frames(20)                              -- building the arena takes a few frames
-  check(rd(STATE) == 3 and rd(CUR) == 4, "dungeon 4 entered, state=" .. rd(STATE) .. " px=" .. rd16(PX) .. " py=" .. rd(PY))
+  check(rd(STATE) == 3 and rd(CUR) == 6, "dungeon 6 entered, state=" .. rd(STATE) .. " px=" .. rd16(PX) .. " py=" .. rd(PY))
   frames(5)
   check(rd(HEARTS) == 3 and rd(INV) == 0, "3 hearts on entry, hearts=" .. rd(HEARTS))
   check(rd(GROUND) == 1 and rd(PY) == FLOOR_Y, "standing on the floor, y=" .. rd(PY))
@@ -121,13 +121,13 @@ co = coroutine.create(function()
   wr16(PX, ex); wr(PY, FLOOR_Y); wr(HEARTS, 3); frames(10)
   check(rd(HEARTS) == 3 and rd(EX) == ex, "dead dummy is harmless and still")
 
-  -- dummy dead = victory (no ability): B does not leave, then the sequence returns to the overworld, dungeon 4 cleared
+  -- dummy dead = victory (no ability): B does not leave, then the sequence returns to the overworld, dungeon 6 cleared
   check(rd(0x325) > 0, "victory running")
   press({b = true})
   check(rd(STATE) == 3, "B does not leave the dungeon")
   check(wait_until(function() return rd(STATE) == 2 end, 200), "victory returns to the overworld")
-  check(rd(CUR) == 0 and rd16(0x308) == 15 and rd(0x322) == 0, "dungeon 4 cleared (mask 15), no ability, mask=" .. rd16(0x308))
-  check(rd16(PX) == 336 and rd(PY) == 48, "back at entrance 4")
+  check(rd(CUR) == 0 and rd16(0x308) == 63 and rd(0x322) == 0, "dungeon 6 cleared (mask 63), no ability, mask=" .. rd16(0x308))
+  check(rd16(PX) == 528 and rd(PY) == 48, "back at entrance 6")
   check(rd(0x201) == 0 and rd(0x202) == 0 and rd(0x200 + 24) == 0xFF, "overworld sprites restored")
 
   print("dungeon test OK")
