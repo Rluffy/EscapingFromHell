@@ -1,0 +1,8 @@
+build/
+tools/mesen/
+dist/*.nes
+*.o
+*.map
+*.dbg
+*.lbl
+__pycache__/

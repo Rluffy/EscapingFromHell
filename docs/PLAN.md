@@ -1,0 +1,51 @@
+# PLAN – Escaping From Hell
+
+Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregeln: `GAMEDESIGN.md`. Technik: `TECH.md`.
+
+## Arbeitsweise
+
+- **Orchestrator:** starkes Modell (Opus 5.5). Liest den Plan, zerlegt den Meilenstein in Arbeitspakete, verteilt sie, prüft Build/Tests, committet. Schreibt selbst nur wenig Code.
+- **Subagenten:** `general-purpose` mit explizitem Modell. Haiku 5.5 für Dateiarbeit, Skripte, Doku, Palette. Sonnet 5.5 für C/Assembler, Boss-Logik, Tests. **Kein Bruno/Carli.** Alle mit `/ponytail`.
+- **Arbeitspaket:** klein, eine Aufgabe, klare Abnahme („`make` und `make test` grün" plus ggf. konkretes Ergebnis). Der Subagent bekommt nur das, was er braucht (relevante Doc-Abschnitte, Dateipfade).
+- **Autonom pro Meilenstein:** Der Orchestrator arbeitet den Meilenstein allein ab. Fragen an den Nutzer nur, wenn es ohne Antwort nicht weitergeht. Sonst selbst entscheiden, in den Docs festhalten.
+- **Definition of Done (Arbeitspaket):** `make` grün, `make test` grün, Docs aktualisiert, ein Commit.
+- **Meilenstein-Ende:** Stopp und Bericht an den Nutzer: was fertig ist, Teststatus, Screenshot in `docs/screenshots/`, ROM in `dist/` zum Selbstspielen, Liste „Entscheidungen, die ich selbst getroffen habe". **Erst nach Okay** Tag setzen und Release (`RELEASE.md`), dann nächsten Meilenstein starten.
+- Status unten in der Tabelle nachführen.
+
+## Meilensteine
+
+| Version | Inhalt | Status |
+|---|---|---|
+| v0.1 | Rough Design: Repo, Docs, Regeln, Plan | erledigt |
+| v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | offen |
+| v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | offen |
+| v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | offen |
+| v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | offen |
+| v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | offen |
+| v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | offen |
+| v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | offen |
+| v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | offen |
+| v1.0 | Balance, Fehlerbehebung, Release mit ROM | offen |
+
+Musik (Overworld, Dungeon, Boss) ist ein Folge-Meilenstein nach v1.0 oder, falls der Nutzer es will, Teil von v0.9.
+
+## Arbeitspakete v0.2 (Vorschlag, Orchestrator darf anpassen)
+
+1. Tools installieren (`TECH.md`): cc65, gh, xvfb, python3-pil, Mesen2 nach `tools/mesen/`. Haiku.
+2. `Makefile`, Linker-Config (MMC3), iNES-Header, minimales Hello-ROM (Hintergrundfarbe). Sonnet.
+3. Test-Pipeline: Lua-Smoke-Test, `make test`, Screenshot-Skript. `emu.stop`/`emu.exit` klären. Sonnet.
+4. `tools/png2chr.py` plus Platzhalter-PNGs (Spieler, Kacheln). Haiku.
+5. Overworld: Scrolling-Karte, Spieler läuft, Kollision, 10 Dungeon-Tore (gesperrt/offen), Dungeon betreten mit A (Platzhalter-Bildschirm). Sonnet.
+6. Tests und Screenshot, Docs aktualisieren, Bericht. Orchestrator.
+
+Pakete für v0.3 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
+
+## Parallel-Aufgabe des Nutzers
+
+`gh auth login` (im Terminal mit `! gh auth login`), sobald `gh` installiert ist. Danach legt der Orchestrator das private Repo `EscapingFromHell` an (`gh repo create`) und pusht. Bis dahin lokal bauen und committen.
+
+## Risiken
+
+- Mesen2 headless nicht verifiziert (`TECH.md`). Ausweichlösung: fceux + xvfb.
+- 8 Sprites pro Zeile: große Dämonen aus Sprites und Hintergrund bauen.
+- ROM-Größe: MMC3-Größen früh festlegen und in `TECH.md` eintragen.
