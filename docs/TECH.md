@@ -45,6 +45,10 @@ Ein Slot. Felder: Magic-Byte, Version, Bitmaske geschaffter Dungeons (10 Bit), B
 
 Der Projektordner gehört UID 1000, Agenten laufen als root. Git meldet dann `dubious ownership`. Dauerhafte Lösung (vom Nutzer einmal auszuführen, ändert die globale Git-Config): `! git config --global --add safe.directory /root/SoftwareApplications/EscapingFromHell`. Bis dahin pro Befehl `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0=$PWD git …` verwenden. Agenten ändern die globale Config nicht selbst.
 
+## Push zu GitHub
+
+Remote `origin` ist `https://github.com/Rluffy/EscapingFromHell.git` (privat). Für root gibt es keinen SSH-Key, daher HTTPS mit `gh` als Credential-Helper, pro Befehl: `git -c credential.helper= -c credential.helper='!gh auth git-credential' push --follow-tags` (plus die safe.directory-Variablen von oben). Globale Git-Config wird nicht geändert.
+
 ## Entscheidungslog
 
 (Agenten tragen hier technische Entscheidungen ein: Datum, Entscheidung, Grund.)
