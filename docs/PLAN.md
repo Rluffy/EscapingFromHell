@@ -18,8 +18,8 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 |---|---|---|
 | v0.1 | Rough Design: Repo, Docs, Regeln, Plan | erledigt |
 | v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | erledigt |
-| v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | fertig, wartet auf Okay |
-| v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | offen |
+| v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | erledigt |
+| v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | in Arbeit |
 | v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | offen |
 | v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | offen |
 | v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | offen |
@@ -49,7 +49,16 @@ Umsetzung v0.2: Paket 1 hat der Orchestrator selbst erledigt (nur Installationen
 
 Hinweis für v0.4: Code im festen 16-KB-Bereich belegt nach v0.3 ca. 9,3 KB. Ab v0.4 Boss-Code in umschaltbare PRG-Bänke ($8000/$A000) legen, erstes Paket von v0.4.
 
-Pakete für v0.4 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
+## Arbeitspakete v0.4
+
+1. PRG-Banking: Boss-Code/-Daten in umschaltbare Bänke ($8000/$A000), fester Bereich nur Kern (NMI, Hauptschleife, Overworld, Arena-Grundlage). Sonnet.
+2. Dämon 2 Geist (Dungeon 2): schwebt, flackert, zeitweise unsichtbar, 3 Phasen, HP-Balken. Sonnet.
+3. Dämon 3 Knochenhund (Dungeon 3): rennt quer durch die Arena, Biss/Sprungangriff, 3 Phasen. Gibt Doppelsprung (zweites A in der Luft). Sonnet.
+4. Tests, Screenshots, Docs, Bericht. Orchestrator.
+
+Schwierigkeit: Nutzer fand den Imp mit 20 HP zu schwer, mit 10 HP passend. Neue Bosse daher in derselben Größenordnung (Geist ca. 12, Knochenhund ca. 14 HP), Angriffe gut lesbar und ausweichbar.
+
+Pakete für v0.5 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
 ## Parallel-Aufgabe des Nutzers
 
