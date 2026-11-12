@@ -10,7 +10,7 @@
 #define SWORD_CD   14
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
-#define NBOSS      1                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define NBOSS      2                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -36,7 +36,8 @@ static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x3
 /* Boss table (docs/TECH.md "Boss-Rahmen"). Phase 1 = 100..71 %, 2 = 70..51 %, 3 = 50..0 % of max hp.
    Behavior function and phase data live in the boss's PRG bank (src/boss.h); the table itself stays fixed. */
 static const struct boss bosses[NBOSS] = {
-    { "IMP", 10, 0, imp_ai, imp_ph }
+    { "IMP", 10, 0, 16, FLOOR_Y - 16, imp_ai, imp_ph },
+    { "GHOST", 12, 1, 24, 104, ghost_ai, ghost_ph }
 };
 const struct boss *bs;                 /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
@@ -59,11 +60,12 @@ static unsigned char sword_cd, gtick;
 static signed char   kb_dir;           /* knockback px/frame, signed */
 static unsigned char kb_t;
 
-/* OAM layout (byte offsets): player 0, sword 16, enemy 24, hearts 40. */
+/* OAM layout (byte offsets): player 0, sword 16, enemy 24, hearts 40, fireballs 52, enemy row 3 at 64. */
 #define O_SWORD  16
 #define O_ENEMY  24
 #define O_HEART  40
 #define O_FB     52
+#define O_ENEMY2 64                    /* third sprite row of a 24 px boss */
 
 static unsigned char arena_tile(unsigned char r, unsigned char c)
 {
@@ -103,10 +105,11 @@ static void arena_reset(void)
     en.x = 160; en.y = FLOOR_Y - 16; en.w = 16; en.h = 16;
     en.hp = hp_max = ENEMY_HP; en.flash = 0; en.dir = -1;
     boss_phase = bs ? 1 : 0;
-    boss_dead = boss_fx = ivx = ivy = ig = iair = dash_t = dash_cd = victory = 0;
+    boss_dead = boss_fx = boss_hide = ivx = ivy = ig = iair = dash_t = dash_cd = victory = 0;
     clear_fb();
     if (bs) {
         en.hp = hp_max = bs->hp;
+        en.h = bs->h; en.y = bs->y0;
         ph_t2 = (unsigned)en.hp * 70 / 100;
         ph_t3 = en.hp / 2;
         ai_t = 40; fb_t = 70;
@@ -194,6 +197,7 @@ void dungeon_enter(void)
         oam[i * 4 + 1] = 4 + i;
         oam[O_ENEMY + i * 4 + 2] = 1;
     }
+    oam[O_ENEMY2 + 2] = oam[O_ENEMY2 + 6] = 1;
     for (i = 0; i < FB_MAX; ++i) {
         oam[O_FB + i * 4 + 1] = 28;
         oam[O_FB + i * 4 + 2] = 2;
@@ -308,7 +312,7 @@ static void combat(void)
 {
     unsigned char ph;
     int nx;
-    if (en.hp && sword_t && !en.flash && !boss_fx &&
+    if (en.hp && !(boss_hide & 1) && sword_t && !en.flash && !boss_fx &&
         overlap(facing ? player_x - 16 : player_x + 12, player_y + 6, 20, 8, en.x, en.y, en.w, en.h)) {
         --en.hp;
         en.flash = ENEMY_HIT;
@@ -320,7 +324,7 @@ static void combat(void)
             else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); }
         }
     }
-    if (en.hp && !boss_fx && !en.flash && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
+    if (en.hp && !(boss_hide & 1) && !boss_fx && !en.flash && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
         hurt(en.x + en.w / 2);
 }
 
@@ -328,7 +332,8 @@ static void draw(void)
 {
     unsigned char x = player_x, y = player_y, f = facing, i;
     unsigned char py = (invuln & 4) ? 0xFF : y - 1;       /* blink while invulnerable */
-    unsigned char ey = (en.hp && !(en.flash & 2)) ? en.y - 1 : 0xFF;
+    unsigned char ey = (en.hp && !(en.flash & 2) && !(boss_hide & 2)) ? en.y - 1 : 0xFF;
+    unsigned char t = bs ? bs->ph[boss_phase - 1].tile : 8;
 
     bar_sync();
 
@@ -348,7 +353,10 @@ static void draw(void)
     oam[O_ENEMY + 3] = oam[O_ENEMY + 11] = en.x;
     oam[O_ENEMY + 7] = oam[O_ENEMY + 15] = en.x + 8;
 
-    for (i = 0; i < 4; ++i) oam[O_ENEMY + i * 4 + 1] = (bs ? bs->ph[boss_phase - 1].tile : 8) + i;
+    for (i = 0; i < 4; ++i) oam[O_ENEMY + i * 4 + 1] = t + i;
+    oam[O_ENEMY2] = oam[O_ENEMY2 + 4] = (ey != 0xFF && en.h > 16) ? en.y + 15 : 0xFF;
+    oam[O_ENEMY2 + 1] = t + 4; oam[O_ENEMY2 + 5] = t + 5;
+    oam[O_ENEMY2 + 3] = en.x; oam[O_ENEMY2 + 7] = en.x + 8;
     for (i = 0; i < FB_MAX; ++i) {
         oam[O_FB + i * 4] = fb_x[i] ? fb_y[i] - 1 : 0xFF;
         oam[O_FB + i * 4 + 3] = fb_x[i];

@@ -18,6 +18,7 @@ struct boss {
     const char *name;                  /* letters must exist in ftile[] */
     unsigned char hp;
     unsigned char bank;                /* PRG bank at $8000 holding ai and ph */
+    unsigned char h, y0;               /* sprite height (16 or 24 px) and start y */
     void (*ai)(void);                  /* runs every frame; in bank `bank` */
     const struct phase *ph;            /* 3 phases; in bank `bank` */
 };
@@ -32,5 +33,7 @@ void __fastcall__ bank_set(unsigned char b);        /* crt0.s: map PRG bank b at
 /* One line per boss: its behavior function and phase data (defined in src/<boss>.c, banked). */
 void imp_ai(void);
 extern const struct phase imp_ph[3];
+void ghost_ai(void);
+extern const struct phase ghost_ph[3];
 
 #endif
