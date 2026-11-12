@@ -18,7 +18,7 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 |---|---|---|
 | v0.1 | Rough Design: Repo, Docs, Regeln, Plan | erledigt |
 | v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | erledigt |
-| v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | in Arbeit |
+| v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | fertig, wartet auf Okay |
 | v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | offen |
 | v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | offen |
 | v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | offen |
@@ -45,7 +45,9 @@ Umsetzung v0.2: Paket 1 hat der Orchestrator selbst erledigt (nur Installationen
 1. Arena (ein Bildschirm, Side-View, Boden/Plattformen), Spieler-Physik (laufen, springen, Schwerkraft), Schwert (B), 3 Herzen als HUD, Treffer → −1 Herz, ca. 1,5 s unverwundbar + Rückstoß, 0 Herzen → Dungeon-Neustart. Test-Dummy statt Boss. Sonnet.
 2. Boss-Rahmen (Datentabelle HP/Phasen-Grenzen, Phasenwechsel-Effekt, Boss-Name-Intro) und Dämon 1 Imp: hüpft, spuckt Feuerbälle, 3 sichtbar verschiedene Phasen, ca. 20 Treffer. Sonnet. **Erledigt** (Screenshots `v0.3-imp-phase1.png`, `v0.3-imp-phase3.png`).
 3. Sieg-Moment, Autosave in PRG-RAM (Format `TECH.md`, Laden beim Start), Fähigkeit Dash. Sonnet. **Erledigt** (Screenshot `v0.3-victory.png`; Steuerung: Select = Dash, Start dann Select = Kampf aufgeben).
-4. Tests, Screenshots, Docs, Bericht. Orchestrator.
+4. Tests, Screenshots, Docs, Bericht. Orchestrator. **Erledigt.**
+
+Hinweis für v0.4: Code im festen 16-KB-Bereich belegt nach v0.3 ca. 9,3 KB. Ab v0.4 Boss-Code in umschaltbare PRG-Bänke ($8000/$A000) legen, erstes Paket von v0.4.
 
 Pakete für v0.4 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
