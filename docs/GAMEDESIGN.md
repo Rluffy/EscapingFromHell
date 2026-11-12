@@ -14,13 +14,13 @@ Ein männlicher Held muss aus der Hölle fliehen. Er läuft durch eine sichere O
 - Jeder Dungeon ist von außen ein Gebäude (Tempel-Rechteck) mit dem Dämon als Figur davor oder darin.
 - Der Spieler muss die Dungeons der Reihe nach schaffen. Der nächste ist durch ein Tor/Siegel gesperrt, bis der vorherige geschafft ist. Geschaffte Dungeons sind wiederholbar.
 - Dungeon betreten: Spieler steht am Eingang, **A**.
-- Umsetzung v0.2: 4 Bildschirme (1024 px), Tempel-Raster und Steuerung siehe `TECH.md` „Overworld (v0.2)". Spieler läuft mit 2 px/Frame in 8 Richtungen, Tore sind fest (verschlossen = Hindernis, offen = begehbar). Im Dungeon-Platzhalter (bis v0.3) bringt **B** oder **Start** zurück zum Eingang.
+- Umsetzung v0.2: 4 Bildschirme (1024 px), Tempel-Raster und Steuerung siehe `TECH.md` „Overworld (v0.2)". Spieler läuft mit 2 px/Frame in 8 Richtungen, Tore sind fest (verschlossen = Hindernis, offen = begehbar). Der Dungeon selbst: siehe unten (seit v0.3 echte Arena). Vorläufig bringt **Select** zurück zum Eingang (später Sieg-Moment).
 
 ## Dungeon (Boss-Arena)
 
 - Ein Dungeon = **ein Bildschirm**, kein Scrollen, keine Vorräume. Kurzes Intro (Boss-Name), dann Kampf.
-- Side-View, Springen, Schwert.
-- **3 Herzen.** Pro Treffer −1 Herz, danach ca. 1,5 s unverwundbar plus kleiner Rückstoß. Bei 0 Herzen: Dungeon startet sofort neu, Boss wieder auf vollen HP.
+- Side-View, Springen, Schwert. Umsetzung v0.3: Boden, Seitenwände, 3 einseitige Plattformen (von unten durchspringbar), Spieler läuft 2 px/Frame, Sprung ca. 63 px hoch (A loslassen = niedriger), Schwert 8 Frames sichtbar mit 20 Frames Abklingzeit. Details und Zahlen: `TECH.md` „Dungeon (v0.3)". Bis der Imp fertig ist, steht ein Test-Dummy (5 HP, läuft hin und her) als Gegner da.
+- **3 Herzen.** Pro Treffer −1 Herz, danach ca. 1,5 s (90 Frames) unverwundbar (Spieler blinkt) plus kleiner Rückstoß weg vom Gegner. Herzen stehen als HUD oben links. Bei 0 Herzen: Dungeon startet sofort neu, Boss wieder auf vollen HP.
 - Kein Heilen im Dungeon. Bei jedem (Wieder-)Betreten gibt es wieder 3 Herzen.
 - Sieg: kurzer Sieg-Moment, Fähigkeit (falls vorhanden), **Autosave**, zurück in die Overworld.
 
@@ -49,7 +49,7 @@ Jeder Dungeon hat eine eigene Farbpalette. Namen und Details dürfen später ge�
 
 - Start: nur Schwert. Kein Inventar, keine Shops, keine Waffen-Drops in v1.
 - Fünf Fähigkeiten (siehe Tabelle), dauerhaft und gespeichert. Alle Dungeons bleiben auch ohne sie schaffbar, die Fähigkeiten machen es nur leichter.
-- Steuerung: **D-Pad** laufen, **A** springen, **B** Schwert, **Start** Pause. In der Overworld **A** = Dungeon betreten. Fähigkeiten brauchen ggf. Tastenkombis: Details legt v0.3/v0.4 fest und trägt sie hier ein.
+- Steuerung: **D-Pad** laufen, **A** springen, **B** Schwert, **Start** Pause (friert das Spiel ein, kein Pausen-Bild). **Select** verlässt den Dungeon, nur vorläufig bis zum Sieg-Moment. In der Overworld **A** = Dungeon betreten. Fähigkeiten brauchen ggf. Tastenkombis: Details legt v0.3/v0.4 fest und trägt sie hier ein.
 
 ## Menüs, Story, Ende
 

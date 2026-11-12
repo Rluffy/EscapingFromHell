@@ -11,6 +11,7 @@
 
 #define PAD_A      0x80
 #define PAD_B      0x40
+#define PAD_SELECT 0x20
 #define PAD_START  0x10
 #define PAD_UP     0x08
 #define PAD_DOWN   0x04
@@ -19,12 +20,27 @@
 
 /* Test-visible RAM, fixed at $0300 (see src/debug.s, cfg/mmc3.cfg). */
 extern volatile unsigned int  frame_count;  /* $0300/$0301, +1 per NMI */
-extern volatile unsigned char game_state;   /* $0302, 0 = boot, 2 = overworld, 3 = dungeon placeholder */
+extern volatile unsigned char game_state;   /* $0302, 0 = boot, 2 = overworld, 3 = dungeon arena */
 extern unsigned int  player_x;              /* $0303/$0304 world x (top-left of the 16x16 sprite) */
 extern unsigned char player_y;              /* $0305 world y */
 extern unsigned int  cam_x;                 /* $0306/$0307 camera x, 0..768 */
 extern unsigned int  dungeons_cleared;      /* $0308/$0309 bit n-1 = dungeon n cleared */
 extern unsigned char cur_dungeon;           /* $030A 1..10 in a dungeon, else 0 */
+
+/* Dungeon state, $030B..$0317 (src/dungeon.c). Tests may write all of it. */
+extern unsigned char hearts, invuln, on_ground, sword_t;   /* $030B..$030E */
+extern signed char   vy;                    /* $030F */
+struct enemy { unsigned char x, y, w, h, hp, flash; signed char dir; };   /* generic enemy, package 2: boss table */
+extern struct enemy en;                     /* $0310..$0316 */
+extern unsigned char paused;                /* $0317 */
+
+/* Shared with dungeon.c (main.c). */
+extern unsigned char pad, pad_prev;
+#define PRESSED(b) (pad & ~pad_prev & (b))
+void screen_off(void);
+void screen_on(unsigned char ctrl);
+void dungeon_enter(void);                   /* cur_dungeon = 1..10 */
+unsigned char dungeon_frame(void);          /* 1 = leave the dungeon */
 
 /* Background streaming buffers, consumed by NMI / ppu_flush (src/crt0.s). */
 extern unsigned char colbuf[60];

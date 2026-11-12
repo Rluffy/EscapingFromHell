@@ -1,4 +1,4 @@
--- Overworld + dungeon placeholder test. One coroutine drives the whole run.
+-- Overworld + dungeon entry/exit test. One coroutine drives the whole run.
 -- Addresses: docs/TECH.md "Debug-Adressen". Temple grid: door col 6n-3, door row 5 (odd n) / 3 (even n).
 local M = emu.memType.nesMemory
 local held = {}
@@ -47,10 +47,13 @@ co = coroutine.create(function()
 
   teleport(1, false)
   press({a = true})
+  frames(20)                              -- building the arena takes a few frames
   check(rd(STATE) == 3 and rd(CUR) == 1, "(d) dungeon 1 entered, state=" .. rd(STATE) .. " cur=" .. rd(CUR))
   frames(10)
   press({b = true})
-  check(rd(STATE) == 2 and rd(CUR) == 0, "(d) B returns to overworld")
+  check(rd(STATE) == 3, "(d) B does not leave the dungeon")
+  press({select = true})
+  check(rd(STATE) == 2 and rd(CUR) == 0, "(d) Select returns to overworld")
   check(rd16(PX) == 48 and rd(PY) == 80, "(d) player at entrance 1, x=" .. rd16(PX))
 
   teleport(2, true)
@@ -60,9 +63,10 @@ co = coroutine.create(function()
   hold({up = true}, 40)
   check(rd(PY) >= 36 and rd(PY) <= 51, "(e) player walked through the open gate, y=" .. rd(PY))
   press({a = true})
+  frames(20)
   check(rd(STATE) == 3 and rd(CUR) == 2, "(e) dungeon 2 entered, state=" .. rd(STATE) .. " cur=" .. rd(CUR))
-  press({start = true})
-  check(rd(STATE) == 2 and rd16(PX) == 144 and rd(PY) == 48, "(e) Start returns to entrance 2")
+  press({select = true})
+  check(rd(STATE) == 2 and rd16(PX) == 144 and rd(PY) == 48, "(e) Select returns to entrance 2")
 
   print("overworld test OK")
   emu.stop(0)

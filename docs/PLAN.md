@@ -18,7 +18,7 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 |---|---|---|
 | v0.1 | Rough Design: Repo, Docs, Regeln, Plan | erledigt |
 | v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | erledigt |
-| v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | offen |
+| v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | in Arbeit |
 | v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | offen |
 | v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | offen |
 | v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | offen |
@@ -40,7 +40,14 @@ Musik (Overworld, Dungeon, Boss) ist ein Folge-Meilenstein nach v1.0 oder, falls
 
 Umsetzung v0.2: Paket 1 hat der Orchestrator selbst erledigt (nur Installationen). Pakete 2 und 3 liefen als ein Sonnet-Auftrag und ein Commit, weil sich ihre TECH.md-Abschnitte überschneiden. Screenshots: `docs/screenshots/v0.2-overworld.png`, `v0.2-dungeon.png`.
 
-Pakete für v0.3 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
+## Arbeitspakete v0.3
+
+1. Arena (ein Bildschirm, Side-View, Boden/Plattformen), Spieler-Physik (laufen, springen, Schwerkraft), Schwert (B), 3 Herzen als HUD, Treffer → −1 Herz, ca. 1,5 s unverwundbar + Rückstoß, 0 Herzen → Dungeon-Neustart. Test-Dummy statt Boss. Sonnet.
+2. Boss-Rahmen (Datentabelle HP/Phasen-Grenzen, Phasenwechsel-Effekt, Boss-Name-Intro) und Dämon 1 Imp: hüpft, spuckt Feuerbälle, 3 sichtbar verschiedene Phasen, ca. 20 Treffer. Sonnet.
+3. Sieg-Moment, Autosave in PRG-RAM (Format `TECH.md`, Laden beim Start), Fähigkeit Dash. Sonnet.
+4. Tests, Screenshots, Docs, Bericht. Orchestrator.
+
+Pakete für v0.4 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
 ## Parallel-Aufgabe des Nutzers
 

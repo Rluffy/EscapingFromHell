@@ -19,12 +19,8 @@ static const unsigned char pal_overworld[32] = {
     0x0F,0x17,0x27,0x37,  0x0F,0x06,0x16,0x26,  0x0F,0x06,0x16,0x27,  0x0F,0x16,0x26,0x38,
     0x0F,0x17,0x21,0x36,  0x0F,0x17,0x21,0x36,  0x0F,0x17,0x21,0x36,  0x0F,0x17,0x21,0x36
 };
-static const unsigned char pal_dungeon[32] = {
-    0x02,0x02,0x02,0x30,  0x02,0x02,0x02,0x30,  0x02,0x02,0x02,0x30,  0x02,0x02,0x02,0x30,
-    0x02,0x02,0x02,0x30,  0x02,0x02,0x02,0x30,  0x02,0x02,0x02,0x30,  0x02,0x02,0x02,0x30
-};
 
-static unsigned char pad, pad_prev;
+unsigned char pad, pad_prev;
 static unsigned char drawn_col;          /* leftmost streamed metatile column; 255 = nothing drawn */
 static unsigned int  drawn_mask;         /* dungeons_cleared the gate tiles were drawn with */
 
@@ -82,14 +78,14 @@ static void build_col(unsigned char c)
     attr_addr = 0x23C0 + ((unsigned int)nt << 10) + ((c >> 1) & 7);
 }
 
-static void screen_off(void)
+void screen_off(void)
 {
     wait_vblank();
     PPU_MASK = 0;
     PPU_CTRL = 0;                     /* NMI off while main writes VRAM directly */
 }
 
-static void screen_on(unsigned char ctrl)
+void screen_on(unsigned char ctrl)
 {
     ppu_ctrl = ctrl;
     col_pending = 0;
@@ -132,28 +128,15 @@ static void redraw_overworld(void)
     screen_on(ppu_ctrl);
 }
 
-static void enter_dungeon(void)
+/* Overworld metasprite: tiles 0..3, palette 0, no flip; all other sprites hidden. */
+static void init_player_oam(void)
 {
-    unsigned char i, n = cur_dungeon;
-    static const unsigned char name[8] = { 26, 27, 28, 29, 30, 31, 28, 0 };  /* "DUNGEON " */
-
-    screen_off();
-    set_palette(pal_dungeon);
-    PPU_ADDR = 0x20;
-    PPU_ADDR = 0x00;
-    for (i = 0; i < 4; ++i) {          /* clear nametable 0 (1024 bytes) */
-        unsigned int k;
-        for (k = 0; k < 256; ++k) PPU_DATA = 0;
+    unsigned int i;
+    for (i = 0; i < 4; ++i) {
+        oam[i * 4 + 1] = i;
+        oam[i * 4 + 2] = 0;
     }
-    PPU_ADDR = 0x21;
-    PPU_ADDR = 0xAB;
-    for (i = 0; i < 8; ++i) PPU_DATA = name[i];
-    if (n >= 10) { PPU_DATA = 17; n -= 10; }   /* tile 17 = "1" */
-    PPU_DATA = 16 + n;
-    for (i = 0; i < 4; ++i) oam[i * 4] = 0xFF; /* hide the player */
-    scroll_x = 0;
-    game_state = ST_DUNGEON;
-    screen_on(0x88);
+    for (i = 16; i < 256; i += 4) oam[i] = 0xFF;
 }
 
 static void leave_dungeon(void)
@@ -164,6 +147,7 @@ static void leave_dungeon(void)
     player_y = (n & 1) ? 80 : 48;
     cur_dungeon = 0;
     game_state = ST_OVERWORLD;
+    init_player_oam();
     redraw_overworld();
 }
 
@@ -193,7 +177,7 @@ static void overworld_frame(void)
         id = cell_id(player_x + 8, player_y + 12);
         if (id >= 32 && is_open(id - 32)) {
             cur_dungeon = id - 31;
-            enter_dungeon();
+            dungeon_enter();
             return;
         }
     }
@@ -218,11 +202,7 @@ static void overworld_frame(void)
 
 void main(void)
 {
-    unsigned char i;
-    for (i = 0; i < 4; ++i) {
-        oam[i * 4 + 1] = i;            /* player tiles 0..3, palette 0 */
-        oam[i * 4 + 2] = 0;
-    }
+    init_player_oam();
     player_x = 32;
     player_y = 144;
     game_state = ST_OVERWORLD;
@@ -235,7 +215,7 @@ void main(void)
         read_pad();
         if (game_state == ST_OVERWORLD) {
             overworld_frame();
-        } else if (pad & (PAD_B | PAD_START)) {
+        } else if (dungeon_frame()) {
             leave_dungeon();
         }
     }
