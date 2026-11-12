@@ -43,7 +43,7 @@ Umsetzung v0.2: Paket 1 hat der Orchestrator selbst erledigt (nur Installationen
 ## Arbeitspakete v0.3
 
 1. Arena (ein Bildschirm, Side-View, Boden/Plattformen), Spieler-Physik (laufen, springen, Schwerkraft), Schwert (B), 3 Herzen als HUD, Treffer → −1 Herz, ca. 1,5 s unverwundbar + Rückstoß, 0 Herzen → Dungeon-Neustart. Test-Dummy statt Boss. Sonnet.
-2. Boss-Rahmen (Datentabelle HP/Phasen-Grenzen, Phasenwechsel-Effekt, Boss-Name-Intro) und Dämon 1 Imp: hüpft, spuckt Feuerbälle, 3 sichtbar verschiedene Phasen, ca. 20 Treffer. Sonnet. **Erledigt** (Screenshots `v0.3-imp-phase1.png`, `v0.3-imp-phase3.png`).
+2. Boss-Rahmen (Datentabelle HP/Phasen-Grenzen, Phasenwechsel-Effekt, Boss-Name-Intro) und Dämon 1 Imp: hüpft, spuckt Feuerbälle, 3 sichtbar verschiedene Phasen, ca. 20 Treffer (nach Nutzer-Test auf 16 gesenkt, plus Boss-HP-Balken). Sonnet. **Erledigt** (Screenshots `v0.3-imp-phase1.png`, `v0.3-imp-phase3.png`).
 3. Sieg-Moment, Autosave in PRG-RAM (Format `TECH.md`, Laden beim Start), Fähigkeit Dash. Sonnet. **Erledigt** (Screenshot `v0.3-victory.png`; Steuerung: Select = Dash, Start dann Select = Kampf aufgeben).
 4. Tests, Screenshots, Docs, Bericht. Orchestrator. **Erledigt.**
 

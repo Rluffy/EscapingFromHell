@@ -5,10 +5,10 @@
 #define FLOOR_Y    192                 /* top of the floor = feet position of a standing player */
 #define WALL       16                  /* wall width in px */
 #define HEARTS_MAX 3
-#define INVULN     90
+#define INVULN     120
 #define KNOCK      8                   /* knockback frames, 3 px/frame */
 #define SWORD_LEN  8
-#define SWORD_CD   20
+#define SWORD_CD   14
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
 #define NBOSS      1                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
@@ -18,6 +18,9 @@
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
 #define DASH_CD    30                  /* frames from dash start until the next one */
 #define VICTORY_LEN 120                /* victory screen, 2 s */
+#define BAR_ADDR   0x2054              /* boss hp bar: row 2, columns 20..29 (10 tiles = 20 half steps) */
+#define BAR_N      10
+#define BOSS_KNOCK 16                  /* px the boss is pushed away from the player by a sword hit */
 
 /* One-way platforms, 48 px wide (6 tiles); x and y are multiples of 8. */
 static const unsigned char plat_x[3] = { 32, 176, 104 };
@@ -47,10 +50,10 @@ struct boss {
 };
 static void imp_ai(void);
 static const struct boss bosses[NBOSS] = {
-    { "IMP", 20, imp_ai, {
-        { 16, 1, 40, 100, 1, 1, { 0x2A, 0x1A, 0x30 } },
-        { 20, 2, 24,  60, 1, 2, { 0x27, 0x17, 0x30 } },
-        { 24, 3, 14,  75, 3, 2, { 0x16, 0x06, 0x28 } } } }
+    { "IMP", 16, imp_ai, {
+        { 16, 1, 60, 150, 1, 1, { 0x2A, 0x1A, 0x30 } },
+        { 20, 2, 40, 100, 1, 1, { 0x27, 0x17, 0x30 } },
+        { 24, 2, 28, 120, 3, 1, { 0x16, 0x06, 0x28 } } } }
 };
 static const struct boss *bs;          /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
@@ -61,6 +64,7 @@ static const unsigned char ftile[26] = {
     37, 0, 33, 26, 30, 0, 29, 39, 13, 0, 0, 0, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 0, 0, 36, 0
 };
 static const unsigned char white = 0x30;
+static unsigned char hp_max, bar_hp;   /* max hp of the enemy; hp the bar shows (255 = redraw) */
 static unsigned char ph_t2, ph_t3;     /* phase 2 / 3 start at hp <= these */
 static unsigned char pal_ph, pal_bg;   /* what the PPU currently shows */
 static signed char   ivx, ivy, fb_vx[3], fb_vy[3];
@@ -113,12 +117,12 @@ static void arena_reset(void)
     player_x = 48;
     player_y = FLOOR_Y - 16;
     en.x = 160; en.y = FLOOR_Y - 16; en.w = 16; en.h = 16;
-    en.hp = ENEMY_HP; en.flash = 0; en.dir = -1;
+    en.hp = hp_max = ENEMY_HP; en.flash = 0; en.dir = -1;
     boss_phase = bs ? 1 : 0;
     boss_dead = boss_fx = ivx = ivy = ig = iair = dash_t = dash_cd = victory = 0;
     clear_fb();
     if (bs) {
-        en.hp = bs->hp;
+        en.hp = hp_max = bs->hp;
         ph_t2 = (unsigned)en.hp * 70 / 100;
         ph_t3 = en.hp / 2;
         ai_t = 40; fb_t = 70;
@@ -165,6 +169,20 @@ static void text_flush(void)
     tb_n = 0;
 }
 
+/* Boss hp bar: tiles 40 full, 41 half, 42 empty; ceil(hp * 20 / max) half steps, so any hp > 0 shows something. */
+static void bar_sync(void)
+{
+    unsigned char i, s;
+    /* unchanged, buffer busy, or a palette write is due next frame (both in one vblank do not fit): retry next frame */
+    if (bar_hp == en.hp || tb_n || (pal_ph && pal_ph != boss_phase)) return;
+    bar_hp = en.hp;
+    s = ((unsigned)en.hp * 20 + hp_max - 1) / hp_max;
+    if (s > 20) s = 20;
+    tb[0] = BAR_ADDR >> 8; tb[1] = BAR_ADDR & 0xFF;
+    for (i = 0; i < BAR_N; ++i) tb[2 + i] = s >= 2 * i + 2 ? 40 : s > 2 * i ? 41 : 42;
+    tb_n = 2 + BAR_N;
+}
+
 void dungeon_enter(void)
 {
     unsigned char i, j, r, c;
@@ -203,6 +221,8 @@ void dungeon_enter(void)
     }
     arena_reset();
     intro = 0;
+    tb_n = 0; bar_hp = 255;
+    bar_sync(); text_flush();
     if (bs) { intro = INTRO_LEN; text_prep(bs->name, 0x2140, 1); text_flush(); }
     scroll_x = 0;
     game_state = ST_DUNGEON;
@@ -342,17 +362,20 @@ static void update_enemy(void)
 static void combat(void)
 {
     unsigned char ph;
+    int nx;
     if (en.hp && sword_t && !en.flash && !boss_fx &&
-        overlap(facing ? player_x - 12 : player_x + 12, player_y + 6, 16, 8, en.x, en.y, en.w, en.h)) {
+        overlap(facing ? player_x - 16 : player_x + 12, player_y + 6, 20, 8, en.x, en.y, en.w, en.h)) {
         --en.hp;
         en.flash = ENEMY_HIT;
         if (bs) {
+            nx = (int)en.x + (en.x >= player_x ? BOSS_KNOCK : -BOSS_KNOCK);
+            en.x = nx < WALL ? WALL : nx > 256 - WALL - 16 ? 256 - WALL - 16 : nx;
             ph = en.hp <= ph_t3 ? 3 : en.hp <= ph_t2 ? 2 : 1;
             if (!en.hp) { boss_dead = 1; clear_fb(); }
             else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); }
         }
     }
-    if (en.hp && !boss_fx && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
+    if (en.hp && !boss_fx && !en.flash && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
         hurt(en.x + en.w / 2);
 }
 
@@ -361,6 +384,8 @@ static void draw(void)
     unsigned char x = player_x, y = player_y, f = facing, i;
     unsigned char py = (invuln & 4) ? 0xFF : y - 1;       /* blink while invulnerable */
     unsigned char ey = (en.hp && !(en.flash & 2)) ? en.y - 1 : 0xFF;
+
+    bar_sync();
 
     oam[0] = oam[4] = py;
     oam[8] = oam[12] = py == 0xFF ? 0xFF : y + 7;

@@ -107,6 +107,11 @@ co = coroutine.create(function()
     check(rd(SWORD) > 0, "sword active, swing " .. i)
     frames(15)
     check(rd(EHP) == 5 - i, "one swing = one hit, hp=" .. rd(EHP) .. " swing " .. i)
+    if i == 1 then   -- generic hp bar: 4/5 hp = 16 of 20 half steps (tiles 40 full, 42 empty, row 2 columns 20..29)
+      local t = {}
+      for c = 20, 29 do t[#t + 1] = emu.read(0x2000 + 2 * 32 + c, emu.memType.nesPpuMemory) end
+      check(table.concat(t, ",") == "40,40,40,40,40,40,40,40,42,42", "dummy hp bar after one hit: " .. table.concat(t, ","))
+    end
     frames(10)
   end
   check(rd(EHP) == 0, "dummy dead")

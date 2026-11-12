@@ -28,6 +28,12 @@ local function duel(hp)
   wr(EX, 120); wr(EY, FLOOR_Y); wr(EHP, hp); wr(EFLASH, 0)
   wr16(PX, 98); wr(PY, FLOOR_Y); wr(HEARTS, 3); wr(INV, 0)
 end
+-- boss hp bar: 10 BG tiles at row 2, columns 20..29 (40 full, 41 half, 42 empty), as a string like "FFFFFFFFFH"
+local function bar()
+  local t = ""
+  for c = 20, 29 do t = t .. ({[40] = "F", [41] = "H", [42] = "."})[emu.read(0x2000 + 2 * 32 + c, emu.memType.nesPpuMemory)] end
+  return t
+end
 local function swing() hold({b = true}, 3); frames(25) end   -- 25: cooldown over, boss hit-flash over
 
 co = coroutine.create(function()
@@ -41,7 +47,8 @@ co = coroutine.create(function()
 
   -- intro: boss name drawn, everything frozen, then the fight starts and the name is erased
   check(rd(INTRO) > 0 and rd(INTRO) <= 75, "intro running, intro=" .. rd(INTRO))
-  check(rd(EHP) == 20 and rd(PHASE) == 1 and rd(DEAD) == 0, "imp: 20 hp, phase 1, alive")
+  check(rd(EHP) == 16 and rd(PHASE) == 1 and rd(DEAD) == 0, "imp: 16 hp, phase 1, alive")
+  check(bar() == "FFFFFFFFFF", "full hp bar during the intro, bar=" .. bar())
   check(emu.read(0x2000 + 10 * 32 + 14, emu.memType.nesPpuMemory) == 13, "name 'I' on screen")
   local x0, y0, px0 = rd(EX), rd(EY), rd16(PX)
   hold({right = true}, 10)
@@ -64,25 +71,32 @@ co = coroutine.create(function()
 
   -- sword: one swing = exactly one hp (boss put next to the player each time, the AI keeps running)
   hold({right = true}, 2)                 -- face right
-  for hp = 19, 17, -1 do
+  for hp = 15, 13, -1 do
     duel(hp + 1); wr(EX, 112)
     frames(1)
     hold({b = true}, 3)
     frames(25)
     check(rd(EHP) == hp, "one swing = one hp, hp=" .. rd(EHP) .. " want " .. hp)
+    if hp == 15 then check(bar() == "FFFFFFFFFH", "one hit = one half step, bar=" .. bar()) end
   end
+  -- the hit boss is pushed 16 px away from the player (112 -> 128) and its flash blocks contact damage
+  check(rd(EX) >= 128, "boss knocked back, x=" .. rd(EX))
+  duel(5); wr(EX, 100); wr(EFLASH, 10); frames(1)
+  check(rd(HEARTS) == 3, "no contact damage during the boss hit-flash")
 
-  -- phase thresholds from max hp 20: phase 2 at hp <= 14, phase 3 at hp <= 10
-  duel(15); frames(1); wr(EX, 112); hold({b = true}, 3); frames(2)
-  check(rd(EHP) == 14 and rd(PHASE) == 2 and rd(FX) > 0, "hp 14 -> phase 2 with effect, phase=" .. rd(PHASE))
+  -- phase thresholds from max hp 16: phase 2 at hp <= 11, phase 3 at hp <= 8
+  duel(12); frames(1); wr(EX, 112); hold({b = true}, 3); frames(2)
+  check(rd(EHP) == 11 and rd(PHASE) == 2 and rd(FX) > 0, "hp 11 -> phase 2 with effect, phase=" .. rd(PHASE))
+  check(bar() == "FFFFFFF...", "phase change frame: bar updated too (ceil(11*20/16)=14 steps), bar=" .. bar())
   check(emu.read(0x3F15, emu.memType.nesPpuMemory) == 0x27, "phase 2 palette applied")
   local ex = rd(EX)
   frames(10)
   check(rd(EX) == ex, "boss frozen during phase change")
   frames(40)
   check(rd(FX) == 0, "phase effect ends")
-  duel(11); frames(1); wr(EX, 112); hold({b = true}, 3); frames(2)
-  check(rd(EHP) == 10 and rd(PHASE) == 3, "hp 10 -> phase 3, phase=" .. rd(PHASE))
+  duel(9); frames(1); wr(EX, 112); hold({b = true}, 3); frames(2)
+  check(rd(EHP) == 8 and rd(PHASE) == 3, "hp 8 -> phase 3, phase=" .. rd(PHASE))
+  check(bar() == "FFFFF.....", "half hp = half bar, bar=" .. bar())
   frames(45)
   check(emu.read(0x3F15, emu.memType.nesPpuMemory) == 0x16, "phase 3 palette applied")
 
@@ -99,6 +113,7 @@ co = coroutine.create(function()
   duel(1); frames(1); wr(EX, 112); hold({b = true}, 3); frames(3)
   check(rd(EHP) == 0 and rd(DEAD) == 1, "hp 0 -> boss_dead, dead=" .. rd(DEAD))
   frames(30)
+  check(bar() == "..........", "empty bar at 0 hp, bar=" .. bar())
   check(rd(0x200 + 24) == 0xFF and fireballs() == 0, "boss and fireballs gone")
   local ex = rd(EX)
   wr16(PX, ex); wr(PY, FLOOR_Y); wr(HEARTS, 3); wr(INV, 0); frames(10)

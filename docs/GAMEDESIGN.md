@@ -19,8 +19,9 @@ Ein männlicher Held muss aus der Hölle fliehen. Er läuft durch eine sichere O
 ## Dungeon (Boss-Arena)
 
 - Ein Dungeon = **ein Bildschirm**, kein Scrollen, keine Vorräume. Kurzes Intro (Boss-Name), dann Kampf.
-- Side-View, Springen, Schwert. Umsetzung v0.3: Boden, Seitenwände, 3 einseitige Plattformen (von unten durchspringbar), Spieler läuft 2 px/Frame, Sprung ca. 63 px hoch (A loslassen = niedriger), Schwert 8 Frames sichtbar mit 20 Frames Abklingzeit. Details und Zahlen: `TECH.md` „Dungeon (v0.3)". Dungeon 1 hat den Imp (siehe unten), Dungeons 2–10 vorläufig einen Test-Dummy (5 HP, läuft hin und her). Intro: Boss-Name groß in der Bildmitte, 1,25 s, alles steht.
-- **3 Herzen.** Pro Treffer −1 Herz, danach ca. 1,5 s (90 Frames) unverwundbar (Spieler blinkt) plus kleiner Rückstoß weg vom Gegner. Herzen stehen als HUD oben links. Bei 0 Herzen: Dungeon startet sofort neu, Boss wieder auf vollen HP.
+- Side-View, Springen, Schwert. Umsetzung v0.3: Boden, Seitenwände, 3 einseitige Plattformen (von unten durchspringbar), Spieler läuft 2 px/Frame, Sprung ca. 63 px hoch (A loslassen = niedriger), Schwert 8 Frames sichtbar mit 14 Frames Abklingzeit, Trefferbox 20 px breit. Details und Zahlen: `TECH.md` „Dungeon (v0.3)". Dungeon 1 hat den Imp (siehe unten), Dungeons 2–10 vorläufig einen Test-Dummy (5 HP, läuft hin und her). Intro: Boss-Name groß in der Bildmitte, 1,25 s, alles steht.
+- **3 Herzen.** Pro Treffer −1 Herz, danach 2 s (120 Frames) unverwundbar (Spieler blinkt) plus kleiner Rückstoß weg vom Gegner. Herzen stehen als HUD oben links. Bei 0 Herzen: Dungeon startet sofort neu, Boss wieder auf vollen HP.
+- **Gegner-HP-Balken** (seit v0.3-Fix, Wunsch aus dem Nutzer-Test): oben rechts, Kachelzeile 2, 10 Kacheln = 20 Halbschritte, rechtsbündig innerhalb der Wände. Voll = hell, leer = dunkel, halbe Kachel = ein Halbschritt. Länge = aufgerundet HP/Max-HP (jede HP > 0 zeigt mindestens einen Halbschritt). Gilt für jeden Dämon und den Test-Dummy, erscheint schon im Intro, sinkt bei jedem Treffer, leer bei 0 HP.
 - Kein Heilen im Dungeon. Bei jedem (Wieder-)Betreten gibt es wieder 3 Herzen.
 - **Sieg** (Umsetzung v0.3): Beim letzten Treffer verschwindet der Dämon, 2 s Sieg-Bildschirm („VICTORY" in der Mitte, bei neuer Fähigkeit darunter „GOT DASH"), Eingaben aus. Dann Dungeon als geschafft markieren, Fähigkeit freischalten, **Autosave**, zurück in die Overworld an die Tür (nächstes Tor offen). Dungeons 2–10 (Test-Dummy) laufen gleich ab, nur ohne Fähigkeit.
 - **Aufgeben:** **Start** (Pause), dann **Select** bricht den Kampf ab: zurück zur Tür, nichts gespeichert, Dungeon-Fortschritt unverändert.
@@ -29,7 +30,7 @@ Ein männlicher Held muss aus der Hölle fliehen. Er läuft durch eine sichere O
 
 - Unterschiedliche Größen (klein bis riesig), bewegen sich **frei** in der Arena (laufen, hüpfen, fliegen, teleportieren).
 - Phasen nach HP-Prozent, für alle gleich: **Phase 1: 100–70 %**, **Phase 2: 70–50 %**, **Phase 3: 50–0 %**. Phase 1 harmlos und schwach, Phase 3 schlimmstes Aussehen und am stärksten. Phasenwechsel mit kurzem Effekt. Jede Phase sieht sichtbar anders aus.
-- HP pro Dämon einstellbar (Richtwert: Dämon 1 ca. 20 Treffer, Dämon 10 ca. 60). Werte beim Testen abstimmen.
+- HP pro Dämon einstellbar (Richtwert: Dämon 1 ca. 16 Treffer, Dämon 10 ca. 60). Werte beim Testen abstimmen.
 
 | # | Dämon | Größe | Verhalten | Gibt dir |
 |---|-------|-------|-----------|----------|
@@ -44,7 +45,7 @@ Ein männlicher Held muss aus der Hölle fliehen. Er läuft durch eine sichere O
 | 9 | Oni-Kriegsherr | groß | rennt, schlägt, Schockwellen | **Schwertwelle** |
 | 10 | Höllenfürst | riesig | Teleport, Flug, Feuer, Unsichtbarkeit | – (Ende) |
 
-**Imp (umgesetzt, v0.3):** 20 HP (1 Schaden pro Schwertschlag), 16x16, hüpft nur am Boden, Kontakt = −1 Herz. Phase 1 (20–15 HP, grün, schlicht): hüpft langsam (1 px/Frame, Pause 40 Frames), spuckt alle 100 Frames einen langsamen Feuerball. Phase 2 (14–11 HP, orange, Hörner): Tempo 2, Pause 24, Feuerball alle 60 Frames, schneller. Phase 3 (10–0 HP, rot-gelb, große Hörner): Tempo 3, Pause 14, alle 75 Frames ein Dreifach-Fächer. Phasenwechsel: 0,5 s Blinken, Imp steht und ist harmlos, Feuerbälle verschwinden. Feuerbälle (max. 3) sind per Sprung zu überspringen. Genaue Zahlen: `TECH.md` „Boss-Rahmen (v0.3)". Noch nicht von Hand durchgespielt, Werte beim Balancing prüfen.
+**Imp (umgesetzt, v0.3):** 16 HP (1 Schaden pro Schwertschlag), 16x16, hüpft nur am Boden, Kontakt = −1 Herz (nicht während seines Trefferblinkens). Ein Schwerttreffer schiebt ihn 16 px vom Spieler weg (nicht aus der Arena). Phase 1 (16–12 HP, grün, schlicht): hüpft langsam (1 px/Frame, Pause 60 Frames), spuckt alle 150 Frames einen langsamen Feuerball (1 px/Frame). Phase 2 (11–9 HP, orange, Hörner): Tempo 2, Pause 40, Feuerball alle 100 Frames. Phase 3 (8–0 HP, rot-gelb, große Hörner): Tempo 2, Pause 28, alle 120 Frames ein Dreifach-Fächer (Feuerbälle 1 px/Frame; der untere Schuss trifft sofort den Boden, der mittlere ist überspringbar, der obere fliegt meist über den Spieler). Balance nach Nutzer-Test („zu schwer“): HP 20 → 16, alle Zahlen sanfter als in der ersten Fassung (Phase 1: Pause 40, Feuerball alle 100; Phase 2: 24 / 60, Feuerball 2 px; Phase 3: Tempo 3, Pause 14, alle 75, Feuerball 2 px). Phasenwechsel: 0,5 s Blinken, Imp steht und ist harmlos, Feuerbälle verschwinden. Feuerbälle (max. 3) sind per Sprung zu überspringen. Genaue Zahlen: `TECH.md` „Boss-Rahmen (v0.3)". Werte beim nächsten Nutzer-Test weiter prüfen.
 
 Jeder Dungeon hat eine eigene Farbpalette. Namen und Details dürfen später geändert werden (dann hier eintragen).
 
