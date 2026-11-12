@@ -19,7 +19,7 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.1 | Rough Design: Repo, Docs, Regeln, Plan | erledigt |
 | v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | erledigt |
 | v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | erledigt |
-| v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | in Arbeit |
+| v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | fertig, wartet auf Okay |
 | v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | offen |
 | v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | offen |
 | v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | offen |
@@ -54,7 +54,7 @@ Hinweis für v0.4: Code im festen 16-KB-Bereich belegt nach v0.3 ca. 9,3 KB. Ab 
 1. PRG-Banking: Boss-Code/-Daten in umschaltbare Bänke ($8000/$A000), fester Bereich nur Kern (NMI, Hauptschleife, Overworld, Arena-Grundlage). Sonnet. **Erledigt** (Details `TECH.md` „PRG-Banking (v0.4)").
 2. Dämon 2 Geist (Dungeon 2): schwebt, flackert, zeitweise unsichtbar, 3 Phasen, HP-Balken. Sonnet. **Erledigt** (`src/ghost.c` in Bank 1, `tests/ghost.lua`, Screenshots `v0.4-ghost-phase1.png`, `v0.4-ghost-phase3.png`).
 3. Dämon 3 Knochenhund (Dungeon 3): rennt quer durch die Arena, Biss/Sprungangriff, 3 Phasen. Gibt Doppelsprung (zweites A in der Luft). Sonnet. **Erledigt** (`src/hound.c` in Bank 2, `tests/hound.lua`, Doppelsprung-Tests in `tests/progress.lua`, Screenshots `v0.4-hound-phase1.png`, `v0.4-hound-phase3.png`).
-4. Tests, Screenshots, Docs, Bericht. Orchestrator.
+4. Tests, Screenshots, Docs, Bericht. Orchestrator. **Erledigt.**
 
 Schwierigkeit: Nutzer fand den Imp mit 20 HP zu schwer, mit 10 HP passend. Neue Bosse daher in derselben Größenordnung (Geist ca. 12, Knochenhund ca. 14 HP), Angriffe gut lesbar und ausweichbar.
 
