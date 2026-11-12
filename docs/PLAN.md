@@ -22,8 +22,8 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | erledigt |
 | v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | erledigt |
 | v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | erledigt |
-| v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | in Arbeit |
-| v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | offen |
+| v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | fertig, Tag nach Okay |
+| v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | in Arbeit |
 | v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | offen |
 | v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | offen |
 | v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | offen |
@@ -64,11 +64,17 @@ Schwierigkeit: Nutzer fand den Imp mit 20 HP zu schwer, mit 10 HP passend. Neue 
 
 1. Dämon 4 Lavaschlange (Dungeon 4, Bank 3): groß und lang, schlängelt am Arena-Rand (Boden/Wände), taucht in Lava ab und wieder auf, spuckt Feuer, 3 Phasen, ca. 14 HP. Sonnet. **Erledigt** (`src/snake.c` in Bank 3, `tests/snake.lua`, Screenshots `v0.5-snake-phase1.png`, `v0.5-snake-phase3.png`; Test-Dummy-Tests nach Dungeon 6 verschoben).
 2. Dämon 5 Geflügelter Dämon (Dungeon 5, Bank 4): fliegt, stürzt herab, 3 Phasen, ca. 14 HP. Gibt **Feuerball** (Steuerung: **Hoch + B**, ein Projektil geradeaus, Abklingzeit). Sonnet. **Erledigt** (`src/winged.c` in Bank 4, `tests/winged.lua`, `tests/fireball.lua`, Screenshots `v0.5-winged-phase1.png`, `v0.5-winged-phase3.png`, `v0.5-fireball.png`; Test-Dummy bleibt in Dungeon 6).
-3. Tests, Screenshots, Docs, Bericht. Orchestrator.
+3. Tests, Screenshots, Docs, Bericht. Orchestrator. **Erledigt.**
 
 Entscheidung: Feuerball auf Hoch + B (B bleibt Schwert, Select bleibt Dash). Test-Dummy wandert in Dungeon 6.
 
-Pakete für v0.6 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
+## Arbeitspakete v0.6
+
+1. Dämon 6 Spiegeldämon (Dungeon 6, Bank 5): teleportiert, erzeugt Scheinkopien (nur das Original ist verwundbar, erkennbar an einem Detail), 3 Phasen, ca. 14 HP. Test-Dummy wandert nach Dungeon 8. Sonnet.
+2. Dämon 7 Riesenkröte (Dungeon 7, Bank 6): sehr groß (Sprites + ggf. Hintergrund-Kacheln), schwere Sprünge, Zunge, Schleim, 3 Phasen, ca. 16 HP. Gibt **Schild** (Steuerung: **Runter halten** am Boden: blockt Projektile und Kontakt von vorn, Spieler steht still). Sonnet.
+3. Tests, Screenshots, Docs, Bericht. Orchestrator.
+
+Pakete für v0.7 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
 ## Parallel-Aufgabe des Nutzers
 
