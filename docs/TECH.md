@@ -106,6 +106,10 @@ Der Projektordner gehört UID 1000, Agenten laufen als root. Der Nutzer hat `saf
 
 Remote `origin` ist `https://github.com/Rluffy/EscapingFromHell.git` (privat). Für root gibt es keinen SSH-Key, daher HTTPS mit `gh` als Credential-Helper, pro Befehl: `git -c credential.helper= -c credential.helper='!gh auth git-credential' push --follow-tags`. Globale Git-Config wird nicht geändert.
 
+## Selbst spielen (FCEUX unter Ubuntu)
+
+Die Qt-Version von FCEUX flackert unter Wayland. Abhilfe: `QT_QPA_PLATFORM=xcb fceux <rom>` oder in *Options → Video Config* den Treiber SDL statt OpenGL wählen. Die ROM selbst ist in FCEUX 2.6.5 und Mesen2 frame-stabil geprüft.
+
 ## Entscheidungslog
 
 (Agenten tragen hier technische Entscheidungen ein: Datum, Entscheidung, Grund.)
