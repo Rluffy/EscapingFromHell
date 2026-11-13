@@ -22,12 +22,12 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.2 | Toolchain, Hello-ROM, Test-Pipeline, Overworld mit Scrolling, Spielerbewegung, gesperrte/offene Dungeon-Tore, Dungeon-Eingang (Platzhalter-Grafik) | erledigt |
 | v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | erledigt |
 | v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | erledigt |
-| v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | fertig, Tag nach Okay |
-| v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | fertig, Tag nach Okay |
-| v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | fertig, Tag nach Okay |
-| v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | fertig, Tag nach Okay |
-| v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | fertig, Tag nach Okay |
-| v1.0 | Balance, Fehlerbehebung, Release mit ROM | fertig, Tag nach Okay |
+| v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | erledigt |
+| v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | erledigt |
+| v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | erledigt |
+| v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | erledigt |
+| v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | erledigt |
+| v1.0 | Balance, Fehlerbehebung, Release mit ROM | erledigt |
 
 Musik (Overworld, Dungeon, Boss) ist ein Folge-Meilenstein nach v1.0 oder, falls der Nutzer es will, Teil von v0.9.
 
