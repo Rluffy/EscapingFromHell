@@ -326,7 +326,7 @@ co = coroutine.create(function()
   frames(8)
   check(rd(FBX + kl) == lx and rd(FBY + kl) > ly + 8, "spiderling falls straight down, y " .. ly .. " -> " .. rd(FBY + kl))
   wr(HEARTS, 3); wr(INV, 0); wr(SLOW, 0); wr16(PX, lx - 4); wr(PY, FLOOR_Y); wr(VY, 0)
-  wr(FBX + kl, lx); wr(FBY + kl, FLOOR_Y)       -- y 176 + 4: still alive after the move (the parity of the frame decides whether it moves)
+  wr(FBX + kl, lx); wr(FBY + kl, FLOOR_Y)       -- y 176: alive and on the feet whatever the parity of the half-rate vertical move
   frames(1)
   check(rd(HEARTS) == 2 and rd(SLOW) == 0, "spiderling costs a heart (and does not web), hearts=" .. rd(HEARTS))
   park()

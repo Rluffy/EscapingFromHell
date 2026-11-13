@@ -177,9 +177,7 @@ co = coroutine.create(function()
   local s = watch(1200, true)
   check(s.frames == 1200, "game loop runs at 60 Hz: 1200 frames -> frame_count +" .. s.frames)
   print("phase 1 states: " .. states(s))
-  local ft, fd, ap, id = full(s, FTELE), full(s, FADE), full(s, APPEAR), nil
-  -- (an idle window that follows the flickering fireball warning can start with one undrawn frame: depends on the random seed, so take a clean one)
-  for _, r in ipairs(runs_of(s, IDLE)) do if r ~= s.runs[1] and r ~= s.runs[#s.runs] and not r.hidden then id = r; break end end
+  local ft, fd, ap, id = full(s, FTELE), full(s, FADE), full(s, APPEAR), full(s, IDLE)
   check(ft and ft.n >= 20 and ft.n <= 24 and ft.hide[0] and ft.hide[2] and only(ft, 0, 2), "fireball warning ~22 frames, flickers, hittable (boss_hide 0 and 2), got " .. (ft and ft.n))
   check(fd and fd.n >= 18 and fd.n <= 22 and only(fd, 1, 3) and fd.hide[3], "teleport fade ~20 frames, untouchable (boss_hide 1 / 3), got " .. (fd and fd.n))
   check(ap and ap.n >= 28 and ap.n <= 32 and only(ap, 1, 3) and ap.drawn and ap.hidden, "reappear telegraph ~30 frames, flickers, untouchable and harmless, got " .. (ap and ap.n))

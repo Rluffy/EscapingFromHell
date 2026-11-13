@@ -18,7 +18,7 @@ void imp_ai(void)
     unsigned char k, s;
     int nx;
 
-    rng = rng * 5 + 17 + (unsigned char)frame_count;
+    rng = rng * 5 + 17;
     if (fb_t) --fb_t;
     else {
         fb_t = p->rate;

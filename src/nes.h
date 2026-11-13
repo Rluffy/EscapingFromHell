@@ -121,6 +121,15 @@ extern unsigned char oam[256];
 /* Write colbuf/attrbuf to the PPU (rendering off or vblank only). */
 void ppu_flush(void);
 
+/* src/ppu.s: fast $2007 writes for full redraws (rendering off; PPU_ADDR set by the caller). */
+void __fastcall__ ppu_fill(unsigned char v, unsigned n);                   /* n >= 1 bytes of v */
+void __fastcall__ ppu_copy(const unsigned char *src, unsigned char n);     /* 1..255 bytes */
+void __fastcall__ scene_draw(const unsigned char *t, unsigned char r0, unsigned char n);   /* n metatile rows from cell row r0 to nametable 0, palette bits ORed into attr[] */
+void oam_hide(void);                                                       /* all 64 sprites off screen */
+void __fastcall__ col_tiles(const unsigned char *mm);                      /* colbuf = tile columns of metatiles mm[0..14] */
+void __fastcall__ pair_meta(const unsigned char *e);                       /* me[], mo[] = cell_meta of the map columns e[0..15], e[16..31] */
+void col_attr(void);                                                       /* attrbuf from me[], mo[] */
+
 /* Block until the next NMI. */
 void wait_vblank(void);
 

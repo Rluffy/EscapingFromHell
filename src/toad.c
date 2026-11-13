@@ -51,7 +51,7 @@ static void sprites(void)
     unsigned char n = iair == TONGUE ? tlen : 0;
     unsigned char open = iair == TTELE || iair == STELE;
     unsigned char yo = iair == CROUCH ? 2 : 255;       /* en.y - 1; crouch: sinks 3 px and trembles */
-    x = en.x + (iair == CROUCH && (frame_count & 2) ? 1 : 0);
+    x = en.x + (iair == CROUCH && (ftick & 2) ? 1 : 0);
     for (j = 0; j < 3; ++j) {
         *o++ = j < n ? en.y + 7 : 0xFF;
         *o++ = BT + (j + 1 == n ? 37 : 36);
@@ -93,7 +93,7 @@ void toad_ai(void)
 
     if (intro || boss_fx) { scroll_x = 0; sprites(); return; }      /* frozen: only redraw (new look at a phase change) */
     boss_hide = 0;
-    if (!(frame_count & 7))            /* slime gravity: the blobs arc (dungeon.c moves them) */
+    if (!(ftick & 7))            /* slime gravity: the blobs arc (dungeon.c moves them) */
         for (k = 0; k < FB_MAX; ++k) if (fb_x[k] && fb_vy[k] < 7) ++fb_vy[k];
     if (iair == INIT) {
         ph = boss_phase; par = ch = shk = tlen = 0; lc = 0;
@@ -138,11 +138,11 @@ void toad_ai(void)
         }
         break;
     case LAND:                         /* stunned: sits still and blinks slowly */
-        boss_hide = (frame_count & 16) ? 2 : 0;
+        boss_hide = (ftick & 16) ? 2 : 0;
         if (!--ai_t) { iair = SIT; ai_t = ch ? 6 : p->rate; }
         break;
     case TTELE:                        /* mouth open, flickers */
-        boss_hide = (frame_count & 4) ? 2 : 0;
+        boss_hide = (ftick & 4) ? 2 : 0;
         if (--ai_t) break;
         iair = TONGUE; ai_t = 0;
         break;
@@ -159,7 +159,7 @@ void toad_ai(void)
         if (!invuln && overlap(player_x + 3, player_y + 2, 10, 14, x0, en.y + 8, tlen * 8, 8)) hurt(x0 + tlen * 4);
         break;
     case STELE:                        /* spit: flickers, then the blobs */
-        boss_hide = (frame_count & 4) ? 2 : 0;
+        boss_hide = (ftick & 4) ? 2 : 0;
         if (--ai_t) break;
         spit(p);
         ch = boss_phase == 3 && next() == lc;

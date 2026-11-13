@@ -94,11 +94,11 @@ static void copies(void)
 void mirror_ai(void)
 {
     const struct phase *p = &bs->ph[boss_phase - 1];
-    unsigned char f = (frame_count & 4) ? 2 : 0, o;
+    unsigned char f = (ftick & 4) ? 2 : 0, o;
     signed char d = 0;
 
     boss_hide = 0;
-    rng = rng * 5 + 17 + (unsigned char)frame_count;
+    rng = rng * 5 + 17;
     if (iair == INIT) { ph = boss_phase; place(0); iair = IN; ai_t = IN_T; }
     else if (ph != boss_phase) { ph = boss_phase; iair = OUT; ai_t = OUT_T; }   /* new phase: teleport now, new copy count */
     switch (iair) {

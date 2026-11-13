@@ -48,7 +48,7 @@ static void drop(const struct phase *p)
 void winged_ai(void)
 {
     const struct phase *p = &bs->ph[boss_phase - 1];
-    unsigned char k = frame_count & 63;
+    unsigned char k = ftick & 63;
 
     boss_hide = 0;
     switch (iair) {
@@ -67,7 +67,7 @@ void winged_ai(void)
         else { iair = TELE; ai_t = p->wait; par = 0; }
         break;
     case TELE:                         /* hover above the player and flicker (still hittable) */
-        boss_hide = (frame_count & 4) ? 2 : 0;
+        boss_hide = (ftick & 4) ? 2 : 0;
         en.x = toward(en.x, (unsigned char)player_x, 4);
         en.y = toward(en.y, TOP_Y, 3);
         if (!--ai_t) { tx = player_x; iair = DIVE; }

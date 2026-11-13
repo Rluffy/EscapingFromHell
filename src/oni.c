@@ -116,7 +116,7 @@ void oni_ai(void)
     int g, d;
 
     if (intro || boss_fx) { sprites(); return; }       /* frozen: only redraw (new look at a phase change) */
-    rng = rng * 5 + 17 + (unsigned char)frame_count;
+    rng = rng * 5 + 17;
     boss_hide = 0;
     if (iair == INIT || ph != boss_phase) {            /* first frame, or a new phase: back to walking on the floor */
         ph = boss_phase; iair = WALK; fb_t = p->rate; cool = COOL; en.y = GROUND;
@@ -132,7 +132,7 @@ void oni_ai(void)
         else if (en.flash && !cool) smash(p);        /* hit while walking: retaliates */
         break;
     case STELE:                        /* club up: flickers, then the club comes down and the shockwave runs */
-        boss_hide = (frame_count & 4) ? 2 : 0;
+        boss_hide = (ftick & 4) ? 2 : 0;
         if (--ai_t) break;
         quake(p, boss_phase == 2);       /* phase 3 smashes twice: forward only (sprite budget) */
         iair = SMASH; ai_t = SMASH_T;
@@ -145,14 +145,14 @@ void oni_ai(void)
         else { iair = REST; ai_t = REST_T; }
         break;
     case CTELE:                        /* charge telegraph: flickers, stands still */
-        boss_hide = (frame_count & 4) ? 2 : 0;
+        boss_hide = (ftick & 4) ? 2 : 0;
         if (!--ai_t) iair = CHARGE;
         break;
     case CHARGE:                       /* across the arena (jumpable, dashable), dazed at the wall */
         if (step(en.dir * (signed char)cspd[boss_phase - 1])) { iair = REST; ai_t = REST_T; }
         break;
     case LTELE:                        /* crouch: flickers, then a leap to where the player stands */
-        boss_hide = (frame_count & 4) ? 2 : 0;
+        boss_hide = (ftick & 4) ? 2 : 0;
         if (--ai_t) break;
         d = (int)player_x + 8 - (int)en.x - 12;
         d = (d + (d < 0 ? -16 : 16)) / 32;                /* ~1 px/frame per 32 px, rounded */
@@ -166,7 +166,7 @@ void oni_ai(void)
         if (ivy >= 0 && en.y >= GROUND) { en.y = GROUND; quake(p, 1); iair = REST; ai_t = REST_T; }
         break;
     default:                           /* REST: sits still and blinks slowly, the main hit window */
-        boss_hide = (frame_count & 16) ? 2 : 0;
+        boss_hide = (ftick & 16) ? 2 : 0;
         if (!--ai_t) { iair = WALK; fb_t = p->rate; cool = COOL; }
         break;
     }

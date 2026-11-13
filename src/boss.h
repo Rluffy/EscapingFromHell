@@ -28,7 +28,7 @@ struct boss {
 
 extern const struct boss *bs;          /* current boss */
 extern signed char   ivx, ivy, fb_vx[3], fb_vy[3];
-extern unsigned char ig, iair, ai_t, rng, facing;   /* iair = boss state, debug byte $0328; facing: player, 0 right / 1 left */
+extern unsigned char ig, iair, ai_t, rng, ftick, facing;   /* ftick: frame counter of the fight (all boss timing uses it, not frame_count); rng is seeded per dungeon in arena_reset; iair = boss state, debug byte $0328; facing: player, 0 right / 1 left */
 extern unsigned      fb_t;
 
 unsigned char overlap(unsigned char ax, unsigned char ay, unsigned char aw, unsigned char ah,

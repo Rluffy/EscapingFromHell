@@ -113,10 +113,10 @@ static void sprites(void)
 void lord_ai(void)
 {
     const struct phase *p = &bs->ph[boss_phase - 1];
-    unsigned char f = (frame_count & 4) ? 2 : 0, c, k;
+    unsigned char f = (ftick & 4) ? 2 : 0, c, k;
 
     if (intro || boss_fx) { sprites(); return; }       /* frozen: only redraw (new look at a phase change) */
-    rng = rng * 5 + 17 + (unsigned char)frame_count;
+    rng = rng * 5 + 17;
     boss_hide = 0;
     if (iair == INIT) { ph = boss_phase; par = 0; iair = IDLE; ai_t = p->wait; }
     else if (ph != boss_phase) { ph = boss_phase; par = 0; act = 'T'; iair = FADE; ai_t = FADE_T; }   /* new phase: teleport to the floor */
@@ -134,7 +134,7 @@ void lord_ai(void)
         boss_hide = f;
         if (--ai_t) break;
         fire(p, act == 'P' ? 3 : 1);
-        iair = IDLE; ai_t = p->wait;
+        iair = IDLE; ai_t = p->wait; boss_hide = 0;      /* the solid window starts with this frame (no leftover flicker) */
         break;
     case FADE:                         /* fading out where it stands */
         boss_hide = 1 | f;
@@ -152,7 +152,7 @@ void lord_ai(void)
     case APPEAR:                       /* telegraph at the new spot */
         boss_hide = 1 | f;
         if (--ai_t) break;
-        iair = IDLE; ai_t = p->wait;
+        iair = IDLE; ai_t = p->wait; boss_hide = 0;
         break;
     case RISE:                         /* up to the hover height, drifting toward the player */
         en.x = toward(en.x, aim(), 2);
@@ -161,7 +161,7 @@ void lord_ai(void)
         break;
     case HOVER:
         en.x = toward(en.x, aim(), 2);
-        k = frame_count & 15;
+        k = ftick & 15;
         en.y = HOVER_Y + (k < 8 ? k : 15 - k);
         if (!--ai_t) { iair = STELE; ai_t = STELE_T; }
         break;
@@ -180,7 +180,7 @@ void lord_ai(void)
         }
         break;
     default:                           /* REST: sits on the floor and blinks slowly, then teleports away (never idles on top of the player) */
-        boss_hide = (frame_count & 16) ? 2 : 0;
+        boss_hide = (ftick & 16) ? 2 : 0;
         if (!--ai_t) { act = 'T'; iair = FADE; ai_t = FADE_T; }
         break;
     }

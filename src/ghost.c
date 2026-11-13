@@ -31,17 +31,17 @@ static unsigned char toward(unsigned char a, unsigned char b, unsigned char m)
 void ghost_ai(void)
 {
     const struct phase *p = &bs->ph[boss_phase - 1];
-    unsigned char k, f = (frame_count & 4) ? 2 : 0;
+    unsigned char k, f = (ftick & 4) ? 2 : 0;
     int t;
 
     boss_hide = 0;
     if (iair != TELE && iair != SWOOP) {
-        t = player_x + ((frame_count & 255) < 128 ? 40 : -40);      /* drift beside the player, switching sides */
+        t = player_x + ((ftick & 255) < 128 ? 40 : -40);      /* drift beside the player, switching sides */
         if (t < WALL) t = WALL;
         if (t > 256 - WALL - 16) t = 256 - WALL - 16;
         ivx += p->spd;
         if (ivx >= 4) { ivx -= 4; en.x = toward(en.x, t, 1); }
-        k = frame_count & 127;                                      /* bob: triangle wave, y 104..168 */
+        k = ftick & 127;                                      /* bob: triangle wave, y 104..168 */
         en.y = toward(en.y, 104 + (k < 64 ? 64 - k : k - 64), 2);
     }
     switch (iair) {

@@ -25,7 +25,7 @@ enum { INIT, HIDE, TELE, RISE, UP, SINK };
 #define O_BODY  72                     /* OAM byte offset of the body segments (after the 3rd enemy row at 64) */
 
 static const signed char wob[8] = { 0, 2, 3, 2, 0, -2, -3, -2 };
-static unsigned char side;             /* 0 = pool at the left wall, 1 = right (stale values are harmless: INIT comes first) */
+static unsigned char side;             /* 0 = pool at the left wall, 1 = right (INIT sets it) */
 
 static unsigned char toward(unsigned char a, unsigned char b, unsigned char m)
 {
@@ -71,7 +71,7 @@ static void body(const struct phase *p)
         q = ((f * f >> 8) + f) >> 1;                    /* between linear and quadratic: hugs the wall low, bends to the head high */
         y = en.y + 16 + j * 8;
         d = en.x; d -= rx; d = (d * (int)q) >> 8;
-        x = rx + d + wob[((frame_count >> 2) + j) & 7];
+        x = rx + d + wob[((ftick >> 2) + j) & 7];
         oam[o] = oam[o + 4] = y - 1;
         oam[o + 1] = p->tile + 4; oam[o + 5] = p->tile + 5;
         oam[o + 2] = oam[o + 6] = 1;
@@ -83,13 +83,14 @@ static void body(const struct phase *p)
 void snake_ai(void)
 {
     const struct phase *p = &bs->ph[boss_phase - 1];
-    unsigned char f = (frame_count & 4) ? 2 : 0, k = frame_count & 63, rx = side ? 216 : 24;
+    unsigned char f = (ftick & 4) ? 2 : 0, k = ftick & 63, rx = side ? 216 : 24;
     int t;
 
     boss_hide = 0;
     switch (iair) {
     case INIT:
-        en.x = rx; en.y = REST_Y;
+        side = 0;                      /* every fight starts at the left pool */
+        en.x = 24; en.y = REST_Y;
         iair = HIDE; ai_t = 30;
         break;
     case HIDE:                         /* submerged: invisible and untouchable; re-emerges at the other wall */

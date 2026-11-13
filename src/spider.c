@@ -79,7 +79,7 @@ static void drop(void)                 /* spiderlings fall straight down from th
 void spider_ai(void)
 {
     const struct phase *p = &bs->ph[boss_phase - 1];
-    unsigned char f = (frame_count & 4) ? 2 : 0;
+    unsigned char f = (ftick & 4) ? 2 : 0;
     int d, nx;
 
     boss_hide = 0;

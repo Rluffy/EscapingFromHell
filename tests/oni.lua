@@ -124,13 +124,8 @@ local function set_len(t) local n = 0; for _ in pairs(t) do n = n + 1 end return
 -- Provoke the retaliation smash: wait (player far away) until the oni walks again with its cooldown expired, then hit it with the
 -- sword (hp is set to hp0 first, so the phase does not change). Returns at the first STELE frame. The oni is put at x = ox first.
 local function bait(ox, hp0)
-  for _ = 1, 8 do                      -- a full 125 frames of walking (the cooldown), starting when the walk starts: the idle timer is far from up
-    wait_until(function() park(); return rd(IAIR) ~= WALK end, 400)
-    wait_until(function() park(); return rd(IAIR) == WALK and rd(FX) == 0 end, 400)
-    local ok = true
-    for _ = 1, 125 do park(); frames(1); if rd(IAIR) ~= WALK then ok = false; break end end
-    if ok then break end
-  end
+  wait_until(function() park(); return rd(IAIR) == WALK and rd(FX) == 0 end, 400)
+  frames(125)                          -- the cooldown
   wait_until(function() park(); return rd(IAIR) == WALK and rd(EFLASH) == 0 end, 300)
   wr(EX, ox); wr(EDIR, 255); wr(EHP, hp0)
   held = {b = true}
@@ -182,12 +177,11 @@ co = coroutine.create(function()
   print("phase 1 states: " .. table.concat(seen, ","))
   check(s.maxwave <= 1 and not s.both, "phase 1: one shockwave at a time, one direction")
   for y in pairs(s.wave_y) do check(y == 183, "shockwave on the floor (8 px above the floor line 192), y " .. y) end
-  for v in pairs(s.wave_v) do check(v == -2 or v == 2, "phase 1 shockwave 2 px/frame toward the player (a charge can leave the oni left of him), v " .. v) end
+  for v in pairs(s.wave_v) do check(v == -2, "phase 1 shockwave 2 px/frame toward the player, v " .. v) end
   check(s.line <= 8, "phase 1: max 8 sprites per scanline, got " .. s.line)
   check(s.tile == 0x40, "phase 1 body tiles")
   local t1 = full(s, STELE)
-  -- (which attack comes first depends on the random seed, which depends on the frame the fight starts; the provoked smash below checks it too)
-  check(t1 == nil or (t1.n >= 28 and t1.n <= 32 and t1.hide[0] and t1.hide[2]), "club telegraph ~30 frames, flickering, got " .. tostring(t1 and t1.n))
+  check(t1 ~= nil and t1.n >= 28 and t1.n <= 32 and t1.hide[0] and t1.hide[2], "club telegraph ~30 frames, flickering, got " .. tostring(t1 and t1.n))
   local lost1 = s.lost
   check(lost1 <= 3, "phase 1 standing bot loses <= 3 hearts, lost " .. lost1)
 
@@ -289,11 +283,6 @@ co = coroutine.create(function()
   check(first(s, WALK).n >= 1, "walks again after the phase change")
   check(s.line <= 8, "phase 2: max 8 sprites per scanline, got " .. s.line)
   local sm2 = s
-  if not (sm2.both and sm2.maxwave == 2) then      -- no smash happened by itself (the random seed): provoke one
-    check(bait(120, 12), "phase 2 smash")
-    wr16(PX, 48); wr(PY, FLOOR_Y); noshots()
-    sm2 = watch(200, false)
-  end
   check(sm2.both and sm2.maxwave == 2, "phase 2: shockwaves in both directions, max " .. sm2.maxwave)
   for v in pairs(sm2.wave_v) do check(v == -2 or v == 2, "phase 2 shockwave 2 px/frame, v " .. v) end
   peak = math.max(peak, sm2.line)
@@ -317,7 +306,7 @@ co = coroutine.create(function()
   local lost3 = s.lost
   do local t = {}; for _, r in ipairs(s.runs) do t[#t + 1] = r.st end; print("phase 3 states: " .. table.concat(t, ",")) end
   check(s.tile == 0x40 + 20 and s.line <= 8, "phase 3 body tiles, max 8 sprites per scanline, got " .. s.line)
-  check(lost3 <= 4, "phase 3 standing bot loses <= 4 hearts (a leap landing on it can cost two), lost " .. lost3)
+  check(lost3 <= 3, "phase 3 standing bot loses <= 3 hearts, lost " .. lost3)
   for v in pairs(s.wave_v) do check(v == -3 or v == 3, "phase 3 shockwave 3 px/frame, v " .. v) end
 
   -- double smash (provoked): STELE 26, SMASH 6, STELE 20, SMASH 6, REST; two forward shockwaves 52 frames apart
@@ -346,9 +335,9 @@ co = coroutine.create(function()
 
   -- leap smash (natural, 1 attack in 4): arc 63 px high toward the player, shockwaves both ways on landing, then recovery
   local leaped
-  for _ = 1, 10 do
+  for _ = 1, 6 do
     wr(EX, 160)
-    s = watch(900, false)
+    s = watch(700, false)
     leaped = full(s, LTELE) and full(s, LEAP)
     if leaped then break end
   end

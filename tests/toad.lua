@@ -268,7 +268,7 @@ co = coroutine.create(function()
   for i = 0, 2 do if rd(FBX + i) ~= 0 then k = i end end
   check(rd(OAM_FB + 4 * k + 1) == 0x40 + 39 and rd(OAM_FB + 4 * k + 2) == 1, "slime sprite: boss tile 39, palette 1")
   local y0, ymin, lastx = rd(FBY + k), 255, 0
-  check(y0 <= 160 and y0 >= 150, "blob starts above the toad's head (160, minus one flight step if the frame parity differs), y=" .. y0)
+  check(y0 == 156, "blob starts above the toad's head (160 minus one vertical step of the spawn frame), y=" .. y0)
   local peakline = 0
   for _ = 1, 160 do
     park(); frames(1)
@@ -277,7 +277,7 @@ co = coroutine.create(function()
     peakline = math.max(peakline, line())
   end
   check(ymin < y0 - 20, "the blob rises and then falls (arc), min y " .. ymin)
-  check(rd(FBX + k) == 0 and math.abs(lastx - 52) <= 24, "the blob lands near the player (x 52; the arc depends on frame_count mod 8), x=" .. lastx)
+  check(rd(FBX + k) == 0 and math.abs(lastx - 52) <= 14, "the blob lands near the player (x 52), x=" .. lastx)
   check(peakline <= 8, "slime flight: max 8 sprites per scanline, got " .. peakline)
   s = watch(1200)
   check(seen(s, STELE) and longest(s, STELE) >= 18 and longest(s, STELE) <= 22, "spit telegraph ~20 frames, got " .. longest(s, STELE))

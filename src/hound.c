@@ -43,7 +43,7 @@ void hound_ai(void)
     signed char d = player_x > en.x ? 1 : -1;
     int dx;
 
-    rng = rng * 5 + 17 + (unsigned char)frame_count;
+    rng = rng * 5 + 17;
     boss_hide = 0;
     switch (iair) {
     case RUN:                          /* patrol, turn at the walls */
@@ -62,7 +62,7 @@ void hound_ai(void)
         if (step(en.dir * (signed char)p->spd)) en.dir = -en.dir;
         break;
     case TELE:                         /* paw-scrape: flickers, stands still */
-        boss_hide = (frame_count & 4) ? 2 : 0;
+        boss_hide = (ftick & 4) ? 2 : 0;
         if (--ai_t) break;
         if (leap) {
             dx = ((int)player_x - en.x) >> 5;
@@ -87,7 +87,7 @@ void hound_ai(void)
         if (ivy >= 0 && en.y + 16 >= FLOOR_Y) { en.y = FLOOR_Y - 16; rest(20); fb_t = p->rate; }
         break;
     default:                           /* REST */
-        boss_hide = (frame_count & 16) ? 2 : 0;
+        boss_hide = (ftick & 16) ? 2 : 0;
         if (!--ai_t) iair = RUN;
         break;
     }

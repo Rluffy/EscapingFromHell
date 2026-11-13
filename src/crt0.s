@@ -148,23 +148,20 @@ _ppu_flush:
     sta $2006
     lda _col_addr
     sta $2006
-    ldx #0
-:   lda _colbuf,x
+.repeat 30, i               ; unrolled: the full redraws spend most of their time here
+    lda _colbuf+i
     sta $2007
-    inx
-    cpx #30
-    bne :-
+.endrepeat
     lda $2002
     lda _col_addr+1
     sta $2006
     lda _col_addr
     ora #1              ; right tile column (left one is even)
     sta $2006
-:   lda _colbuf,x
+.repeat 30, i
+    lda _colbuf+30+i
     sta $2007
-    inx
-    cpx #60
-    bne :-
+.endrepeat
     ldx #0
 :   lda _attr_addr+1
     sta $2006

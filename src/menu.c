@@ -2,6 +2,7 @@
    Banked code: never calls bank_set, only fixed code (main.c, crt0.s, sfx.s). */
 #pragma code-name("BANK10")
 #pragma rodata-name("BANK10")
+#include <string.h>
 #include "nes.h"
 #include "meta.h"                      /* overworld metatiles: the title and intro scenes reuse them */
 #include "ui.h"                        /* tile ids of the big letters, punctuation and the ending sky */
@@ -15,10 +16,10 @@
 /* Menu entries by id; the visible list (mid[], mn) leaves out CONTINUE and DELETE SAVE without a save. */
 static const char *const item[] = { "CONTINUE", "NEW GAME", "CHEAT", "DELETE SAVE" };
 static unsigned char mid[4], mn;
-static unsigned char attr[64];         /* attribute table being built (metatile palettes, flushed by screen_go) */
+unsigned char attr[64];                /* attribute table being built (metatile palettes, ppu.s scene_draw; flushed by screen_go) */
 
 /* Scene cells are metatile indices of meta.h (16 per row, 2 tile rows each); X = nothing. */
-#define X 255
+#define X META_BLANK
 #define LA 27                          /* lantern (animated flame) */
 #define LV 3,15,3,3,15,43,3,15         /* a stretch of lava (animated) */
 static const unsigned char title_scene[15 * 16] = {
@@ -67,12 +68,13 @@ static const unsigned char end_attr[8] = { 0xAA, 0x00, 0x55, 0xFF, 0xAA, 0x00, 0
 /* Tile of a text character: font letters (X and Z are new), three punctuation marks, blank. */
 static unsigned char glyph(char c)
 {
+    if (c > 'A' - 1 && c != 'X' && c != 'Z') return ftile[c - 'A'];       /* the common case first (speed: the redraw is black) */
     if (c == '.') return U_DOT;
     if (c == '!') return U_EXC;
     if (c == '?') return U_Q;
     if (c == 'X') return U_X;
     if (c == 'Z') return U_Z;
-    return c > ' ' ? ftile[c - 'A'] : 0;
+    return 0;
 }
 
 static void at(unsigned char row, unsigned char col)
@@ -81,48 +83,38 @@ static void at(unsigned char row, unsigned char col)
     PPU_ADDR = a >> 8; PPU_ADDR = a;
 }
 
-/* Text on a nametable-0 row, rendering off; col 0 = centered. */
+/* Text on a nametable-0 row, rendering off; col 0 = centered. (statics: cc65 is much faster without stack locals) */
+static unsigned char tl;
+static const char *tp;
 static void put_text(const char *s, unsigned char row, unsigned char col)
 {
-    unsigned char l = 0;
-    while (s[l]) ++l;
-    at(row, col ? col : (32 - l) >> 1);
-    for (; *s; ++s) PPU_DATA = glyph(*s);
+    tl = 0;
+    while (s[tl]) ++tl;
+    at(row, col ? col : (32 - tl) >> 1);
+    for (tp = s; *tp; ++tp) PPU_DATA = glyph(*tp);
 }
 
-/* Big 2x2-tile letters (U_BIGSET) on rows row, row + 1, centered; a space is one tile wide. */
-static void put_big(const char *s, unsigned char row)
+/* Big 2x2-tile letters (U_BIGSET: A C D E F G H I L M N O P R S U Y = k 0..16, tiles U_BIG0 + 4k + TL TR BL BR). A line is its
+   top-row tiles, then its bottom-row tiles; a space is one blank tile. Constant data: the title screen is black while it is drawn. */
+#define K(k, p) U_BIG0 + 4 * (k) + (p), U_BIG0 + 4 * (k) + (p) + 1     /* letter k, p = 0 top row, 2 bottom row */
+#define ESCAPING(p) K(3,p), K(14,p), K(1,p), K(0,p), K(12,p), K(7,p), K(10,p), K(5,p)
+#define FROM_HELL(p) K(4,p), K(13,p), K(11,p), K(9,p), 0, K(6,p), K(3,p), K(8,p), K(8,p)
+#define YOU_ESCAPED(p) K(16,p), K(11,p), K(15,p), 0, K(3,p), K(14,p), K(1,p), K(0,p), K(12,p), K(3,p), K(2,p)
+static const unsigned char big_escaping[] = { ESCAPING(0), ESCAPING(2) };
+static const unsigned char big_from_hell[] = { FROM_HELL(0), FROM_HELL(2) };
+static const unsigned char big_you_escaped[] = { YOU_ESCAPED(0), YOU_ESCAPED(2) };
+
+/* A big line b (2 * n tiles) on rows row, row + 1, centered. */
+static void put_big(const unsigned char *b, unsigned char n, unsigned char row)
 {
-    unsigned char w = 0, p, k, t;
-    const char *c;
-    for (c = s; *c; ++c) w += *c == ' ' ? 1 : 2;
-    for (p = 0; p < 2; ++p) {
-        at(row + p, (32 - w) >> 1);
-        for (c = s; *c; ++c) {
-            if (*c == ' ') { PPU_DATA = 0; continue; }
-            for (k = 0; U_BIGSET[k] != *c; ++k) ;
-            t = U_BIG0 + 4 * k + 2 * p;
-            PPU_DATA = t; PPU_DATA = t + 1;
-        }
-    }
+    at(row, (32 - n) >> 1);
+    ppu_copy(b, n);
+    at(row + 1, (32 - n) >> 1);
+    ppu_copy(b + n, n);
 }
 
-/* n rows of a scene table from cell row r0 down; the attribute bits of every cell are collected into attr[]. */
-static void draw_cells(const unsigned char *t, unsigned char r0, unsigned char n)
-{
-    unsigned char r, c, k, m;
-    for (r = 0; r < n; ++r)
-        for (k = 0; k < 2; ++k) {
-            at((r0 + r) * 2 + k, 0);
-            for (c = 0; c < 16; ++c) {
-                m = t[(r << 4) + c];
-                if (m == 255) { PPU_DATA = 0; PPU_DATA = 0; continue; }
-                PPU_DATA = k ? meta_bl[m] : meta_tl[m];
-                PPU_DATA = k ? meta_br[m] : meta_tr[m];
-                if (!k) attr[((r0 + r) >> 1 << 3) + (c >> 1)] |= meta_pal[m] << (((c & 1) << 1) | (((r0 + r) & 1) << 2));
-            }
-        }
-}
+/* n rows of a scene table from cell row r0 down (ppu.s scene_draw); the attribute bits of every cell are collected into attr[]. */
+#define draw_cells scene_draw
 
 /* The overworld hero (sprite tiles 0..3, palette 0) standing at x 120, sprite top y. */
 static void put_hero(unsigned char y)
@@ -139,22 +131,20 @@ static void put_hero(unsigned char y)
 /* Blank screen with palette p, all sprites hidden; the caller draws and calls screen_go. */
 static void blank_screen(const unsigned char *p)
 {
-    unsigned int i;
     screen_off();
     PPU_ADDR = 0x3F; PPU_ADDR = 0x00;
-    for (i = 0; i < 32; ++i) PPU_DATA = p[i];
+    ppu_copy(p, 32);
     PPU_ADDR = 0x20; PPU_ADDR = 0x00;
-    for (i = 0; i < 1024; ++i) PPU_DATA = 0;
-    for (i = 0; i < 256; i += 4) oam[i] = 0xFF;
-    for (i = 0; i < 64; ++i) attr[i] = 0;
+    ppu_fill(0, 1024);
+    memset(attr, 0, 64);
+    oam_hide();
     scroll_x = 0;
 }
 
 static void screen_go(void)
 {
-    unsigned char i;
     PPU_ADDR = 0x23; PPU_ADDR = 0xC0;
-    for (i = 0; i < 64; ++i) PPU_DATA = attr[i];
+    ppu_copy(attr, 64);
     screen_on(0x88);
 }
 
@@ -165,8 +155,8 @@ static void menu_draw(void)
     blank_screen(pal_title);
     for (i = 0; i < 16; ++i) attr[i] = 0xAA;          /* rows 0..7 = logo palette */
     draw_cells(title_scene, 0, 15);
-    put_big("ESCAPING", 3);
-    put_big("FROM HELL", 6);
+    put_big(big_escaping, sizeof big_escaping / 2, 3);
+    put_big(big_from_hell, sizeof big_from_hell / 2, 6);
     if (menu_conf) {
         put_text("DELETE SAVE?", ITEM_ROW + 2, 0);
         put_text("A YES   B NO", ITEM_ROW + 5, 0);
@@ -251,17 +241,15 @@ unsigned char intro_frame(void)
 
 void end_enter(void)
 {
-    unsigned char r, c;
+    unsigned char r;
     blank_screen(pal_end);
-    for (r = 4; r < 17; ++r) {                         /* sky bands: solid tiles, the palette of each band colours them */
-        at(r, 0);
-        for (c = 0; c < 32; ++c) PPU_DATA = (r & 3) ? U_SKY1 : U_DITH;
-    }
-    for (c = 0; c < 32; ++c) PPU_DATA = u_sky17[c];    /* sun and mountain silhouettes on the horizon */
-    for (c = 0; c < 32; ++c) PPU_DATA = u_sky18[c];
-    for (c = 0; c < 32; ++c) PPU_DATA = u_sky19[c];
+    at(4, 0);
+    for (r = 4; r < 17; ++r) ppu_fill((r & 3) ? U_SKY1 : U_DITH, 32);   /* sky bands: solid tiles, the palette of each band colours them */
+    ppu_copy(u_sky17, 32);                             /* sun and mountain silhouettes on the horizon */
+    ppu_copy(u_sky18, 32);
+    ppu_copy(u_sky19, 32);
     for (r = 0; r < 64; ++r) attr[r] = end_attr[r >> 3];
-    put_big("YOU ESCAPED", 2);
+    put_big(big_you_escaped, sizeof big_you_escaped / 2, 2);
     put_text("THE END", 22, 0);
     put_text("THANKS FOR PLAYING", 25, 0);
     put_hero(146);                                     /* the hero walks out of hell into the dawn */
