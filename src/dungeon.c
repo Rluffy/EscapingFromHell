@@ -44,15 +44,15 @@ static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x3
    Behavior function and phase data live in the boss's PRG bank (src/boss.h); the table itself stays fixed. */
 static const struct boss bosses[] = {
     { "IMP", 10, 0, 16, 16, FLOOR_Y - 16, imp_ai, imp_ph },
-    { "GHOST", 12, 1, 16, 24, 104, ghost_ai, ghost_ph },
-    { "BONE HOUND", 14, 2, 24, 16, FLOOR_Y - 16, hound_ai, hound_ph },
-    { "LAVA SNAKE", 14, 3, 16, 16, FLOOR_Y - 16, snake_ai, snake_ph },
-    { "WINGED DEMON", 14, 4, 16, 24, 56, winged_ai, winged_ph },
-    { "MIRROR DEMON", 14, 5, 16, 24, FLOOR_Y - 24, mirror_ai, mirror_ph },
-    { "GIANT TOAD", 16, 6, 32, 24, FLOOR_Y - 24, toad_ai, toad_ph },
-    { "SPIDER QUEEN", 16, 7, 24, 16, 32, spider_ai, spider_ph },
-    { "ONI WARLORD", 18, 8, 24, 32, FLOOR_Y - 32, oni_ai, oni_ph },
-    { "HELL LORD", 20, 9, 32, 32, FLOOR_Y - 32, lord_ai, lord_ph }
+    { "GHOST", 11, 1, 16, 24, 104, ghost_ai, ghost_ph },
+    { "BONE HOUND", 12, 2, 24, 16, FLOOR_Y - 16, hound_ai, hound_ph },
+    { "LAVA SNAKE", 12, 3, 16, 16, FLOOR_Y - 16, snake_ai, snake_ph },
+    { "WINGED DEMON", 13, 4, 16, 24, 56, winged_ai, winged_ph },
+    { "MIRROR DEMON", 13, 5, 16, 24, FLOOR_Y - 24, mirror_ai, mirror_ph },
+    { "GIANT TOAD", 14, 6, 32, 24, FLOOR_Y - 24, toad_ai, toad_ph },
+    { "SPIDER QUEEN", 14, 7, 24, 16, 32, spider_ai, spider_ph },
+    { "ONI WARLORD", 15, 8, 24, 32, FLOOR_Y - 32, oni_ai, oni_ph },
+    { "HELL LORD", 18, 9, 32, 32, FLOOR_Y - 32, lord_ai, lord_ph }
 };
 const struct boss *bs;                 /* the demon of the current dungeon */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */

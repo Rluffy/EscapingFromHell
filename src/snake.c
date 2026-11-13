@@ -9,8 +9,8 @@
    fspd = fireball px/frame. Phase 2 spits twice per visit (short rate), phase 3 spreads and hides shorter. */
 const struct phase snake_ph[3] = {
     { BT + 0, 1, 100, 120, 1, 1, { 0x07, 0x27, 0x30 } },
-    { BT + 6, 2,  70,  70, 1, 1, { 0x06, 0x26, 0x38 } },
-    { BT + 12, 2,  40,  80, 3, 1, { 0x06, 0x16, 0x30 } }
+    { BT + 6, 2, 100,  80, 1, 1, { 0x06, 0x26, 0x38 } },
+    { BT + 12, 2, 150, 110, 3, 1, { 0x06, 0x16, 0x30 } }
 };
 
 /* iair = state. ai_t = state timer (also the time left up), fb_t = frames to the next spit. */

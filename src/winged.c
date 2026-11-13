@@ -7,8 +7,8 @@
 /* tile = first of 6 (16x24); spd = dive px/frame; wait = telegraph frames; rate = frames of patrol between attacks;
    shots = fireballs dropped while rising (0 = none, 3 = spread); fspd = patrol speed in quarter px/frame. */
 const struct phase winged_ph[3] = {
-    { BT + 0, 4, 30, 420, 0, 3, { 0x04, 0x24, 0x30 } },
-    { BT + 6, 5, 28, 300, 1, 5, { 0x06, 0x26, 0x38 } },
+    { BT + 0, 4, 30, 460, 0, 3, { 0x04, 0x24, 0x30 } },
+    { BT + 6, 5, 28, 440, 1, 5, { 0x06, 0x26, 0x38 } },
     { BT + 12, 5, 24, 420, 3, 6, { 0x06, 0x16, 0x30 } }
 };
 
@@ -18,7 +18,7 @@ enum { INIT, PATROL, TELE, DIVE, REST, RISE };
 #define LAND_Y  (FLOOR_Y - 24)         /* resting on the floor */
 #define REST_T  40                     /* on the floor: the sword's main window */
 #define RISE_V  3                      /* px/frame back up */
-#define TELE2_T 14                     /* phase 3: telegraph of the second dive (the first hit's invulnerability still covers it) */
+#define TELE2_T 14                     /* phase 3: telegraph of the second dive (only after a miss: a hit player is invulnerable and spared it) */
 #define DROP_Y  120                    /* fireballs leave the demon when it rises above this */
 
 static unsigned char tx, par;          /* dive target x, dives done in this attack (stale values are harmless: INIT comes first) */
@@ -84,7 +84,7 @@ void winged_ai(void)
         en.y = toward(en.y, TOP_Y, RISE_V);
         if (!ig && en.y <= DROP_Y) { ig = 1; if (p->shots) drop(p); }
         if (en.y == TOP_Y) {
-            if (boss_phase == 3 && !par) { par = 1; iair = TELE; ai_t = TELE2_T; }     /* phase 3: a second dive in a row */
+            if (boss_phase == 3 && !par && !invuln) { par = 1; iair = TELE; ai_t = TELE2_T; }     /* phase 3: a second dive in a row, but only after a miss */
             else { iair = PATROL; fb_t = p->rate; }
         }
         break;

@@ -8,7 +8,7 @@
    rate = frames between attacks (0 = none); shots = 1: every second attack is a fireball; fspd = fireball px/frame. */
 const struct phase ghost_ph[3] = {
     { BT + 0, 2, 250,   0, 0, 1, { 0x22, 0x30, 0x0F } },
-    { BT + 6, 3, 220, 150, 0, 1, { 0x03, 0x33, 0x16 } },
+    { BT + 6, 3, 220, 380, 0, 1, { 0x03, 0x33, 0x16 } },
     { BT + 12, 4, 160, 180, 1, 1, { 0x0F, 0x16, 0x38 } }
 };
 

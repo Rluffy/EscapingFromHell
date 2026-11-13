@@ -8,9 +8,9 @@
    player's center after a hop; wait = crouch frames before a hop; rate = frames sitting between actions; shots = slime blobs
    per spit; fspd = blob px/frame. */
 const struct phase toad_ph[3] = {
-    { BT + 0, 24, 30, 70, 0, 1, { 0x09, 0x1A, 0x26 } },
-    { BT + 12, 12, 30, 60, 1, 1, { 0x04, 0x1A, 0x26 } },
-    { BT + 24, 12, 30, 50, 2, 1, { 0x03, 0x14, 0x28 } }
+    { BT + 0, 24, 30, 80, 0, 1, { 0x09, 0x1A, 0x26 } },
+    { BT + 12, 12, 30, 80, 1, 1, { 0x04, 0x1A, 0x26 } },
+    { BT + 24, 12, 30, 70, 2, 1, { 0x03, 0x14, 0x28 } }
 };
 /* Action cycle per phase: H hop, T tongue, S spit. In phase 3 an action followed by the same one runs back to back. */
 static const char seq[3][6] = { "HHT", "HSHT", "HHTTS" };

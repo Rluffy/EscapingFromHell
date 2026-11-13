@@ -75,7 +75,7 @@ local function watch(n, bot, swing, follow)
   if bot then wr(HEARTS, 3); wr(INV, 0) end
   for i = 1, n do
     if swing then held = {b = i % 16 < 3} end
-    if follow then wr(EHP, 10) end                -- the swings hit it: keep it in phase 3
+    if follow then wr(EHP, 9) end                -- the swings hit it: keep it in phase 3
     wr16(PX, follow and math.max(16, rd(EX) - 14) or 48); wr(PY, FLOOR_Y); wr(VY, 0)
     if not bot then safe() end
     frames(1)
@@ -157,7 +157,7 @@ co = coroutine.create(function()
 
   -- intro: "HELL LORD" (H E L L _ L O R D = 39 30 44 44 0 44 31 35 26 at row 10, columns 11..19)
   check(rd(INTRO) > 0, "intro running")
-  check(rd(EHP) == 20 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "lord: 20 hp, phase 1, full bar")
+  check(rd(EHP) == 18 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "lord: 18 hp, phase 1, full bar")
   check(rd(EW) == 32 and rd(EH) == 32 and rd(EY) == GROUND, "lord is 32x32 on the floor, w=" .. rd(EW) .. " h=" .. rd(EH) .. " y=" .. rd(EY))
   local name = {}
   for c = 11, 19 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
@@ -173,7 +173,7 @@ co = coroutine.create(function()
   check(ppu(0x3F16) == 0x16, "phase 1 palette")
   check(ppu(0x3F00) == 0x0F and ppu(0x3F01) == 0x05 and ppu(0x3F03) == 0x38, "own deep red / black / yellow dungeon palette")
 
-  -- phase 1, standing bot (x 48): teleport + single aimed fireballs, hearts <= 4
+  -- phase 1, standing bot (x 48): teleport + single aimed fireballs, hearts <= 3
   local s = watch(1200, true)
   check(s.frames == 1200, "game loop runs at 60 Hz: 1200 frames -> frame_count +" .. s.frames)
   print("phase 1 states: " .. states(s))
@@ -181,7 +181,7 @@ co = coroutine.create(function()
   check(ft and ft.n >= 20 and ft.n <= 24 and ft.hide[0] and ft.hide[2] and only(ft, 0, 2), "fireball warning ~22 frames, flickers, hittable (boss_hide 0 and 2), got " .. (ft and ft.n))
   check(fd and fd.n >= 18 and fd.n <= 22 and only(fd, 1, 3) and fd.hide[3], "teleport fade ~20 frames, untouchable (boss_hide 1 / 3), got " .. (fd and fd.n))
   check(ap and ap.n >= 28 and ap.n <= 32 and only(ap, 1, 3) and ap.drawn and ap.hidden, "reappear telegraph ~30 frames, flickers, untouchable and harmless, got " .. (ap and ap.n))
-  check(id and id.n >= 98 and id.n <= 102 and only(id, 0) and id.drawn and not id.hidden, "solid window ~100 frames after every action, got " .. (id and id.n))
+  check(id and id.n >= 138 and id.n <= 142 and only(id, 0) and id.drawn and not id.hidden, "solid window ~140 frames after every action, got " .. (id and id.n))
   local moved = false
   for _, r in ipairs(runs_of(s, FADE)) do
     local a = runs_of(s, APPEAR)
@@ -200,7 +200,7 @@ co = coroutine.create(function()
   end
   check(s.line <= 8, "phase 1: max 8 sprites per scanline, got " .. s.line)
   local lost1 = s.lost
-  check(lost1 <= 4, "phase 1 standing bot loses <= 4 hearts, lost " .. lost1)
+  check(lost1 <= 3, "phase 1 standing bot loses <= 3 hearts, lost " .. lost1)
 
   -- untouchable while fading / reappearing, harmless then; hittable while it warns; contact costs exactly one heart
   for _, st in ipairs({FADE, APPEAR}) do
@@ -216,13 +216,13 @@ co = coroutine.create(function()
   wr(EFLASH, 0)
   local hp1, hp0 = swing_at(6)
   check(hp1 == hp0 - 1, "warning flicker is hittable: exactly 1 hp, hp " .. hp0 .. " -> " .. hp1)
-  wr(EHP, 20); wr(EFLASH, 0)
+  wr(EHP, 18); wr(EFLASH, 0)
   wait_until(function() park(); return rd(IAIR) == IDLE and rd(EFLASH) == 0 end, 300)
   check(touch() == 2 and rd(INV) > 80, "contact costs exactly one heart and starts invulnerability, hearts=" .. rd(HEARTS))
   for _ = 1, 30 do wr16(PX, rd(EX) + 8); frames(1) end
   check(rd(HEARTS) == 2, "no second loss while invulnerable, hearts=" .. rd(HEARTS))
   park()
-  check(bar() == "FFFFFFFFFF", "bar full at 20 hp, got " .. bar())
+  check(bar() == "FFFFFFFFFF", "bar full at 18 hp, got " .. bar())
 
   -- the shield stops its fireball from the front
   wr(ABIL, 8)
@@ -239,19 +239,19 @@ co = coroutine.create(function()
   wr(ABIL, 0)
   frames(5)
 
-  -- phase 2 at hp <= 14 (70 % of 20)
-  wr(EHP, 15); wr(EFLASH, 0)
-  check(strike() == 14 and rd(PHASE) == 2, "hp 14 -> phase 2, phase=" .. rd(PHASE))
+  -- phase 2 at hp <= 12 (70 % of 18)
+  wr(EHP, 13); wr(EFLASH, 0)
+  check(strike() == 12 and rd(PHASE) == 2, "hp 12 -> phase 2, phase=" .. rd(PHASE))
   check(wait_until(function() return ppu(0x3F16) == 0x15 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  check(bar() == "FFFFFFF..." or bar():sub(1, 7) == "FFFFFFF", "phase 2 bar (14/20) " .. bar())
+  check(bar() == "FFFFFFF..." or bar():sub(1, 7) == "FFFFFFF", "phase 2 bar (12/18) " .. bar())
   check(rd(OAM_BODY + 1) == 0x46, "phase 2 look (boss tile 6)")
   s = watch(1200, true)
   local lost2 = s.lost
   print("phase 2 states: " .. states(s))
   check(s.frames == 1200, "60 Hz: 1200 frames -> +" .. s.frames)
   check(s.line <= 8, "phase 2: max 8 sprites per scanline, got " .. s.line)
-  check(lost2 <= 4, "phase 2 standing bot loses <= 4 hearts, lost " .. lost2)
+  check(lost2 <= 3, "phase 2 standing bot loses <= 3 hearts, lost " .. lost2)
   local ri, ho, st, dv, rs = full(s, RISE), full(s, HOVER), full(s, STELE), full(s, DIVE), full(s, REST)
   check(ri and ho and st and dv and rs, "swoop states RISE HOVER STELE DIVE REST seen (" .. states(s) .. ")")
   check(ri.y0 == GROUND or ri.y0 >= 100, "the swoop starts from the floor, y " .. ri.y0)
@@ -271,12 +271,12 @@ co = coroutine.create(function()
   check(ys[spread[1].y] and #spread == 3 and (function() local n = 0; for _ in pairs(ys) do n = n + 1 end return n end)() == 3, "the spread starts on three different scanline groups")
 
   -- a hit in the rest window costs exactly 1 hp; a hit while it dives or hovers is allowed too (only fade/appear are untouchable)
-  wr(EHP, 14); wr(EFLASH, 0)
+  wr(EHP, 12); wr(EFLASH, 0)
   wait_until(function() park(); return rd(IAIR) == REST and rd(FX) == 0 end, 900)
   wr(EFLASH, 0)
   hp1, hp0 = swing_at(4)
   check(hp1 == hp0 - 1, "a hit in the rest window costs 1 hp, hp " .. hp0 .. " -> " .. hp1)
-  wr(EHP, 14); wr(EFLASH, 0)
+  wr(EHP, 12); wr(EFLASH, 0)
   -- a diving lord costs a heart
   wait_until(function() park(); return rd(IAIR) == STELE and rd(FX) == 0 end, 900)
   wait_until(function() park(); return rd(IAIR) == DIVE end, 60)
@@ -285,9 +285,9 @@ co = coroutine.create(function()
   check(rd(HEARTS) == 2, "the dive hits a player below it, hearts=" .. rd(HEARTS))
   park()
 
-  -- phase 3 at hp <= 10
-  wr(EHP, 11); wr(EFLASH, 0)
-  check(strike() == 10 and rd(PHASE) == 3, "hp 10 -> phase 3, phase=" .. rd(PHASE))
+  -- phase 3 at hp <= 9
+  wr(EHP, 10); wr(EFLASH, 0)
+  check(strike() == 9 and rd(PHASE) == 3, "hp 9 -> phase 3, phase=" .. rd(PHASE))
   check(wait_until(function() return ppu(0x3F16) == 0x06 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(rd(OAM_BODY + 1) == 0x4C, "phase 3 look (boss tile 12)")
@@ -296,7 +296,7 @@ co = coroutine.create(function()
   print("phase 3 states: " .. states(s))
   check(s.frames == 1200, "60 Hz: 1200 frames -> +" .. s.frames)
   check(s.line <= 9, "phase 3: max 9 sprites per scanline, got " .. s.line)
-  check(lost3 <= 4, "phase 3 standing bot loses <= 4 hearts, lost " .. lost3)
+  check(lost3 <= 3, "phase 3 standing bot loses <= 3 hearts, lost " .. lost3)
   local gn = full(s, GONE)
   check(gn and gn.n >= 88 and gn.n <= 92 and only(gn, 3), "invisible ~90 frames, untouchable (boss_hide 3), got " .. (gn and gn.n))
   check(s.gone_hidden and s.gone_n > 0, "while invisible no body sprite is drawn")
@@ -353,6 +353,7 @@ co = coroutine.create(function()
   check(s.line <= 9, "worst case (sword + shockwaves + fireballs): max 9 sprites per scanline, got " .. s.line)
   local worst = s.line
   peak = pk
+  park(); frames(30)                        -- the last swing of the worst-case run is over (it would kill the lord at 1 hp)
 
   -- victory: hp 1 + hit -> dead, sprites gone, "VICTORY" and no ability, overworld, all 10 dungeons cleared (mask 1023), valid save
   wr(EHP, 1); wr(EFLASH, 0)

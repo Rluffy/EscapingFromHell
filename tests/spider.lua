@@ -151,7 +151,7 @@ co = coroutine.create(function()
 
   -- intro: "SPIDER QUEEN" (S P I D E R _ Q U E E N = 38 15 13 26 30 35 0 49 27 30 30 28 at row 10, columns 10..21)
   check(rd(INTRO) > 0, "intro running")
-  check(rd(EHP) == 16 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "spider: 16 hp, phase 1, full bar")
+  check(rd(EHP) == 14 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "spider: 14 hp, phase 1, full bar")
   check(rd(EW) == 24 and rd(EH) == 16 and rd(EY) == CEIL, "spider is 24x16 on the ceiling, w=" .. rd(EW) .. " y=" .. rd(EY))
   local name = {}
   for c = 10, 21 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
@@ -267,18 +267,18 @@ co = coroutine.create(function()
   check(hit and rd(EHP) == hp - 1, "jump + sword from the floor hits the hanging spider, hp " .. hp .. " -> " .. rd(EHP))
   park()
 
-  -- sword hit on the body: exactly 1 hp more, bar ceil(15*20/16) = 19 half steps, <= 8 sprites per line with the sword out
-  wr(EHP, 16); wr(EFLASH, 0)
+  -- sword hit on the body: exactly 1 hp more, bar ceil(13*20/14) = 19 half steps, <= 8 sprites per line with the sword out
+  wr(EHP, 14); wr(EFLASH, 0)
   local hp = strike()
-  check(hp == 15, "hit = exactly 1 hp, hp=" .. hp)
+  check(hp == 13, "hit = exactly 1 hp, hp=" .. hp)
   check(bar() == "FFFFFFFFFH", "bar after one hit, bar=" .. bar())
   check(peak <= 8, "sword + spider + player: max 8 sprites per scanline, got " .. peak)
 
-  -- phase 2 at hp <= 11: look, palette, faster descent, shorter hang and crawl, two webs
-  wr(EHP, 12); wr(EFLASH, 0)
-  check(strike() == 11 and rd(PHASE) == 2, "hp 11 -> phase 2, phase=" .. rd(PHASE))
+  -- phase 2 at hp <= 9: look, palette, faster descent, shorter hang and crawl, two webs
+  wr(EHP, 10); wr(EFLASH, 0)
+  check(strike() == 9 and rd(PHASE) == 2, "hp 9 -> phase 2, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFFFF...", "bar 14 half steps at hp 11, bar=" .. bar())
+  check(bar() == "FFFFFFH...", "bar 13 half steps at hp 9, bar=" .. bar())
   check(wait_until(function() return ppu(0x3F16) == 0x25 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(rd(OAM_E + 1) == 0x40 + 6, "phase 2 look (boss tile 6)")
@@ -293,11 +293,11 @@ co = coroutine.create(function()
   local lost2 = bot(1200)
   check(lost2 <= 3, "phase 2 standing bot loses <= 3 hearts, lost " .. lost2)
 
-  -- phase 3 at hp <= 8: look, palette, faster crawl + descent, three webs and spiderlings (a heart each)
-  wr(EHP, 9); wr(EFLASH, 0)
-  check(strike() == 8 and rd(PHASE) == 3, "hp 8 -> phase 3, phase=" .. rd(PHASE))
+  -- phase 3 at hp <= 7: look, palette, faster crawl + descent, three webs and spiderlings (a heart each)
+  wr(EHP, 8); wr(EFLASH, 0)
+  check(strike() == 7 and rd(PHASE) == 3, "hp 7 -> phase 3, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFF.....", "bar half at hp 8, bar=" .. bar())
+  check(bar() == "FFFFF.....", "bar half at hp 7, bar=" .. bar())
   check(wait_until(function() return ppu(0x3F16) == 0x16 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(rd(OAM_E + 1) == 0x40 + 12, "phase 3 look (boss tile 12)")

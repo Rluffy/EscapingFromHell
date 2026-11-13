@@ -151,7 +151,7 @@ co = coroutine.create(function()
 
   -- intro: "ONI WARLORD" (O N I _ W A R L O R D = 31 28 13 0 47 37 35 44 31 35 26 at row 10, columns 10..20)
   check(rd(INTRO) > 0, "intro running")
-  check(rd(EHP) == 18 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "oni: 18 hp, phase 1, full bar")
+  check(rd(EHP) == 15 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "oni: 15 hp, phase 1, full bar")
   check(rd(EW) == 24 and rd(EH) == 32 and rd(EY) == GROUND, "oni is 24x32 on the floor, w=" .. rd(EW) .. " h=" .. rd(EH) .. " y=" .. rd(EY))
   local name = {}
   for c = 10, 20 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
@@ -166,12 +166,12 @@ co = coroutine.create(function()
   check(ppu(0x3F16) == 0x26, "phase 1 palette")
   check(ppu(0x3F00) == 0x0F and ppu(0x3F01) == 0x04, "own purple/black dungeon palette")
 
-  -- phase 1, standing bot (x 48): walks 1 px/frame, stops 32 px in front, attacks after 330 frames idle, hearts <= 3
+  -- phase 1, standing bot (x 48): walks 1 px/frame, stops 32 px in front, attacks after 480 frames idle, hearts <= 3
   local s = watch(1200, true)
   check(s.frames == 1200, "game loop runs at 60 Hz: 1200 frames -> frame_count +" .. s.frames)
   local w1 = s.runs[1]
   check(w1.st == WALK and w1.x0 >= 150 and w1.x0 <= 160 and w1.xe == 88, "walks toward the player and stops at x 88 (front edge 32 px from the player's center), x " .. w1.x0 .. " -> " .. w1.xe)
-  check(w1.n >= 320 and w1.n <= 333, "first attack after ~330 idle frames, walk run " .. w1.n)
+  check(w1.n >= 470 and w1.n <= 483, "first attack after ~480 idle frames, walk run " .. w1.n)
   local seen = {}
   for _, r in ipairs(s.runs) do seen[#seen + 1] = r.st end
   print("phase 1 states: " .. table.concat(seen, ","))
@@ -186,7 +186,7 @@ co = coroutine.create(function()
   check(lost1 <= 3, "phase 1 standing bot loses <= 3 hearts, lost " .. lost1)
 
   -- reaction smash: telegraph ~30 frames (club up, flickers), smash 6 frames, shockwave from the club, recovery ~40 frames
-  check(bait(120, 17), "a sword hit while it walks gets a smash in return")
+  check(bait(120, 14), "a sword hit while it walks gets a smash in return")
   wr16(PX, 48); wr(PY, FLOOR_Y); noshots()
   s = watch(260, false)
   local st1, sm, re = first(s, STELE), first(s, SMASH), first(s, REST)
@@ -201,12 +201,12 @@ co = coroutine.create(function()
   check(s.maxwave == 1, "one wave in phase 1")
 
   -- shockwave: standing player is hit once, a jumper is not. (bait puts the oni at x 120, wave starts at x 112 going left)
-  check(bait(120, 17), "second smash")
+  check(bait(120, 14), "second smash")
   wr16(PX, 48); wr(PY, FLOOR_Y); wr(VY, 0); wr(HEARTS, 3); wr(INV, 0); noshots()
   check(wait_until(function() return rd(FBX) ~= 0 or rd(FBX + 1) ~= 0 end, 80), "a shockwave appears")
   check(wait_until(function() return rd(HEARTS) < 3 end, 80), "the shockwave hits a standing player")
   check(rd(HEARTS) == 2, "exactly one heart, hearts=" .. rd(HEARTS))
-  check(bait(120, 17), "third smash")
+  check(bait(120, 14), "third smash")
   wr16(PX, 48); wr(PY, FLOOR_Y); wr(VY, 0); wr(HEARTS, 3); wr(INV, 0); noshots()
   check(wait_until(function() return rd(FBX) ~= 0 or rd(FBX + 1) ~= 0 end, 80), "a shockwave appears again")
   frames(8)
@@ -217,7 +217,7 @@ co = coroutine.create(function()
   frames(60)
   -- the shield blocks it from the front
   wr(ABIL, 8)
-  check(bait(120, 17), "fourth smash")
+  check(bait(120, 14), "fourth smash")
   wr16(PX, 48); wr(PY, FLOOR_Y); wr(VY, 0); wr(HEARTS, 3); wr(INV, 0); noshots()
   hold({right = true}, 3)
   held = {down = true}
@@ -247,11 +247,11 @@ co = coroutine.create(function()
   xs = charge(true)
   check(rd(HEARTS) == 3 and rd(INV) == 0, "jumping over the charge avoids damage, hearts=" .. rd(HEARTS))
 
-  -- recovery window: a sword hit during REST costs exactly 1 hp (bar 17/18 = 19 half steps)
+  -- recovery window: a sword hit during REST costs exactly 1 hp (bar 14/15 = 19 half steps)
   wait_until(function() park(); return rd(IAIR) == WALK and rd(FX) == 0 end, 400)
   wr(EX, 100); wr(EDIR, 255); wr(IAIR, CHARGE); noshots()           -- a charge to the wall, then the 40 frame recovery (natural attacks depend on the random seed)
   check(wait_until(function() park(); return rd(IAIR) == REST end, 60), "recovery after the charge")
-  wr(EHP, 18); wr(EFLASH, 0)
+  wr(EHP, 15); wr(EFLASH, 0)
   local hp = rd(EHP)
   local hit = false
   for _ = 1, 3 do
@@ -262,15 +262,15 @@ co = coroutine.create(function()
     if rd(EHP) < hp then hit = true; break end
   end
   check(hit and rd(EHP) == hp - 1, "a hit in the recovery window costs 1 hp, hp " .. hp .. " -> " .. rd(EHP))
-  check(bar() == "FFFFFFFFFH", "bar 17/18 = FFFFFFFFFH, got " .. bar())
+  check(bar() == "FFFFFFFFFH", "bar 14/15 = FFFFFFFFFH, got " .. bar())
   park()
   local ek = rd(EX)
   check(ek >= 16 and ek <= 80, "knocked back but still in the arena, x=" .. ek)
-  wr(EHP, 18)
+  wr(EHP, 15)
 
-  -- phase 2 at hp <= 12 (70 % of 18, rounded down)
-  wr(EHP, 13); wr(EFLASH, 0)
-  check(strike() == 12 and rd(PHASE) == 2, "hp 12 -> phase 2, phase=" .. rd(PHASE))
+  -- phase 2 at hp <= 10 (70 % of 15, rounded down)
+  wr(EHP, 11); wr(EFLASH, 0)
+  check(strike() == 10 and rd(PHASE) == 2, "hp 10 -> phase 2, phase=" .. rd(PHASE))
   check(wait_until(function() return ppu(0x3F16) == 0x16 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(bar() == "FFFFFFH...." or bar() == "FFFFFFH.." or bar():sub(1, 6) == "FFFFFF", "phase 2 bar " .. bar())
@@ -279,6 +279,12 @@ co = coroutine.create(function()
   s = watch(1200, true)
   local lost2 = s.lost
   do local t = {}; for _, r in ipairs(s.runs) do t[#t + 1] = r.st end; print("phase 2 states: " .. table.concat(t, ",")) end
+  for _ = 1, 4 do                          -- attacks come every ~450 frames, half of them are charges, and a smash with the oni at the wall has no backward wave: look at more windows
+    if s.both then break end
+    local s2 = watch(900, true)
+    s.both = s2.both; s.maxwave = math.max(s.maxwave, s2.maxwave); s.line = math.max(s.line, s2.line)
+    for v in pairs(s2.wave_v) do s.wave_v[v] = true end
+  end
   check(s.frames == 1200, "60 Hz: 1200 frames -> +" .. s.frames)
   check(first(s, WALK).n >= 1, "walks again after the phase change")
   check(s.line <= 8, "phase 2: max 8 sprites per scanline, got " .. s.line)
@@ -295,9 +301,9 @@ co = coroutine.create(function()
     check(ch ~= nil and ch.n >= 8 and math.abs(ch.xe - ch.x0) >= 8 * 4, "charge runs at 4 px/frame")
   end
 
-  -- phase 3 at hp <= 9
-  wr(EHP, 10); wr(EFLASH, 0)
-  check(strike() == 9 and rd(PHASE) == 3, "hp 9 -> phase 3, phase=" .. rd(PHASE))
+  -- phase 3 at hp <= 7
+  wr(EHP, 8); wr(EFLASH, 0)
+  check(strike() == 7 and rd(PHASE) == 3, "hp 7 -> phase 3, phase=" .. rd(PHASE))
   check(wait_until(function() return ppu(0x3F16) == 0x06 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(rd(OAM_BODY + 1) == 0x40 + 20, "phase 3 look (boss tile 20)")
@@ -310,7 +316,7 @@ co = coroutine.create(function()
   for v in pairs(s.wave_v) do check(v == -3 or v == 3, "phase 3 shockwave 3 px/frame, v " .. v) end
 
   -- double smash (provoked): STELE 26, SMASH 6, STELE 20, SMASH 6, REST; two forward shockwaves 52 frames apart
-  check(bait(120, 9), "phase 3 smash")
+  check(bait(120, 7), "phase 3 smash")
   wr16(PX, 48); wr(PY, FLOOR_Y); noshots()
   s = watch(120, false, true)                      -- sword swinging all the time
   held = {}
@@ -325,7 +331,7 @@ co = coroutine.create(function()
   check(second.n >= 18 and second.n <= 22, "second telegraph ~20 frames, got " .. second.n)
 
   -- worst case for the sprite budget: double smash (2 shockwaves alive) while the sword swings and throws waves (ability, 3 hearts)
-  check(bait(120, 9), "phase 3 smash (worst case)")
+  check(bait(120, 7), "phase 3 smash (worst case)")
   wr(ABIL, 16)
   local pk = peak
   local w = watch(120, false, true)

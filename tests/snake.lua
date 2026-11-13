@@ -140,7 +140,7 @@ co = coroutine.create(function()
 
   -- intro: "LAVA SNAKE" (L A V A _ S N A K E = tiles 44 37 32 37 0 38 28 37 46 30 at row 10, columns 11..20)
   check(rd(INTRO) > 0, "intro running")
-  check(rd(EHP) == 14 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "snake: 14 hp, phase 1, full bar")
+  check(rd(EHP) == 12 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "snake: 12 hp, phase 1, full bar")
   local name = {}
   for c = 11, 20 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
   check(table.concat(name, ",") == "44,37,32,37,0,38,28,37,46,30", "name LAVA SNAKE on screen: " .. table.concat(name, ","))
@@ -212,14 +212,14 @@ co = coroutine.create(function()
   -- head hit: exactly 1 hp, bar 19 half steps, sprites per line with the swing
   wr(EFLASH, 0)
   hp = strike()
-  check(hp == 13 and bar() == "FFFFFFFFFH", "hit = exactly 1 hp, bar=" .. bar() .. " hp=" .. hp)
+  check(hp == 11 and bar() == "FFFFFFFFFH", "hit = exactly 1 hp, bar=" .. bar() .. " hp=" .. hp)
   check(maxline <= 8, "sword swing + overlap: max 8 sprites per scanline, got " .. maxline)
 
-  -- phase 2 at hp <= 9: look, palette, faster, two spits per visit
-  wr(EHP, 10); wr(EFLASH, 0)
-  check(strike() == 9 and rd(PHASE) == 2, "hp 9 -> phase 2, phase=" .. rd(PHASE))
+  -- phase 2 at hp <= 8: look, palette, faster, two spits per visit
+  wr(EHP, 9); wr(EFLASH, 0)
+  check(strike() == 8 and rd(PHASE) == 2, "hp 8 -> phase 2, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFFFH...", "bar 13 steps at hp 9, bar=" .. bar())
+  check(bar() == "FFFFFFF...", "bar 14 steps at hp 8, bar=" .. bar())
   check(rd(OAM_HEAD + 1) == 0x40 + 6, "phase 2 look (head boss tile 6)")
   check(wait_until(function() return ppu(0x3F16) == 0x26 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
@@ -227,21 +227,21 @@ co = coroutine.create(function()
   check(rd(OAM_BODY + 1) == 0x40 + 10, "phase 2 body boss tile 10")
   check(s.mxr == 2 and s.mxs == 2, "phase 2 rises and sinks 2 px/frame, got " .. s.mxr .. "/" .. s.mxs)
   check(s.maxspawn >= 2, "phase 2 spits twice per visit, got " .. s.maxspawn)
-  check(longest(s, HID) >= 68 and longest(s, HID) <= 72, "phase 2 submerged ~70 frames, got " .. longest(s, HID))
+  check(longest(s, HID) >= 98 and longest(s, HID) <= 102, "phase 2 submerged ~100 frames, got " .. longest(s, HID))
   check(s.line <= 8, "phase 2: sprites per line " .. s.line)
 
-  -- phase 3 at hp <= 7: look, spread of 3, shorter submerged time
-  wr(EHP, 8); wr(EFLASH, 0)
-  check(strike() == 7 and rd(PHASE) == 3, "hp 7 -> phase 3, phase=" .. rd(PHASE))
+  -- phase 3 at hp <= 6: look, spread of 3, one fan per visit
+  wr(EHP, 7); wr(EFLASH, 0)
+  check(strike() == 6 and rd(PHASE) == 3, "hp 6 -> phase 3, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFF.....", "bar half at hp 7, bar=" .. bar())
+  check(bar() == "FFFFF.....", "bar half at hp 6, bar=" .. bar())
   check(rd(OAM_HEAD + 1) == 0x40 + 12, "phase 3 look (head boss tile 12)")
   check(wait_until(function() return ppu(0x3F16) == 0x16 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  s = watch(800, 100)
+  s = watch(1000, 100)
   check(rd(OAM_BODY + 1) == 0x40 + 16, "phase 3 body boss tile 16")
   check(s.volley == 3 and s.maxfb == 3, "phase 3 spits a spread of 3, volley " .. s.volley)
-  check(longest(s, HID) >= 38 and longest(s, HID) <= 42, "phase 3 submerged ~40 frames, got " .. longest(s, HID))
+  check(longest(s, HID) >= 148 and longest(s, HID) <= 152, "phase 3 submerged ~150 frames, got " .. longest(s, HID))
   check(s.line <= 8, "phase 3: sprites per line " .. s.line)
 
   -- victory: hp 1 + hit -> dead, body gone, overworld, bit 3 set, no ability, saved

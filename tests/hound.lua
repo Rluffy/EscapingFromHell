@@ -101,7 +101,7 @@ co = coroutine.create(function()
 
   -- intro: "BONE HOUND" (B O N E _ H O U N D = tiles 43 31 28 30 0 39 31 27 28 26 at row 10, columns 11..20)
   check(rd(INTRO) > 0, "intro running")
-  check(rd(EHP) == 14 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "hound: 14 hp, phase 1, full bar")
+  check(rd(EHP) == 12 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "hound: 12 hp, phase 1, full bar")
   check(rd(EW) == 24, "hound is 24 px wide, w=" .. rd(EW))
   local name = {}
   for c = 11, 20 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
@@ -122,14 +122,21 @@ co = coroutine.create(function()
   check(longest(s, REST) >= 38 and longest(s, REST) <= 42, "dizzy ~40 frames, got " .. longest(s, REST))
   check(s.line <= 7, "max 7 sprites per scanline (limit 8), got " .. s.line)
 
-  -- bite: player close and on the ground while patrolling -> lunge at 3 px/frame
-  for _, st in ipairs({CHARGE, REST, RUN}) do     -- after a charge the next attack is 150 frames away
+  -- bite: player close (<= 28 px) and on the ground while patrolling -> lunge at 3 px/frame
+  for _, st in ipairs({CHARGE, REST, RUN}) do     -- after a charge the next attack is 480 frames away
     check(wait_until(function() wr(HEARTS, 3); wr(INV, 99); wr16(PX, 30); wr(PY, FLOOR_Y); return rd(IAIR) == st end, 400), "state " .. st)
   end
+  wr(EX, 200)                          -- the patrol turns back 56 px short of the player (it never walks into him)
+  local near = 255
+  for _ = 1, 150 do
+    wr(HEARTS, 3); wr(INV, 99); wr16(PX, 100); wr(PY, FLOOR_Y); frames(1)
+    if rd(IAIR) == RUN then near = math.min(near, math.abs(rd(EX) - 100)) end
+  end
+  check(near >= 54 and near <= 58, "patrol keeps ~56 px from the player, nearest " .. near)
   wr(EX, 120)
   local bx
-  check(wait_until(function()          -- player 30 px left of the hound (bite cooldown <= 60 frames)
-    wr(HEARTS, 3); wr(INV, 99); wr16(PX, rd(EX) - 30); wr(PY, FLOOR_Y)
+  check(wait_until(function()          -- player 22 px left of the hound (bite cooldown <= 60 frames)
+    wr(HEARTS, 3); wr(INV, 99); wr16(PX, rd(EX) - 22); wr(PY, FLOOR_Y)
     bx = rd(EX); return rd(IAIR) == BITE
   end, 80), "bites when the player is close")
   frames(3)
@@ -140,7 +147,7 @@ co = coroutine.create(function()
   local function charge_test(jump)
     wr(HEARTS, 3); wr(INV, 0); wr16(PX, 200); wr(PY, FLOOR_Y); wr(VY, 0)
     local jumped, lost = false, false
-    check(wait_until(function() if rd(IAIR) == RUN then wr(EX, 40); wr(INV, 0) end return rd(IAIR) == TELE end, 400), "attack starts")
+    check(wait_until(function() if rd(IAIR) == RUN then wr(EX, 40); wr(INV, 0) end return rd(IAIR) == TELE end, 700), "attack starts")
     check(wait_until(function() return rd(IAIR) == CHARGE end, 60), "charge follows the telegraph")
     check(wait_until(function()
       local dist = (rd16(PX) + 8) - (rd(EX) + 12)
@@ -159,7 +166,7 @@ co = coroutine.create(function()
   wr(PY, FLOOR_Y)
   check(charge_test(false) and rd(HEARTS) == 2, "standing in the charge costs a heart: hearts " .. rd(HEARTS))
 
-  -- dizzy window: hit while resting, exactly 1 hp, bar ceil(13*20/14) = 19 steps; contact while resting costs a heart
+  -- dizzy window: hit while resting, exactly 1 hp, bar ceil(11*20/12) = 19 steps; contact while resting costs a heart
   wr(INV, 0); wr(EFLASH, 0)
   check(wait_until(function() return rd(IAIR) == REST end, 200), "dizzy after the charge")
   wr(HEARTS, 3); wr(INV, 0)
@@ -167,31 +174,31 @@ co = coroutine.create(function()
   check(rd(HEARTS) == 2, "contact with the dizzy hound costs a heart, hearts=" .. rd(HEARTS))
   wait_until(function() return rd(INV) == 0 end, 130)
   local hp = strike()
-  check(hp == 13, "hit = exactly 1 hp, hp=" .. hp)
+  check(hp == 11, "hit = exactly 1 hp, hp=" .. hp)
   check(bar() == "FFFFFFFFFH", "bar after one hit, bar=" .. bar())
   check(maxline <= 7, "sword swing + overlap: max 7 sprites per scanline, got " .. maxline)
 
-  -- phase 2 at hp <= 9 (70 % of 14), phase 3 at hp <= 7 (50 %)
-  wr(EHP, 10); wr(EFLASH, 0)
-  check(strike() == 9 and rd(PHASE) == 2, "hp 9 -> phase 2, phase=" .. rd(PHASE))
+  -- phase 2 at hp <= 8 (70 % of 12), phase 3 at hp <= 6 (50 %)
+  wr(EHP, 9); wr(EFLASH, 0)
+  check(strike() == 8 and rd(PHASE) == 2, "hp 8 -> phase 2, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFFFH...", "bar 13 steps at hp 9, bar=" .. bar())
+  check(bar() == "FFFFFFF...", "bar 14 steps at hp 8, bar=" .. bar())
   check(rd(0x201 + 24) == 0x40 + 6, "phase 2 look (boss tile 6, id 0x46)")
   check(wait_until(function() return ppu(0x3F16) == 0x37 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  s = watch(500)
+  s = watch(1000)                         -- an attack every ~500 frames
   check(s.mx[CHARGE] == 5, "phase 2 charges faster (5 px/frame), got " .. tostring(s.mx[CHARGE]))
   check(longest(s, TELE) >= 22 and longest(s, TELE) <= 26, "phase 2 telegraph ~24 frames, got " .. longest(s, TELE))
   check(not s.oob and s.line <= 7, "phase 2 inside the arena, sprites per line " .. s.line)
 
-  wr(EHP, 8); wr(EFLASH, 0)
-  check(strike() == 7 and rd(PHASE) == 3, "hp 7 -> phase 3, phase=" .. rd(PHASE))
+  wr(EHP, 7); wr(EFLASH, 0)
+  check(strike() == 6 and rd(PHASE) == 3, "hp 6 -> phase 3, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFF.....", "bar half at hp 7, bar=" .. bar())
+  check(bar() == "FFFFF.....", "bar half at hp 6, bar=" .. bar())
   check(rd(0x201 + 24) == 0x40 + 12, "phase 3 look (boss tile 12, id 0x4C)")
   check(wait_until(function() return ppu(0x3F16) == 0x16 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  s = watch(1500)
+  s = watch(3000)                         -- an attack every ~600 frames, a leap in half of them
   local double, leaped = false, false
   for i = 1, #s.runs - 2 do
     if s.runs[i].st == CHARGE and s.runs[i + 1].st == TELE and s.runs[i + 2].st == CHARGE and s.runs[i + 1].n <= 12 then double = true end

@@ -50,7 +50,7 @@ local function park_imp() wr(EX, 200); wr(EY, FLOOR_Y) end
 local function shot(keys, px)
   held = keys
   local lastx = 0
-  check(wait_until(function() park_imp(); return rd(FBX) ~= 0 end, 500), "the imp spits")
+  check(wait_until(function() park_imp(); return rd(FBX) ~= 0 end, 800), "the imp spits")
   for _ = 1, 200 do
     park_imp()
     frames(1)

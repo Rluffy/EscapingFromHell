@@ -156,7 +156,7 @@ co = coroutine.create(function()
 
   -- intro: "MIRROR DEMON" = M I R R O R _ D E M O N = tiles 14 13 35 35 31 35 0 26 30 14 31 28 at row 10, columns 10..21
   check(rd(INTRO) > 0, "intro running")
-  check(rd(EHP) == 14 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "mirror demon: 14 hp, phase 1, full bar")
+  check(rd(EHP) == 13 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "mirror demon: 13 hp, phase 1, full bar")
   local name = {}
   for c = 10, 21 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
   check(table.concat(name, ",") == "14,13,35,35,31,35,0,26,30,14,31,28", "name MIRROR DEMON on screen: " .. table.concat(name, ","))
@@ -230,7 +230,7 @@ co = coroutine.create(function()
 
   -- the original: a sword hit costs exactly 1 hp, bar 19 half steps
   hp = strike()
-  check(hp == 13 and bar() == "FFFFFFFFFH", "sword hit on the original = exactly 1 hp, bar=" .. bar() .. " hp=" .. hp)
+  check(hp == 12 and bar() == "FFFFFFFFFH", "sword hit on the original = exactly 1 hp, bar=" .. bar() .. " hp=" .. hp)
   check(maxline <= 8, "sword swing + overlap: max 8 sprites per scanline, got " .. maxline)
 
   -- player fireball (ability bit 2): pops a copy, hurts the original by exactly 1
@@ -278,7 +278,7 @@ co = coroutine.create(function()
   wr(EHP, 10); wr(EFLASH, 0)
   check(strike() == 9 and rd(PHASE) == 2, "hp 9 -> phase 2, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFFFH...", "bar 13 steps at hp 9, bar=" .. bar())
+  check(bar() == "FFFFFFF...", "bar 14 steps at hp 9 (ceil(9*20/13)), bar=" .. bar())
   check(rd(OAM_HEAD + 1) == 0x40 + 6, "phase 2 look (boss tile 6)")
   check(wait_until(function() return ppu(0x3F16) == 0x24 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
@@ -294,11 +294,11 @@ co = coroutine.create(function()
   check(rd(OAM_COPY + 1) == 0x40 + 20 and rd(OAM_HEAD + 1) == 0x40 + 6, "phase 2: copy head boss tile 20, original 6")
   check(s.line <= 8, "phase 2: sprites per line " .. s.line)
 
-  -- phase 3 at hp <= 7: look, palette, copies (3, or 2 when the original is on a side platform), double shots
-  wr(EHP, 8); wr(EFLASH, 0)
-  check(strike() == 7 and rd(PHASE) == 3, "hp 7 -> phase 3, phase=" .. rd(PHASE))
+  -- phase 3 at hp <= 6: look, palette, copies (3, or 2 when the original is on a side platform), double shots
+  wr(EHP, 7); wr(EFLASH, 0)
+  check(strike() == 6 and rd(PHASE) == 3, "hp 6 -> phase 3, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFF.....", "bar half at hp 7, bar=" .. bar())
+  check(bar() == "FFFFF.....", "bar half at hp 6, bar=" .. bar())
   check(rd(OAM_HEAD + 1) == 0x40 + 12, "phase 3 look (boss tile 12)")
   check(wait_until(function() return ppu(0x3F16) == 0x16 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
@@ -320,7 +320,7 @@ co = coroutine.create(function()
   local m = 0
   for i = 1, 700 do
     held = (i % 9 < 3) and {b = true} or {}
-    safe(); wr(EHP, 7); wr16(PX, i < 350 and 56 or 190); wr(PY, 136); wr(0x30F, 0)
+    safe(); wr(EHP, 6); wr16(PX, i < 350 and 56 or 190); wr(PY, 136); wr(0x30F, 0)
     frames(1)
     m = math.max(m, max_line())
   end

@@ -139,7 +139,7 @@ co = coroutine.create(function()
 
   -- intro: "GIANT TOAD" (G I A N T _ T O A D = 29 13 37 28 34 0 34 31 37 26 at row 10, columns 11..20)
   check(rd(INTRO) > 0, "intro running")
-  check(rd(EHP) == 16 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "toad: 16 hp, phase 1, full bar")
+  check(rd(EHP) == 14 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "toad: 14 hp, phase 1, full bar")
   check(rd(EW) == 32 and rd(EH) == 24, "toad is 32x24, w=" .. rd(EW) .. " h=" .. rd(EH))
   local name = {}
   for c = 11, 20 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
@@ -246,17 +246,17 @@ co = coroutine.create(function()
   frames(3)
   check(rd(OAM_BODY) == rd(EY) + 2 and rd(EY) == 168, "crouch: body drawn 3 px lower, oam y=" .. rd(OAM_BODY))
 
-  -- sword hit on the body: exactly 1 hp, bar ceil(15*20/16) = 19 half steps, <= 8 sprites per line with the sword out
+  -- sword hit on the body: exactly 1 hp, bar ceil(13*20/14) = 19 half steps, <= 8 sprites per line with the sword out
   local hp = strike()
-  check(hp == 15, "hit = exactly 1 hp, hp=" .. hp)
+  check(hp == 13, "hit = exactly 1 hp, hp=" .. hp)
   check(bar() == "FFFFFFFFFH", "bar after one hit, bar=" .. bar())
   check(peak <= 8, "sword + toad + player: max 8 sprites per scanline, got " .. peak)
 
-  -- phase 2 at hp <= 11 (70 % of 16 = 11): look, palette, slime, standing bot
-  wr(EHP, 12); wr(EFLASH, 0)
-  check(strike() == 11 and rd(PHASE) == 2, "hp 11 -> phase 2, phase=" .. rd(PHASE))
+  -- phase 2 at hp <= 9 (70 % of 14 = 9): look, palette, slime, standing bot
+  wr(EHP, 10); wr(EFLASH, 0)
+  check(strike() == 9 and rd(PHASE) == 2, "hp 9 -> phase 2, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFFFF...", "bar 14 half steps at hp 11, bar=" .. bar())
+  check(bar() == "FFFFFFH...", "bar 13 half steps at hp 9, bar=" .. bar())
   check(wait_until(function() return ppu(0x3F15) == 0x04 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(rd(OAM_BODY + 1) >= 0x40 + 12 and rd(OAM_BODY + 1) < 0x40 + 24, "phase 2 look (boss tiles 12..23)")
@@ -286,11 +286,11 @@ co = coroutine.create(function()
   local lost2 = bot(1200)
   check(lost2 <= 3, "phase 2 standing bot loses <= 3 hearts, lost " .. lost2)
 
-  -- phase 3 at hp <= 8: look, palette, hop chains, double tongue, two blobs
-  wr(EHP, 9); wr(EFLASH, 0)
-  check(strike() == 8 and rd(PHASE) == 3, "hp 8 -> phase 3, phase=" .. rd(PHASE))
+  -- phase 3 at hp <= 7: look, palette, hop chains, double tongue, two blobs
+  wr(EHP, 8); wr(EFLASH, 0)
+  check(strike() == 7 and rd(PHASE) == 3, "hp 7 -> phase 3, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFF.....", "bar half at hp 8, bar=" .. bar())
+  check(bar() == "FFFFF.....", "bar half at hp 7, bar=" .. bar())
   check(wait_until(function() return ppu(0x3F15) == 0x03 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   s = watch(1500)

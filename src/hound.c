@@ -8,9 +8,9 @@
    wait = telegraph frames; rate = frames between attacks; shots = charges per attack (2 = back to back);
    fspd = charge px/frame. Phase 2/3 sometimes leap instead of charging (see hound_ai). */
 const struct phase hound_ph[3] = {
-    { BT + 0, 1, 30, 180, 1, 4, { 0x08, 0x37, 0x2A } },
-    { BT + 6, 1, 24, 150, 1, 5, { 0x06, 0x37, 0x16 } },
-    { BT + 12, 2, 20, 120, 2, 5, { 0x0F, 0x16, 0x38 } }
+    { BT + 0, 1, 30, 480, 1, 4, { 0x08, 0x37, 0x2A } },
+    { BT + 6, 1, 24, 460, 1, 5, { 0x06, 0x37, 0x16 } },
+    { BT + 12, 2, 20, 520, 2, 5, { 0x0F, 0x16, 0x38 } }
 };
 
 /* iair = state. fb_t counts frames to the next attack, ig is the bite cooldown (90), ai_t the state timer. */
@@ -18,6 +18,8 @@ enum { RUN, TELE, CHARGE, REST, BITE, LEAP };
 #define REST_T  40                     /* dizzy after a charge: the window to hit it */
 #define TURN_T  10                     /* short telegraph before the second charge of a back-to-back pair */
 #define BITE_T  10                     /* lunge: 3 px/frame */
+#define KEEP    56                     /* patrol turns back this far from the player */
+#define BITE_R  28                     /* bite range: a standing player is not bitten by a hound passing or resting at 32 px */
 #define MAXX    (256 - WALL - 24)
 
 static unsigned char leap, left;       /* attack kind (1 = leap), charges still to run */
@@ -55,10 +57,11 @@ void hound_ai(void)
             break;
         }
         dx = (int)player_x - en.x;
-        if (!ig && player_y > FLOOR_Y - 24 && (unsigned)(dx + 44) < 88) {      /* player close and on the ground: bite */
+        if (!ig && player_y > FLOOR_Y - 24 && (unsigned)(dx + BITE_R) < 2 * BITE_R) {      /* player close and on the ground: bite */
             iair = BITE; ai_t = BITE_T; en.dir = d; ig = 90;
             break;
         }
+        if (en.dir == d && (unsigned)(dx + KEEP) < 2 * KEEP) en.dir = -en.dir;     /* never patrols into the player: turns KEEP px short */
         if (step(en.dir * (signed char)p->spd)) en.dir = -en.dir;
         break;
     case TELE:                         /* paw-scrape: flickers, stands still */

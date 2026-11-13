@@ -65,15 +65,18 @@ local function strike()
   wr16(PX, 120); wr(PY, FLOOR_Y)
   return rd(EHP)
 end
--- Watch n frames with the player parked on the floor at x = px and safe.
-local function watch(n, px)
+-- Watch n frames with the player parked on the floor at x = px and safe. away: not safe (invulnerability 0, hearts refilled), but the player
+-- steps out of the way (x 230) while the demon dives, rests and rises, so a dive misses and the phase 3 second dive follows.
+local function watch(n, px, away)
   local s = {runs = {}, mxd = 0, mxr = 0, miny = 255, maxy = 0, minx = 255, maxx = 0, line = 0, spawns = 0, volley = 0,
              maxfb = 0, hides = {}, patd = 0, patn = 0, land = {}, rest_y = {}}
   local last, ey, ex, prev = nil, rd(EY), rd(EX), {}
   for i = 0, 2 do prev[i] = rd(FBX + i) end
   for _ = 1, n do
     frames(1)
-    safe(); wr16(PX, px); wr(PY, FLOOR_Y)
+    local st0 = rd(IAIR)
+    if away then wr(HEARTS, 3); wr(INV, 0) else safe() end
+    wr16(PX, away and (st0 == DIVE or st0 == REST or st0 == RISE) and 230 or px); wr(PY, FLOOR_Y)
     local x, y, st = rd(EX), rd(EY), rd(IAIR)
     if rd(FX) == 0 then
       if st == DIVE and last == DIVE then s.mxd = math.max(s.mxd, y - ey) end
@@ -138,7 +141,7 @@ co = coroutine.create(function()
 
   -- intro: "WINGED DEMON" (tiles 47 13 28 29 30 26 _ 26 30 14 31 28 at row 10, columns 10..21)
   check(rd(INTRO) > 0, "intro running")
-  check(rd(EHP) == 14 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "winged: 14 hp, phase 1, full bar")
+  check(rd(EHP) == 13 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "winged: 13 hp, phase 1, full bar")
   local name = {}
   for c = 10, 21 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
   check(table.concat(name, ",") == "47,13,28,29,30,26,0,26,30,14,31,28", "name WINGED DEMON on screen: " .. table.concat(name, ","))
@@ -150,9 +153,9 @@ co = coroutine.create(function()
   hold({right = true}, 2)                 -- face right
 
   -- phase 1: patrol (bob), ~30 frame telegraph with flicker, 4 px/frame dive to the player, 40 frame rest, 3 px/frame rise
-  local s = watch(1300, 120)
+  local s = watch(1700, 120)
   check(has_seq(s, {PAT, TELE, DIVE, REST, RISE, PAT}), "cycle PATROL, TELE, DIVE, REST, RISE, PATROL")
-  check(longest(s, PAT) >= 400 and longest(s, PAT) <= 440, "phase 1 patrols ~420 frames, got " .. longest(s, PAT))
+  check(longest(s, PAT) >= 440 and longest(s, PAT) <= 480, "phase 1 patrols ~460 frames, got " .. longest(s, PAT))
   check(s.miny >= 56 and s.maxy <= 72 and s.maxy - s.miny >= 8, "flies high and bobs, y " .. s.miny .. ".." .. s.maxy)
   check(s.maxx - s.minx >= 100, "patrols left/right, x " .. s.minx .. ".." .. s.maxx)
   local sp = s.patd / s.patn
@@ -176,7 +179,7 @@ co = coroutine.create(function()
 
   -- floor hit during the rest: exactly 1 hp, bar 19 half steps; a hit while hovering high does not reach from the floor
   local hp = strike()
-  check(hp == 13 and bar() == "FFFFFFFFFH", "floor hit = exactly 1 hp, bar=" .. bar() .. " hp=" .. hp)
+  check(hp == 12 and bar() == "FFFFFFFFFH", "floor hit = exactly 1 hp, bar=" .. bar() .. " hp=" .. hp)
   check(maxline <= 8, "sword swing + overlap: max 8 sprites per scanline, got " .. maxline)
   check(wait_until(function() safe(); wr16(PX, 120); wr(PY, FLOOR_Y); return rd(IAIR) == PAT end, 400), "patrolling again")
   hp = rd(EHP)
@@ -189,32 +192,34 @@ co = coroutine.create(function()
   wr(EHP, 10); wr(EFLASH, 0)
   check(strike() == 9 and rd(PHASE) == 2, "hp 9 -> phase 2, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFFFH...", "bar 13 steps at hp 9, bar=" .. bar())
+  check(bar() == "FFFFFFF...", "bar 14 steps at hp 9, bar=" .. bar())
   check(rd(OAM_HEAD + 1) == 0x40 + 6, "phase 2 look (boss tile 6)")
   check(wait_until(function() return ppu(0x3F16) == 0x26 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  s = watch(1100, 120)
+  s = watch(1600, 120)
   sp = s.patd / s.patn
   check(sp > 1.1 and sp < 1.4, "phase 2 patrol ~1.25 px/frame, got " .. sp)
-  check(longest(s, PAT) >= 280 and longest(s, PAT) <= 320, "phase 2 patrols ~300 frames (dives more often), got " .. longest(s, PAT))
+  check(longest(s, PAT) >= 420 and longest(s, PAT) <= 460, "phase 2 patrols ~440 frames, got " .. longest(s, PAT))
   check(s.mxd == 5, "phase 2 dives 5 px/frame, got " .. s.mxd)
   check(shortest_inner(s, TELE) >= 26 and longest(s, TELE) <= 30, "phase 2 telegraph ~28 frames, got " .. longest(s, TELE))
   check(s.volley == 1 and s.spawns >= 2, "phase 2 drops one fireball per rise, volley " .. s.volley .. " spawns " .. s.spawns)
   check(s.line <= 8, "phase 2: sprites per line " .. s.line)
 
-  -- phase 3 at hp <= 7: look, palette, double dive, fireball spread of 3 when rising
-  wr(EHP, 8); wr(EFLASH, 0)
-  check(strike() == 7 and rd(PHASE) == 3, "hp 7 -> phase 3, phase=" .. rd(PHASE))
+  -- phase 3 at hp <= 6: look, palette, double dive (after a miss), fireball spread of 3 when rising
+  wr(EHP, 7); wr(EFLASH, 0)
+  check(strike() == 6 and rd(PHASE) == 3, "hp 6 -> phase 3, phase=" .. rd(PHASE))
   frames(2)
-  check(bar() == "FFFFF.....", "bar half at hp 7, bar=" .. bar())
+  check(bar() == "FFFFF.....", "bar half at hp 6, bar=" .. bar())
   check(rd(OAM_HEAD + 1) == 0x40 + 12, "phase 3 look (boss tile 12)")
   check(wait_until(function() return ppu(0x3F16) == 0x16 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  s = watch(1500, 120)
-  check(has_seq(s, {PAT, TELE, DIVE, REST, RISE, TELE, DIVE, REST, RISE, PAT}), "phase 3: two dives in a row")
+  s = watch(2200, 120, true)
+  check(has_seq(s, {PAT, TELE, DIVE, REST, RISE, TELE, DIVE, REST, RISE, PAT}), "phase 3: two dives in a row after a miss")
   check(s.volley == 3 and s.maxfb == 3, "phase 3 drops a spread of 3, volley " .. s.volley)
   check(s.mxd == 5, "phase 3 dives 5 px/frame, got " .. s.mxd)
   check(s.line <= 8, "phase 3: sprites per line " .. s.line)
+  s = watch(1500, 120)                    -- invulnerable (a dive just hit): no second dive, the first hit's invulnerability would cover it anyway
+  check(has_seq(s, {PAT, TELE, DIVE, REST, RISE, PAT}), "phase 3: a hit (invulnerable) player gets one dive only")
 
   -- victory: hp 1 + floor hit -> dead, fireballs gone, "GOT FIREBALL", overworld, bit 4, ability bit 2, saved
   wr(EHP, 1); wr(EFLASH, 0)

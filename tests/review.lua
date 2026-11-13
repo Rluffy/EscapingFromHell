@@ -14,7 +14,7 @@ local HEARTS, INV, SWORD, PAUSED = 0x30B, 0x30C, 0x30E, 0x317
 local EX, EY, EHP, PHASE, DEAD, INTRO, FBX = 0x310, 0x311, 0x314, 0x318, 0x319, 0x31A, 0x31B
 local ABIL, DASH, VICT, HIDE, PFX, SHIELD, SLOW, TLEN, FTICK = 0x322, 0x323, 0x325, 0x327, 0x329, 0x331, 0x332, 0x330, 0x342
 local SAVE = 0x6000
-local MAXHP = {10, 12, 14, 14, 14, 14, 16, 16, 18, 20}
+local MAXHP = {10, 11, 12, 12, 13, 13, 14, 14, 15, 18}
 
 local co
 local function frames(n) for _ = 1, n do coroutine.yield() end end

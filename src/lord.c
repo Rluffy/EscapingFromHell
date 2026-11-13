@@ -8,9 +8,9 @@
    spd = dive px/frame; wait = idle frames (hit window) after every action; rate = frames invisible (0 = never);
    shots = 1: shockwaves on landing; fspd = fireball and shockwave px/frame. */
 const struct phase lord_ph[3] = {
-    { BT + 0, 0, 100,  0, 0, 2, { 0x06, 0x16, 0x28 } },
-    { BT + 6, 5, 100,  0, 0, 2, { 0x05, 0x15, 0x38 } },
-    { BT + 12, 6,  80, 90, 1, 3, { 0x0F, 0x06, 0x30 } }
+    { BT + 0, 0, 140,  0, 0, 2, { 0x06, 0x16, 0x28 } },
+    { BT + 6, 5, 130,  0, 0, 2, { 0x05, 0x15, 0x38 } },
+    { BT + 12, 6, 100, 90, 1, 3, { 0x0F, 0x06, 0x30 } }
 };
 /* Action cycle per phase: F aimed fireball, P 3-way spread, T teleport, S flying swoop, I invisible teleport (fires while unseen). */
 static const char seq[3][6] = { "FTT", "SPTT", "ISTPT" };

@@ -1,5 +1,7 @@
 -- Full-screen redraws: frames with rendering off (the black screen) per redraw, measured as endFrame samples with the background
--- disabled over the 40 frames after the trigger. Limit MAX = 3 (v1.0 package 1: asm blits in src/ppu.s; before: 10..14).
+-- disabled over the 40 frames after the trigger. Limit MAX = 4 (v1.0 package 1: asm blits in src/ppu.s; before: 10..14). A redraw is 2 or 3 frames; screen_on polls $2002 with the NMI off, and a read
+-- that lands on the exact PPU cycle the vblank flag is set misses that flag (NES quirk), which costs one more frame now and then (a shift of a few cycles in
+-- dungeon_enter flips it), hence 4.
 -- Redraws: menu question (DELETE SAVE) and back, intro start, intro page turn, overworld, overworld teleport, dungeon entry (1: plain,
 -- 4: lava pools, 8: ceiling), leaving a dungeon, ending screen.
 -- Addresses: docs/TECH.md "Debug-Adressen", "Bildaufbau (v1.0)".
@@ -12,7 +14,7 @@ local function wr(a, v) if a >= 0x6000 and a < 0x8000 then emu.write(a - 0x6000,
 local function wr16(a, v) wr(a, v % 256); wr(a + 1, v // 256) end
 local STATE, PX, PY, CUR, DEAD, VICT = 0x302, 0x303, 0x305, 0x30A, 0x319, 0x325
 local SAVE = 0x6000
-local MAX = 3
+local MAX = 4
 
 local co
 local function frames(n) for _ = 1, n do coroutine.yield() end end
