@@ -28,17 +28,19 @@ co = coroutine.create(function()
   hold({start = true}, 3); frames(60)       -- menu: CHEAT, all gates open
   check(rd(STATE) == 2 and rd(BANK) == 10 and rd(0x8000) ~= 0, "overworld: UI bank 10 mapped, cur_bank=" .. rd(BANK))
 
-  -- overworld animation hook: R1 flips between frame A (bank 2) and B (bank 4); tile 255 is the marker
+  -- overworld animation hook: R1 flips between frame A (bank 2) and B (bank 4); the animated lava/lantern/grass tiles differ
   local seen = {}
   for _ = 1, 100 do
     frames(1)
     local b = rd(ANIM)
     check(b == 2 or b == 4, "anim_bank is a frame bank, got " .. b)
     seen[b] = (seen[b] or 0) + 1
-    check(same(0x0FF0, b, 0x7F0), "R1 shows bank " .. b)
+    check(same(0x0800, b, 0) and same(0x0FF0, b, 0x7F0), "R1 shows bank " .. b)
   end
   check(seen[2] and seen[4], "overworld animation toggles between both frames")
-  check(not same(0x0FF0, 4, 0x7F0) or not same(0x0FF0, 2, 0x7F0), "the two frames differ")
+  local diff = 0                             -- bytes that differ between frame A and B in the 2 KB sheet
+  for i = 0, 2047 do if emu.read(2 * 1024 + i, C) ~= emu.read(4 * 1024 + i, C) then diff = diff + 1 end end
+  check(diff > 0, "the two animation frames differ, bytes: " .. diff)
   check(same(0x0000, 0, 0) and same(0x1000, 6, 0), "R0 = background bank 0, R2 = common sprites bank 6")
 
   -- every dungeon maps its boss sheet into R3..R5

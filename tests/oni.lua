@@ -169,7 +169,7 @@ co = coroutine.create(function()
   frames(3)
   check(ppu(0x2000 + 10 * 32 + 10) == 0, "name erased")
   check(ppu(0x3F15) == 0x16, "phase 1 palette")
-  check(ppu(0x3F00) == 0x0F and ppu(0x3F01) == 0x06, "own red/black dungeon palette")
+  check(ppu(0x3F00) == 0x0F and ppu(0x3F01) == 0x04, "own purple/black dungeon palette")
 
   -- phase 1, standing bot (x 48): walks 1 px/frame, stops 32 px in front, attacks after 330 frames idle, hearts <= 3
   local s = watch(1200, true)
@@ -182,7 +182,7 @@ co = coroutine.create(function()
   print("phase 1 states: " .. table.concat(seen, ","))
   check(s.maxwave <= 1 and not s.both, "phase 1: one shockwave at a time, one direction")
   for y in pairs(s.wave_y) do check(y == 183, "shockwave on the floor (8 px above the floor line 192), y " .. y) end
-  for v in pairs(s.wave_v) do check(v == -2, "phase 1 shockwave 2 px/frame toward the player, v " .. v) end
+  for v in pairs(s.wave_v) do check(v == -2 or v == 2, "phase 1 shockwave 2 px/frame toward the player (a charge can leave the oni left of him), v " .. v) end
   check(s.line <= 8, "phase 1: max 8 sprites per scanline, got " .. s.line)
   check(s.tile == 0x40, "phase 1 body tiles")
   local t1 = full(s, STELE)

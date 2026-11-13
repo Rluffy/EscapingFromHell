@@ -1,17 +1,18 @@
-# Overworld 64x15 metatiles. Legend: ',' dark ground  '.' path  '#' rock  '~' lava  'W' brick wall
-# 'R' temple roof  'A'..'J' temple door of dungeon 1..10  'a'..'j' gate in front of door 1..10
+# Overworld 64x15 metatiles. Legend: ',' ground  '.' path  '#' rock  '~' lava  'W' wall  'R' roof
+# 'A'..'J' temple door of dungeon 1..10  'a'..'j' gate in front of door 1..10
+# decor: 'T' dead tree  'L' lantern  'y' grass  'k' skull  'x' bones  'o' eyes in the dark (T, L solid; variants of , . # ~ and wall/roof ends by tools/mapconv.py)
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 W##############################################################W
 W~#~#~#~RRR#~#~#~#~~RRR~#~#~#~~#RRR#~#~#~~#~RRR~#~#~~#~#RRR#~#~W
 W~##~~#~WBW~~##~~#~~WDW~##~~#~~#WFW##~~#~~##WHW#~~#~~##~WJW~~#~W
-W#RRR####b####RRR####d####RRR####f####RRR####h####RRR####j#####W
+W#RRR###LbL###RRR###LdL###RRR###LfL###RRR###LhL###RRR###LjL####W
 W#WAW#~~#.~~#~WCW~~##.~#~~WEW~##~.#~~#WGW##~~.~~##WIW#~~#.~##~~W
-W#~a~#~#~.~~#~#c#~#~#.~#~#~e~#~#~.#~#~#g#~#~~.~#~#~i~#~~#.#~#~#W
+W#LaL#~#~.~~#~LcL~#~#.~#~#LeL#~#~.#~#~LgL~#~~.~#~#LiL#~~#.#~#~#W
 W~~.##~~~.##~~~.#~~~#.#~~~#.~~~##.~~~##.~~###.~~##~.~###~.~##~~W
-W,,.,,,,,.,,,,,.#####.~~~~~.####~.~~~~#.###~~.~~,,,.,,,,,.,,,,,W
-W...............,,,,,.,,~#~.#~##~.~~#~~.,,,,,.,,...............W
-W.......................,,,.,,,,,.,,,,,........................W
-W,,,,,,,,,,,,,,,................................,,,,,,,,,,,,,,,W
-W,~,~,#,#~,~,~,~,,,,,,,,................,,,,,,,,~,#,#~,~,~,~,#,W
-W~#,~,,~,~#,~#,~,,~,~#,~,,,,,,,,,,,,,,,,~,~#,~#,~,,~,~#,~#,~,,~W
+W,,.y,y,,.y,,y,.#####.~~~~~.####~.~~~~#.###~~.~~,,,.yoy,,.,,,,yW
+W...............,,,,,.,y~#~.#~##~.~~#~~.,x,,x.,,...............W
+W.......................y,,.y,,y,.y,,xy........................W
+Wy,Ty,,,,,y,k,,T................................,,y,,,y,,o,T,,,W
+W,~y~,#,#~,~,~,~,,T,,,x,................,y,y,T,,~,#,#~o~,~,~o#,W
+W~#,~,,~,~#,~#k~,,~T~#,~k,,,Tyx,,,,y,yy,~,~#y~#,~,,~,~#,~#k~,,~W
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW

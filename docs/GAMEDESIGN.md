@@ -97,7 +97,14 @@ Ein Speicherplatz, Autosave nach jedem geschafften Dungeon (nur im Normalmodus, 
 
 ## Artstyle
 
-Asiatisch inspirierte Höllen-Tempel (Dächer, Laternen, Torbögen), nächtlich und düster, siehe `DesignIdea1.png` (blau/violett) und `DesignIdea2.webp` (rot/schwarz). Jeder Dungeon eigene Palette. Zuerst Platzhalter-Grafik, später Art-Pass (`PLAN.md`).
+Asiatisch inspirierte Höllen-Tempel (Dächer, Laternen, Torbögen), nächtlich und düster, siehe `DesignIdea1.png` (blau/violett) und `DesignIdea2.webp` (rot/schwarz). Jeder Dungeon eigene Palette. Art-Pass in `PLAN.md` (v0.9).
+
+**Hintergrund-Art-Pass (v0.9 Paket 2, umgesetzt):**
+- **Overworld:** Nacht auf schwarzem Grund. Boden mit blauem Sternenstaub, Kieseln und Rissen, ein mondlichtvioletter Plattenweg, Bergketten mit Schneekappe, glühende Lava (rote Fladen mit orangen Rändern, gelbe Blasen), tote Bäume, Gras, Totenschädel und Knochen, dazu Augen, die im Dunkeln blinzeln. Jeder der 10 Dungeons ist ein **Tempel**: blaues Ziegeldach mit hochgebogener Traufe, rote Säulen und Gitterfenster, dunkler Eingang mit den glühenden Augen des Dämons, davor das **Tor** zwischen zwei Laternen. Gesperrt = rotes Tor mit orange-gelbem **Siegelring**, geschafft = **blauer Bogen** mit Funken.
+- **Idle-Animationen:** Lava blubbert, Laternen flackern, Gras wiegt sich, Augen blinzeln (CHR-Bankwechsel alle 24 Frames, `TECH.md` „Hintergrund-Kunst (v0.9)").
+- **Arena:** Tempelstein: Decken-Balken, Wandfelder, zwei gedimmte Säulen im Hintergrund, Boden mit Fugen, Plattformen mit Endkappen und Ketten. Jeder Dungeon hat einen Steinton passend zum Dämon (Imp braun-orange, Geist blau, Hund grau, Schlange rot, Geflügelter blau, Spiegel türkis, Kröte grün, Spinne violett, Oni magenta, Höllenfürst karmin-gelb); Dungeon 4 mit leuchtenden Lavabecken, Dungeon 8 mit Decke. Kollision unverändert.
+- **Schrift und HP-Balken** sind unverändert lesbar. Offen für den Sprite-Pass: individuelle Tempel-Zeichen pro Dungeon (heute sehen alle 10 Tempel gleich aus, nur die Tür-Zelle bestimmt den Dungeon).
+
 
 ## Audio
 
