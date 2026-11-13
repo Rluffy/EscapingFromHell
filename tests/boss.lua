@@ -91,7 +91,7 @@ co = coroutine.create(function()
   duel(8); frames(1); wr(EX, 112); hold({b = true}, 3); frames(2)
   check(rd(EHP) == 7 and rd(PHASE) == 2 and rd(FX) > 0, "hp 7 -> phase 2 with effect, phase=" .. rd(PHASE))
   check(bar() == "FFFFFFF...", "phase change frame: bar updated too (ceil(7*20/10)=14 steps), bar=" .. bar())
-  check(emu.read(0x3F15, emu.memType.nesPpuMemory) == 0x27, "phase 2 palette applied")
+  check(emu.read(0x3F16, emu.memType.nesPpuMemory) == 0x27, "phase 2 palette applied")
   local ex = rd(EX)
   frames(10)
   check(rd(EX) == ex, "boss frozen during phase change")
@@ -101,7 +101,7 @@ co = coroutine.create(function()
   check(rd(EHP) == 5 and rd(PHASE) == 3, "hp 5 -> phase 3, phase=" .. rd(PHASE))
   check(bar() == "FFFFF.....", "half hp = half bar, bar=" .. bar())
   frames(45)
-  check(emu.read(0x3F15, emu.memType.nesPpuMemory) == 0x16, "phase 3 palette applied")
+  check(emu.read(0x3F16, emu.memType.nesPpuMemory) == 0x16, "phase 3 palette applied")
 
   -- a fireball costs a heart and starts invulnerability
   wr(EX, 224); wr(EY, 0); wr(EFLASH, 255)   -- park the boss away: no contact damage possible

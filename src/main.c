@@ -250,6 +250,8 @@ static void overworld_frame(void)
             col_pending = 1;
         }
     }
+    id = (dx | dy) && (frame_count & 8) ? 32 : 0;      /* walking: second foot frame */
+    oam[1] = id; oam[5] = id + 1; oam[9] = id + 2; oam[13] = id + 3;
     oam[0] = oam[4] = player_y - 1;
     oam[8] = oam[12] = player_y + 7;
     oam[3] = oam[11] = player_x - cam_x;

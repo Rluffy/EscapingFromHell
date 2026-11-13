@@ -392,15 +392,20 @@ static void combat(void)
         hurt(en.x + en.w / 2);
 }
 
+static unsigned char px_prev;          /* player x of the last frame: walking = it changed */
+
 static void draw(void)
 {
     unsigned char x = player_x, y = player_y, f = facing, i;
+    unsigned char pt = !on_ground ? 22 : px_prev != x ? ((frame_count & 8) ? 8 : 18) : 4;     /* hero tiles: jump / walk A, B / stand (common sheet) */
     unsigned char py = (invuln & 4) ? 0xFF : y - 1;       /* blink while invulnerable */
     unsigned char ey = (en.hp && !(en.flash & 2) && !(boss_hide & 2) && !OWN_DRAW) ? en.y - 1 : 0xFF;
     unsigned char t = bs->ph[boss_phase - 1].tile;
 
     bar_sync();
 
+    px_prev = x;
+    for (i = 0; i < 4; ++i) oam[i * 4 + 1] = pt + i;
     oam[0] = oam[4] = py;
     oam[8] = oam[12] = py == 0xFF ? 0xFF : y + 7;
     oam[2] = oam[6] = oam[10] = oam[14] = (f << 6) | (slow ? 3 : 0);   /* webbed: icy palette */         /* bit 6 = horizontal flip */

@@ -7,9 +7,9 @@
 /* tile = first of 6 (16x24); spd = x drift in quarter px/frame; wait = frames solid before it vanishes;
    rate = frames between attacks (0 = none); shots = 1: every second attack is a fireball; fspd = fireball px/frame. */
 const struct phase ghost_ph[3] = {
-    { BT + 0, 2, 250,   0, 0, 1, { 0x30, 0x21, 0x0F } },
-    { BT + 6, 3, 220, 150, 0, 1, { 0x33, 0x23, 0x16 } },
-    { BT + 12, 4, 160, 180, 1, 1, { 0x26, 0x16, 0x28 } }
+    { BT + 0, 2, 250,   0, 0, 1, { 0x22, 0x30, 0x0F } },
+    { BT + 6, 3, 220, 150, 0, 1, { 0x03, 0x33, 0x16 } },
+    { BT + 12, 4, 160, 180, 1, 1, { 0x0F, 0x16, 0x38 } }
 };
 
 /* iair = state. SOLID counts the visible window (ig) and the attack timer (fb_t). */

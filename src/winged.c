@@ -7,9 +7,9 @@
 /* tile = first of 6 (16x24); spd = dive px/frame; wait = telegraph frames; rate = frames of patrol between attacks;
    shots = fireballs dropped while rising (0 = none, 3 = spread); fspd = patrol speed in quarter px/frame. */
 const struct phase winged_ph[3] = {
-    { BT + 0, 4, 30, 420, 0, 3, { 0x24, 0x14, 0x30 } },
-    { BT + 6, 5, 28, 300, 1, 5, { 0x26, 0x16, 0x38 } },
-    { BT + 12, 5, 24, 420, 3, 6, { 0x16, 0x07, 0x28 } }
+    { BT + 0, 4, 30, 420, 0, 3, { 0x04, 0x24, 0x30 } },
+    { BT + 6, 5, 28, 300, 1, 5, { 0x06, 0x26, 0x38 } },
+    { BT + 12, 5, 24, 420, 3, 6, { 0x06, 0x16, 0x30 } }
 };
 
 /* iair = state. fb_t = patrol frames left until the next attack, ai_t = telegraph / rest timer. */
