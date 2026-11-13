@@ -85,7 +85,7 @@ static unsigned char solid(unsigned char id)
     if (id < 16) return (0xE3FCu >> id) & 1;      /* rock, lava, wall, roof variants; ground and path are free */
     if (id < 26) return !is_open(id - 16);        /* gate */
     if (id < 32) return id < 28;                  /* tree, lantern solid; grass, skull, bones, eyes decor */
-    return id == 43;                              /* doors walk-through, lava variant solid */
+    return id > 42;                               /* doors walk-through, lava variant 43 and the roof colours 44..52 solid */
 }
 
 static unsigned char blocked(unsigned int x, unsigned char y)
@@ -99,7 +99,7 @@ static unsigned char blocked(unsigned int x, unsigned char y)
    RAM (ppu.s reads it): gate_meta() sets the gate entries from dungeons_cleared before every full redraw. */
 #define G 16,16,16,16,16,16,16,16,16,16
 #define D 32,32,32,32,32,32,32,32,32,32
-unsigned char cell_meta[44] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, G, 26,27,28,29,30,31, D, 42,43 };
+unsigned char cell_meta[53] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, G, 26,27,28,29,30,31, D, 42,43, 44,45,46,47,48,49,50,51,52 };
 #undef G
 #undef D
 
@@ -171,6 +171,49 @@ static void draw_player(unsigned char walking)
     oam[7] = oam[15] = player_x - cam_x + 8;
 }
 
+/* Overworld demons (docs/TECH.md "Overworld-Figuren (v1.1)"): demon n sits on the roof of its temple (door column 6n-3, 4 sprites,
+   OAM sprites 4..15 = at most 3 figures on screen); a defeated one is a skull (sprite palette 0). Sprite palettes 1..3 are rewritten
+   (dpal -> NMI) when the visible set changes: demon n uses palette ((n - 1) % 3) + 1, so neighbours never share one. Off screen = hidden. */
+#define OW_TILE 0x40                   /* block k of assets/sprites/owdemon.png = tiles 0x40 + 4k (0..9 demons, 10 skull) */
+static const unsigned char ow_pal[30] = {      /* phase-1 palettes of the demons (tools/art/owart.py PAL) */
+    0x0A,0x2A,0x38, 0x22,0x30,0x0F, 0x08,0x37,0x2A, 0x07,0x27,0x30, 0x04,0x24,0x30,
+    0x01,0x21,0x30, 0x09,0x1A,0x26, 0x03,0x13,0x2A, 0x06,0x26,0x38, 0x06,0x16,0x28
+};
+unsigned char dpal[11], dpal_pending;         /* $3F15..$3F1F (sprite palettes 1..3, the gaps mirror the unused background entries) */
+
+static void demon_sprites(void)
+{
+    unsigned char n, k = 4, tile, att, y, s;
+    int sx;
+    unsigned char *o, *d;
+    const unsigned char *p;
+
+    for (n = 1; n <= 10; ++n) {
+        sx = (int)(96 * n - 48) - (int)cam_x;
+        if (sx <= -16 || sx >= 256) continue;
+        if (!cheat && (dungeons_cleared & (1u << (n - 1)))) { tile = OW_TILE + 40; att = 0; }
+        else {
+            tile = OW_TILE + 4 * (n - 1);
+            s = (n - 1) % 3;
+            att = s + 1;
+            p = ow_pal + 3 * (n - 1);
+            d = dpal + 4 * s;
+            if (d[0] != p[0] || d[1] != p[1] || d[2] != p[2]) {
+                d[0] = p[0]; d[1] = p[1]; d[2] = p[2];
+                dpal_pending = 1;
+            }
+        }
+        y = ((n & 1) ? 51 : 19) + (anim_bank == CHR_ANIM_B);   /* sprite y - 1; the 2 animation frames bob the figure by 1 px */
+        o = oam + 4 * k;
+        o[0] = sx >= 0 ? y : 0xFF;                 o[1] = tile;     o[2] = att; o[3] = sx;       /* a column that would wrap is hidden */
+        o[4] = sx >= -8 ? y : 0xFF;                o[5] = tile + 1; o[6] = att; o[7] = sx + 8;
+        o[8] = sx >= 0 ? y + 8 : 0xFF;             o[9] = tile + 2; o[10] = att; o[11] = sx;
+        o[12] = sx >= -8 ? y + 8 : 0xFF;           o[13] = tile + 3; o[14] = att; o[15] = sx + 8;
+        k += 4;
+    }
+    for (; k < 16; ++k) oam[4 * k] = 0xFF;
+}
+
 /* Redraw every visible column with rendering off (entering the overworld, gate changes, teleports). */
 static void redraw_overworld(void)
 {
@@ -179,6 +222,8 @@ static void redraw_overworld(void)
     pair_c = 255;                      /* the gate state may have changed */
     gate_meta();
     set_palette(pal_overworld);
+    boss_chr = CHR_OW;                 /* R3..R5 = the demon sheet (the dungeons put their boss sheet there) */
+    chr_set(3, CHR_OW); chr_set(4, CHR_OW + 1); chr_set(5, CHR_OW + 2);
     update_camera();
     drawn_col = cam_x >> 4;
     last = drawn_col + 16;
@@ -188,6 +233,12 @@ static void redraw_overworld(void)
     }
     drawn_mask = dungeons_cleared;
     draw_player(0);
+    demon_sprites();
+    PPU_CTRL = 0;                      // ppu_flush left +32 per write
+    PPU_ADDR = 0x3F;
+    PPU_ADDR = 0x15;
+    ppu_copy(dpal, 11);                // the demons' sprite palettes before the first picture
+    dpal_pending = 0;
     screen_on(ppu_ctrl);
 }
 
@@ -272,6 +323,7 @@ static void overworld_frame(void)
         }
     }
     draw_player((dx | dy) != 0);
+    demon_sprites();
 }
 
 static void to_overworld(void)

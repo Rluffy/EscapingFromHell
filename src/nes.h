@@ -65,6 +65,7 @@ extern unsigned char boss_chr;               /* $0337 CHR bank in R3 (R4, R5 = +
 extern unsigned char anim_bank;              /* $0338 CHR bank in R1: overworld animation frame (CHR_ANIM_A / CHR_ANIM_B) */
 #define CHR_ANIM_A 2                         /* CHR layout: docs/TECH.md "CHR-Layout" */
 #define CHR_ANIM_B 4
+#define CHR_OW 48                            /* overworld demon sheet (owdemon.png), R3..R5 = 48..50 */
 #define CHR_BOSS(n) (8 + 4 * ((n) - 1))      /* first 1 KB bank of the boss of dungeon n */
 extern unsigned char ui_page, ui_t, menu_conf; /* $033D..$033F intro page / frames left on it, DELETE SAVE confirmation shown */
 extern volatile unsigned int loops;          /* $0340/$0341 main-loop iterations: frame_count delta - loops delta = missed frames (tests/budget.lua) */

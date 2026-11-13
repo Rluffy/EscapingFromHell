@@ -2,7 +2,7 @@
 .import _main, copydata, zerobss
 .import __CSTACK_START__, __CSTACK_SIZE__
 .importzp sp
-.import _frame_count, _cur_bank
+.import _frame_count, _cur_bank, _dpal, _dpal_pending
 .import popa
 .importzp tmp1
 .export _wait_vblank, _ppu_flush, _bank_set, _chr_set, __STARTUP__: absolute = 1
@@ -121,6 +121,24 @@ nmi:
     jsr _ppu_flush
     lda #0
     sta _col_pending
+:   lda _dpal_pending   ; overworld: new sprite palettes 1..3 ($3F15..$3F1F) for the demons in view
+    beq :+
+    lda _ppu_ctrl
+    sta $2000           ; +1 increment (ppu_flush left +32 in $2000)
+    lda $2002
+    lda #$3F
+    sta $2006
+    lda #$15
+    sta $2006
+    ldx #0
+@pal:
+    lda _dpal,x
+    sta $2007
+    inx
+    cpx #11
+    bne @pal
+    lda #0
+    sta _dpal_pending
 :   lda $2002           ; reset the address latch
     lda _ppu_ctrl
     sta $2000

@@ -15,3 +15,4 @@
     .incbin "build/boss08.chr"
     .incbin "build/boss09.chr"
     .incbin "build/boss10.chr"      ; KB 44-47
+    .incbin "build/owdemon.chr"     ; KB 48-51: overworld demon figures + skull (R3..R5 = 48..50 in the overworld, tile ids 0x40..)
