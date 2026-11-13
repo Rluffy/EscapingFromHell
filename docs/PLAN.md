@@ -71,7 +71,7 @@ Entscheidung: Feuerball auf Hoch + B (B bleibt Schwert, Select bleibt Dash). Tes
 ## Arbeitspakete v0.6
 
 1. Dämon 6 Spiegeldämon (Dungeon 6, Bank 5): teleportiert, erzeugt Scheinkopien (nur das Original ist verwundbar, erkennbar an einem Detail), 3 Phasen, ca. 14 HP. Test-Dummy wandert nach Dungeon 8. Sonnet. **Erledigt** (`src/mirror.c` in Bank 5, `tests/mirror.lua`, Screenshots `v0.6-mirror-phase1.png`, `v0.6-mirror-phase3.png`; Test-Dummy-Tests jetzt in Dungeon 8; Linker-Bereiche `BANK6..BANK9` angelegt).
-2. Dämon 7 Riesenkröte (Dungeon 7, Bank 6): sehr groß (Sprites + ggf. Hintergrund-Kacheln), schwere Sprünge, Zunge, Schleim, 3 Phasen, ca. 16 HP. Gibt **Schild** (Steuerung: **Runter halten** am Boden: blockt Projektile und Kontakt von vorn, Spieler steht still). Sonnet.
+2. Dämon 7 Riesenkröte (Dungeon 7, Bank 6): sehr groß (Sprites + ggf. Hintergrund-Kacheln), schwere Sprünge, Zunge, Schleim, 3 Phasen, ca. 16 HP. Gibt **Schild** (Steuerung: **Runter halten** am Boden: blockt Projektile und Kontakt von vorn, Spieler steht still). Sonnet. **Erledigt** (`src/toad.c` in Bank 6, Schild in `src/dungeon.c`, `tests/toad.lua`, `tests/shield.lua`, Screenshots `v0.6-toad-phase1.png`, `v0.6-toad-phase3.png`, `v0.6-shield.png`; Debug-Block auf `$0300-$033F` erweitert).
 3. Tests, Screenshots, Docs, Bericht. Orchestrator.
 
 Pakete für v0.7 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.

@@ -47,5 +47,7 @@ void winged_ai(void);
 extern const struct phase winged_ph[3];
 void mirror_ai(void);
 extern const struct phase mirror_ph[3];
+void toad_ai(void);
+extern const struct phase toad_ph[3];
 
 #endif

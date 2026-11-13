@@ -10,7 +10,7 @@
 #define SWORD_CD   14
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
-#define NBOSS      6                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define NBOSS      7                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -29,7 +29,7 @@ static const unsigned char plat_y[3] = { 152, 152, 112 };
 /* Per-dungeon BG palette 0 (backdrop, floor, mortar, edge); sprite palettes are shared. */
 static const unsigned char dpal[10][4] = {
     {0x02,0x11,0x01,0x21}, {0x0F,0x16,0x06,0x26}, {0x01,0x14,0x04,0x24}, {0x06,0x16,0x07,0x27},
-    {0x08,0x18,0x07,0x28}, {0x03,0x13,0x02,0x23}, {0x0C,0x1C,0x0B,0x2C}, {0x09,0x19,0x0A,0x29},
+    {0x08,0x18,0x07,0x28}, {0x03,0x13,0x02,0x23}, {0x0F,0x14,0x04,0x24}, {0x09,0x19,0x0A,0x29},
     {0x05,0x15,0x04,0x25}, {0x0F,0x00,0x2D,0x10}
 };
 /* Sprite palettes 0..3 without the backdrop: player, enemy, heart + sword, player fireball. */
@@ -43,12 +43,13 @@ static const struct boss bosses[NBOSS] = {
     { "BONE HOUND", 14, 2, 24, 16, FLOOR_Y - 16, hound_ai, hound_ph },
     { "LAVA SNAKE", 14, 3, 16, 16, FLOOR_Y - 16, snake_ai, snake_ph },
     { "WINGED DEMON", 14, 4, 16, 24, 56, winged_ai, winged_ph },
-    { "MIRROR DEMON", 14, 5, 16, 24, FLOOR_Y - 24, mirror_ai, mirror_ph }
+    { "MIRROR DEMON", 14, 5, 16, 24, FLOOR_Y - 24, mirror_ai, mirror_ph },
+    { "GIANT TOAD", 16, 6, 32, 24, FLOOR_Y - 24, toad_ai, toad_ph }
 };
 const struct boss *bs;                 /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
 static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
-static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP", 0, "GOT FIREBALL" };   /* Dash, Double jump, Fireball act so far */
+static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP", 0, "GOT FIREBALL", 0, "GOT SHIELD" };   /* Dash, Double jump, Fireball, Shield act so far */
 /* BG tile of the letter A..Z (0 = not in the font sheet). */
 static const unsigned char ftile[26] = {
     37, 43, 33, 26, 30, 48, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 47, 0, 36, 0
@@ -107,7 +108,7 @@ static void clear_fb(void)
 static void arena_reset(void)
 {
     hearts = HEARTS_MAX;
-    invuln = sword_t = sword_cd = kb_t = gtick = paused = air_jumped = pf_x = pf_cd = 0;
+    invuln = sword_t = sword_cd = kb_t = gtick = paused = air_jumped = pf_x = pf_cd = shield = 0;
     vy = 0;
     on_ground = 1;
     facing = 0;
@@ -213,7 +214,6 @@ void dungeon_enter(void)
         oam[O_FB + i * 4 + 1] = 28;
         oam[O_FB + i * 4 + 2] = 2;
     }
-    for (i = 0; i < 2; ++i) oam[O_SWORD + i * 4 + 1] = 12 + i;
     oam[O_PF + 1] = 29;
     for (i = 0; i < 3; ++i) {
         oam[O_HEART + i * 4]     = 15;
@@ -246,13 +246,15 @@ static void update_player(void)
         dash_t = DASH_LEN; dash_cd = DASH_CD;
         if (invuln < DASH_LEN) invuln = DASH_LEN;       /* invulnerable (and blinking) while dashing */
     }
+    shield = (abilities & AB_SHIELD) && (pad & PAD_DOWN) && on_ground && !dash_t;   /* Down on the ground: stand still behind the shield */
+    if (shield) sword_t = 0;
     if (dash_t) {                       /* gravity keeps working: in the air the dash is a flat arc */
         --dash_t;
         dx = facing ? -4 : 4;
     } else if (kb_t) {
         --kb_t;
         dx = kb_dir;
-    } else {
+    } else if (!shield) {
         if (pad & PAD_RIGHT) { dx = 2;  facing = 0; }
         if (pad & PAD_LEFT)  { dx = -2; facing = 1; }
     }
@@ -282,7 +284,7 @@ static void update_player(void)
     }
     player_y = ny;
 
-    if (PRESSED(PAD_B)) {
+    if (PRESSED(PAD_B) && !shield) {
         if ((pad & PAD_UP) && (abilities & AB_FIRE)) {      /* Up + B with the ability: fireball instead of a sword swing */
             if (!pf_x && !pf_cd) {
                 pf_x = facing ? player_x - 4 : player_x + 12;
@@ -301,7 +303,7 @@ static void pfire(void)
     if (pf_x <= WALL || pf_x >= 256 - WALL - 8) pf_x = 0;     /* gone at the wall */
 }
 
-void hurt(unsigned char sx)     /* player hit by something at x = sx */
+static void hit(unsigned char sx)     /* player hit by something at x = sx */
 {
     if (--hearts == 0) { arena_reset(); return; }
     invuln = INVULN;
@@ -309,6 +311,13 @@ void hurt(unsigned char sx)     /* player hit by something at x = sx */
     kb_dir = (player_x + 8 < sx) ? -3 : 3;
     vy = -3;
     gtick = 0;
+}
+
+/* Contact (bosses, body segments, tongue): the shield stops what touches it from the facing side and pushes the player back. */
+void hurt(unsigned char sx)
+{
+    if (shield && ((sx >= player_x + 8) ^ facing)) { kb_t = 4; kb_dir = facing ? 3 : -3; return; }
+    hit(sx);
 }
 
 static void fireballs(void)
@@ -320,8 +329,10 @@ static void fireballs(void)
         if (frame_count & 1) fb_y[k] += fb_vy[k];       /* vertical at half speed: shallow spread */
         if (fb_x[k] <= WALL || fb_x[k] >= 256 - WALL - 8 || fb_y[k] < 8 || fb_y[k] + 8 >= FLOOR_Y)
             fb_x[k] = 0;
+        else if (shield && overlap(facing ? player_x - 4 : player_x + 12, player_y, 8, 16, fb_x[k], fb_y[k], 8, 8))
+            fb_x[k] = 0;                                    /* the shield sprite catches it */
         else if (!invuln && overlap(player_x + 3, player_y + 2, 10, 14, fb_x[k], fb_y[k], 8, 8)) {
-            hurt(fb_x[k] + 4);
+            hit(fb_x[k] + 4);
             fb_x[k] = 0;
         }
     }
@@ -332,7 +343,7 @@ static void update_enemy(void)
     if (en.flash) --en.flash;
     if (!en.hp) return;
     if (bs) {
-        if (boss_fx) --boss_fx;
+        if (boss_fx) { --boss_fx; if (bs->w > 24) bs->ai(); }      /* the toad draws its own sprites: also while frozen */
         else { bs->ai(); fireballs(); }
         return;
     }
@@ -365,7 +376,7 @@ static void draw(void)
 {
     unsigned char x = player_x, y = player_y, f = facing, i;
     unsigned char py = (invuln & 4) ? 0xFF : y - 1;       /* blink while invulnerable */
-    unsigned char ey = (en.hp && !(en.flash & 2) && !(boss_hide & 2)) ? en.y - 1 : 0xFF;
+    unsigned char ey = (en.hp && !(en.flash & 2) && !(boss_hide & 2) && en.w < 32) ? en.y - 1 : 0xFF;
     unsigned char t = bs ? bs->ph[boss_phase - 1].tile : 8;
 
     bar_sync();
@@ -380,6 +391,13 @@ static void draw(void)
     oam[O_SWORD + 2] = oam[O_SWORD + 6] = 2 | (f << 6);
     oam[O_SWORD + 3] = x + (f ? -4 : 12);
     oam[O_SWORD + 7] = x + (f ? -12 : 20);
+    oam[O_SWORD + 1] = 12; oam[O_SWORD + 5] = 13;
+    if (shield) {                                         /* the sword's two sprites become a vertical shield in front */
+        oam[O_SWORD] = y - 1; oam[O_SWORD + 4] = y + 7;
+        oam[O_SWORD + 1] = 30; oam[O_SWORD + 5] = 31;
+        oam[O_SWORD + 2] = oam[O_SWORD + 6] = 3 | (f << 6);
+        oam[O_SWORD + 3] = oam[O_SWORD + 7] = x + (f ? -4 : 12);
+    }
 
     oam[O_ENEMY] = oam[O_ENEMY + 4] = ey;
     oam[O_ENEMY + 8] = oam[O_ENEMY + 12] = ey == 0xFF ? 0xFF : en.y + 7;
@@ -432,12 +450,13 @@ unsigned char dungeon_frame(void)
     if (bs) pal_sync();                 /* PPU writes first: still in vblank */
     if (intro) {
         if (!--intro) text_prep(bs->name, 0x2140, 0);
+        if (bs->w > 24) bs->ai();       /* the toad draws its own sprites: also in the intro */
     } else if (!paused) {
         update_player();
         pfire();
         update_enemy();
         combat();
-        if (!en.hp) { victory = VICTORY_LEN; text_prep("VICTORY", 0x2140, 1); }
+        if (!en.hp) { victory = VICTORY_LEN; scroll_x = 0; text_prep("VICTORY", 0x2140, 1); }
     }
     draw();
     return 0;
