@@ -139,7 +139,7 @@ local function wait_web(max)
 end
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld")
   wr16(0x308, 127)                          -- dungeons 1..7 cleared: gate 8 open
   wr16(PX, 720); wr(PY, 48)                 -- door of dungeon 8 (col 45, row 3)

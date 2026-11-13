@@ -9,6 +9,9 @@
 #define PPU_DATA   (*(volatile unsigned char*)0x2007)
 #define JOY1       (*(volatile unsigned char*)0x4016)
 
+#define ST_MENU 1                           /* game_state values the menu/ending code sets (menu.c, main.c) */
+#define ST_END  4
+
 #define PAD_A      0x80
 #define PAD_B      0x40
 #define PAD_SELECT 0x20
@@ -20,7 +23,7 @@
 
 /* Test-visible RAM, fixed at $0300 (see src/debug.s, cfg/mmc3.cfg). */
 extern volatile unsigned int  frame_count;  /* $0300/$0301, +1 per NMI */
-extern volatile unsigned char game_state;   /* $0302, 0 = boot, 2 = overworld, 3 = dungeon arena */
+extern volatile unsigned char game_state;   /* $0302, 0 = boot, 1 = start menu, 2 = overworld, 3 = dungeon arena, 4 = ending */
 extern unsigned int  player_x;              /* $0303/$0304 world x (top-left of the 16x16 sprite) */
 extern unsigned char player_y;              /* $0305 world y */
 extern unsigned int  cam_x;                 /* $0306/$0307 camera x, 0..768 */
@@ -47,7 +50,17 @@ extern unsigned char boss_hide;              /* $0327 bit 0 = boss untouchable (
 #define AB_WAVE 16
 extern unsigned char shield;                 /* $0331 1 = shield raised (Down held on the ground, with AB_SHIELD) */
 extern unsigned char slow;                   /* $0332 frames the player is webbed (walks 1 px/frame, no dash) */
+extern unsigned char ending_seen;            /* $0333 1 = the ending was seen (saved: bit 7 of $6004) */
+extern unsigned char cheat;                  /* $0334 1 = cheat mode: all gates open, no heart loss, no saving */
+extern unsigned char menu_sel;               /* $0335 start menu cursor (0 NORMAL, 1 CHEAT) */
+extern unsigned char end_t;                  /* $0336 ending screen frames left */
 extern unsigned char pf_x, pf_y, pf_cd;      /* $0329..$032B player fireball: x (0 = none), y, cooldown frames left */
+
+extern const unsigned char ftile[26];       /* dungeon.c: BG tile of the letter A..Z (0 = none) */
+void menu_enter(void);                      /* menu.c: start menu / ending screen (rendering off, then on) */
+unsigned char menu_frame(void);             /* 1 = entry chosen */
+void end_enter(void);
+unsigned char end_frame(void);              /* 1 = back to the overworld */
 
 /* Shared with dungeon.c (main.c). */
 extern unsigned char pad, pad_prev;

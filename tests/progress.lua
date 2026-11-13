@@ -37,7 +37,7 @@ local function gate2_tile()                 -- gate of dungeon 2: col 9, row 3 -
   return ppu(0x2000 + 8 * 32 + 18)
 end
 local function boot()                        -- reset the console, PRG-RAM stays
-  emu.reset(); frames(60)
+  emu.reset(); frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld after reset")
 end
 

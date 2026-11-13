@@ -42,7 +42,7 @@ end
 local function shoot() hold({up = true, b = true}, 3) end
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld")
   check(rd(ABIL) == 0, "new game: no abilities")
 

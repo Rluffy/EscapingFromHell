@@ -144,7 +144,7 @@ local function bot(n)
 end
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld")
   wr16(0x308, 31)                         -- dungeons 1-5 cleared: gate 6 open
   wr16(PX, 528); wr(PY, 48)               -- door of dungeon 6

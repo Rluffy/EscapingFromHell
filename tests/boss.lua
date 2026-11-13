@@ -38,7 +38,7 @@ end
 local function swing() hold({b = true}, 3); frames(25) end   -- 25: cooldown over, boss hit-flash over
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld")
   check(rd(BANK) == 13 and rd(0x8000) == 0, "no boss bank mapped in the overworld")
   wr16(PX, 48); wr(PY, 80)                -- door of dungeon 1

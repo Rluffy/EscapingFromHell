@@ -24,7 +24,7 @@ unsigned char pad, pad_prev;
 static unsigned char drawn_col;          /* leftmost streamed metatile column; 255 = nothing drawn */
 static unsigned int  drawn_mask;         /* dungeons_cleared the gate tiles were drawn with */
 
-/* Autosave in battery PRG-RAM, layout in docs/TECH.md "Speicherstand": 'E','H', version, cleared lo/hi, abilities, sum of bytes 0..5. */
+/* Autosave in battery PRG-RAM, layout in docs/TECH.md "Speicherstand": 'E','H', version, cleared lo/hi (bit 7 of hi = ending seen), abilities, sum of bytes 0..5. */
 #define SAVE ((volatile unsigned char *)0x6000)
 #define SAVE_VER 1
 
@@ -38,18 +38,20 @@ static unsigned char save_sum(void)
 /* The checksum goes in last: a write cut short by a power loss reads as "no save". */
 void save_game(void)
 {
+    if (cheat) return;                 /* cheat mode never touches the save */
     SAVE[0] = 'E'; SAVE[1] = 'H'; SAVE[2] = SAVE_VER;
-    SAVE[3] = dungeons_cleared; SAVE[4] = dungeons_cleared >> 8;
+    SAVE[3] = dungeons_cleared; SAVE[4] = (dungeons_cleared >> 8) | (ending_seen << 7);
     SAVE[5] = abilities;
     SAVE[6] = save_sum();
 }
 
-/* No title menu yet (v0.9): a valid save is loaded at boot, anything else is a new game. */
+/* NORMAL: a valid save is loaded, anything else is a new game. */
 static void load_game(void)
 {
     if (SAVE[0] == 'E' && SAVE[1] == 'H' && SAVE[2] == SAVE_VER && SAVE[6] == save_sum()) {
         dungeons_cleared = (SAVE[3] | ((unsigned int)SAVE[4] << 8)) & 0x3FF;
         abilities = SAVE[5];
+        ending_seen = SAVE[4] >> 7;
     }
 }
 
@@ -229,24 +231,40 @@ static void overworld_frame(void)
     oam[7] = oam[15] = player_x - cam_x + 8;
 }
 
+/* Menu entry menu_sel chosen (0 NORMAL, 1 CHEAT). */
+static void start_game(void)
+{
+    cheat = menu_sel == 1;
+    if (cheat) dungeons_cleared = 0x3FF;      /* every gate open; save_game() is disabled */
+    else load_game();
+    game_state = ST_OVERWORLD;
+    init_player_oam();
+    redraw_overworld();
+}
+
 void main(void)
 {
     init_player_oam();
     player_x = 32;
     player_y = 144;
-    game_state = ST_OVERWORLD;
-    load_game();
     ppu_ctrl = 0x88;
     PPU_CTRL = 0x88;                   /* NMI on, so screen_off can wait for vblank */
-    redraw_overworld();
+    menu_enter();
 
     for (;;) {
         wait_vblank();
         read_pad();
         if (game_state == ST_OVERWORLD) {
             overworld_frame();
-        } else if (dungeon_frame()) {
-            leave_dungeon();
+        } else if (game_state == ST_DUNGEON) {
+            if (dungeon_frame()) {
+                if (cur_dungeon == 10 && boss_dead) end_enter();    /* victory over the last demon, not giving up */
+                else leave_dungeon();
+            }
+        } else if (game_state == ST_END) {
+            if (end_frame()) leave_dungeon();
+        } else if (menu_frame()) {
+            start_game();
         }
     }
 }

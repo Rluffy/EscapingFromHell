@@ -28,7 +28,7 @@ local function gate_tile(n)                -- background tile drawn at the gate 
 end
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "(a) boot reaches overworld, state=" .. rd(STATE))
 
   local x0, c0 = rd16(PX), rd16(CAM)

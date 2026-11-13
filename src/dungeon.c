@@ -54,7 +54,7 @@ const struct boss *bs;                 /* the demon of the current dungeon */
 static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
 static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP", 0, "GOT FIREBALL", 0, "GOT SHIELD", 0, "GOT SWORD WAVE" };   /* Dash, Double jump, Fireball, Shield act so far */
 /* BG tile of the letter A..Z (0 = not in the font sheet). */
-static const unsigned char ftile[26] = {
+const unsigned char ftile[26] = {
     37, 43, 33, 26, 30, 48, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 49, 35, 38, 34, 27, 32, 47, 0, 36, 0
 };
 static const unsigned char white = 0x30;
@@ -317,7 +317,7 @@ static void pfire(void)
 
 static void hit(unsigned char sx)     /* player hit by something at x = sx */
 {
-    if (--hearts == 0) { arena_reset(); return; }
+    if (!cheat && --hearts == 0) { arena_reset(); return; }       /* cheat: hearts stay 3, knockback and flash remain */
     invuln = INVULN;
     kb_t = KNOCK;
     kb_dir = (player_x + 8 < sx) ? -3 : 3;
@@ -437,6 +437,7 @@ static void win(void)
 {
     dungeons_cleared |= 1u << (cur_dungeon - 1);
     abilities |= grant[cur_dungeon - 1];
+    ending_seen |= cur_dungeon == 10;
     save_game();
 }
 

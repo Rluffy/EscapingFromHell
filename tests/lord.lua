@@ -145,7 +145,7 @@ local function touch()
 end
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld")
   wr16(0x308, 511)                          -- dungeons 1..9 cleared: gate 10 open
   wr16(PX, 912); wr(PY, 48)                 -- door of dungeon 10 (col 57, row 3)
@@ -363,12 +363,13 @@ co = coroutine.create(function()
   check(rd(OAM_E) == 0xFF and nfb() == 0, "dead: no default sprites, no fireballs")
   frames(3)
   for c = 9, 22 do check(ppu(0x2000 + 13 * 32 + c) == 0, "no 'GOT' text: the last demon gives no ability") end
-  check(wait_until(function() return rd(STATE) == 2 end, 300), "victory returns to the overworld")
+  check(wait_until(function() return rd(STATE) == 4 end, 300), "victory of dungeon 10 shows the ending screen")
+  check(wait_until(function() return rd(STATE) == 2 end, 300), "the ending screen returns to the overworld")
   check(rd16(0x308) == 1023, "all 10 dungeons cleared, mask=" .. rd16(0x308))
   check(rd(ABIL) == 0, "no ability granted, abilities=" .. rd(ABIL))
   check(rd16(PX) == 912 and rd(PY) == 48 and rd(CUR) == 0, "back at entrance 10")
-  check(rd(0x6000) == 0x45 and rd(0x6001) == 0x48 and rd(0x6002) == 1 and rd(0x6003) == 255 and rd(0x6004) == 3
-        and rd(0x6005) == 0 and rd(0x6006) == 0x90, "autosave valid")
+  check(rd(0x6000) == 0x45 and rd(0x6001) == 0x48 and rd(0x6002) == 1 and rd(0x6003) == 255 and rd(0x6004) == 0x83
+        and rd(0x6005) == 0 and rd(0x6006) == 0x10, "autosave valid")
 
   print("lord test OK (hearts lost by a standing bot per phase: " .. lost1 .. " / " .. lost2 .. " / " .. lost3 ..
         ", peak sprites per scanline: " .. peak .. ", worst case: " .. worst .. ")")

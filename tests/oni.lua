@@ -144,7 +144,7 @@ local function bait(ox, hp0)
 end
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld")
   wr16(0x308, 255)                          -- dungeons 1..8 cleared: gate 9 open
   wr16(PX, 816); wr(PY, 80)                 -- door of dungeon 9 (col 51, row 5)

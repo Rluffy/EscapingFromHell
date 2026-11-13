@@ -126,7 +126,7 @@ local function order_ok(s)       -- ... HIDE, TELE, RISE, UP, SINK, HIDE ... som
 end
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld")
   wr16(0x308, 7)                          -- dungeons 1-3 cleared: gate 4 open
   wr16(PX, 336); wr(PY, 48)               -- door of dungeon 4

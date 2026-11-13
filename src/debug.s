@@ -6,6 +6,7 @@
 .export _boss_phase, _boss_dead, _intro, _fb_x, _fb_y, _boss_fx
 .export _abilities, _dash_t, _dash_cd, _victory, _cur_bank, _boss_hide, _iair
 .export _pf_x, _pf_y, _pf_cd, _mcx, _mcur, _tlen, _shield, _slow
+.export _ending_seen, _cheat, _menu_sel, _end_t
 
 .segment "DEBUG"
 _frame_count:      .res 2   ; $0300
@@ -44,3 +45,7 @@ _mcur:           .res 1   ; $032F Mirror demon: spot of the original (0 floor, 1
 _tlen:           .res 1   ; $0330 Giant toad: tongue segments out (0..3)
 _shield:         .res 1   ; $0331 dungeon: 1 = the player holds the shield up (Down on the ground, with the ability)
 _slow:           .res 1   ; $0332 dungeon: frames the player is webbed (Spider queen): half walk speed, no dash
+_ending_seen:     .res 1   ; $0333 1 = the ending was seen (saved as bit 7 of $6004)
+_cheat:           .res 1   ; $0334 1 = cheat mode (all gates open, no heart loss, no saving)
+_menu_sel:        .res 1   ; $0335 start menu cursor (0 NORMAL, 1 CHEAT)
+_end_t:           .res 1   ; $0336 ending screen frames left

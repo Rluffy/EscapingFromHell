@@ -1,4 +1,6 @@
 local frames = 0
+-- Boot shows the start menu (state 1); Start picks NORMAL.
+emu.addEventCallback(function() emu.setInput({start = frames >= 10 and frames < 13}, 0, 0) end, emu.eventType.inputPolled)
 emu.addEventCallback(function()
   frames = frames + 1
   if frames < 120 then return end

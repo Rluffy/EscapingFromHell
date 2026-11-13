@@ -40,7 +40,7 @@ local function face(dir, px)                    -- 0 right, 1 left
 end
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld")
   wr16(MASK, 0); wr16(PX, 48); wr(PY, 80); frames(30)
   hold({a = true}, 3); frames(20)

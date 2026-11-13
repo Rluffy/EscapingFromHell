@@ -127,7 +127,7 @@ local function until_state(st, max)
 end
 
 co = coroutine.create(function()
-  frames(60)
+  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
   check(rd(STATE) == 2, "boot reaches overworld")
   wr16(0x308, 63)                           -- dungeons 1..6 cleared: gate 7 open
   wr16(PX, 624); wr(PY, 80)                 -- door of dungeon 7

@@ -84,14 +84,16 @@ Jeder Dungeon hat eine eigene Farbpalette. Namen und Details dürfen später ge�
 
 ## Menüs, Story, Ende
 
-- Titel: „New Game" und „Continue" (nur wenn Speicherstand da), Spielstand löschen im Titelmenü.
-- Kurzes Intro (2 bis 3 Bildschirme Text): Du musst aus der Hölle fliehen.
-- Nach Dämon 10: Endbild „You escaped". Danach frei weiterspielbar.
+- **Startmenü (seit v0.8, Platzhalter bis v0.9):** beim Einschalten Text „ESCAPING FROM HELL" und zwei Einträge **NORMAL** und **CHEAT**. Cursor (Herz) mit Hoch/Runter oder Select, bestätigen mit A oder Start. v0.9 ergänzt „CONTINUE" und „DELETE SAVE" (Eintragstabelle in `src/menu.c`, `TECH.md` „Startmenü und Ende (v0.8)").
+  - **NORMAL:** wie bisher: gültiger Speicherstand wird geladen, sonst neues Spiel (nur Tor 1 offen). Autosave nach jedem Sieg.
+  - **CHEAT (jeden Level frei spielen):** alle 10 Dungeon-Tore sind von Anfang an offen. Der Spieler **verliert nie Herzen**: Treffer geben weiter Rückstoß und Blinken (Unverwundbarkeit), die Herzen bleiben aber bei 3 (so bleibt sichtbar, dass man getroffen wurde, und der Kampf startet nie neu). Dadurch wirkt die Schwertwelle (verlangt volle Herzen) im Cheat immer. **Nichts wird je gespeichert**, der normale Spielstand bleibt unberührt. Fähigkeiten gelten wie im Normalmodus: Sie kommen durch Besiegen der Bosse und leben nur im RAM der Cheat-Sitzung (kein Dungeon gibt sie vorab). Ein Zurück ins Menü gibt es nur per Reset. Kein Marker außer dem Menü selbst.
+- Kurzes Intro (2 bis 3 Bildschirme Text): Du musst aus der Hölle fliehen (v0.9).
+- **Ende (seit v0.8, Platzhalter bis v0.9):** nach dem Sieg über Dämon 10 (Siegbildschirm „VICTORY") erscheint ein Endbild „YOU ESCAPED" / „PRESS START". Es endet nach 4 s von selbst oder mit Start (ab 1 s). Danach steht der Spieler an Tür 10 und kann frei weiterspielen. Im Normalmodus wird ein End-Flag im Speicherstand gesetzt; im Cheat-Modus erscheint das Endbild auch, es wird aber nichts gespeichert. Wer Dungeon 10 wiederholt, sieht das Endbild erneut. Aufgeben (Start, Select) in Dungeon 10 zeigt kein Endbild.
 - Der Held hat keinen Namen und keine Dialoge. Spieltexte englisch.
 
 ## Speichern
 
-Ein Speicherplatz, Autosave nach jedem geschafften Dungeon. Format: `TECH.md`.
+Ein Speicherplatz, Autosave nach jedem geschafften Dungeon (nur im Normalmodus, nie im Cheat). Das End-Flag („Ende gesehen") steht im selben Speicherstand. Format: `TECH.md`.
 
 ## Artstyle
 
