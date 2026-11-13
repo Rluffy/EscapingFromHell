@@ -6,6 +6,7 @@
 #define FLOOR_Y 192                    /* top of the floor = feet position of a standing player */
 #define WALL    16                     /* wall width in px */
 #define FB_MAX  3
+#define WEB_TILE 187                   /* fireball sprite tile of a web ball: slows the player instead of costing a heart */
 
 struct phase {
     unsigned char tile;                /* first of 4 sprite tiles (TL, TR, BL, BR) */
@@ -49,5 +50,7 @@ void mirror_ai(void);
 extern const struct phase mirror_ph[3];
 void toad_ai(void);
 extern const struct phase toad_ph[3];
+void spider_ai(void);
+extern const struct phase spider_ph[3];
 
 #endif

@@ -10,7 +10,7 @@
 #define SWORD_CD   14
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
-#define NBOSS      7                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define NBOSS      8                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -20,6 +20,7 @@
 #define BAR_N      10
 #define FIRE_CD    40                  /* player fireball cooldown (Up + B) */
 #define FIRE_VX    3                   /* player fireball px/frame */
+#define SLOW_T     90                  /* frames a web slows the player */
 #define BOSS_KNOCK 16                  /* px the boss is pushed away from the player by a sword hit */
 
 /* One-way platforms, 48 px wide (6 tiles); x and y are multiples of 8. */
@@ -44,7 +45,8 @@ static const struct boss bosses[NBOSS] = {
     { "LAVA SNAKE", 14, 3, 16, 16, FLOOR_Y - 16, snake_ai, snake_ph },
     { "WINGED DEMON", 14, 4, 16, 24, 56, winged_ai, winged_ph },
     { "MIRROR DEMON", 14, 5, 16, 24, FLOOR_Y - 24, mirror_ai, mirror_ph },
-    { "GIANT TOAD", 16, 6, 32, 24, FLOOR_Y - 24, toad_ai, toad_ph }
+    { "GIANT TOAD", 16, 6, 32, 24, FLOOR_Y - 24, toad_ai, toad_ph },
+    { "SPIDER QUEEN", 16, 7, 24, 16, 32, spider_ai, spider_ph }
 };
 const struct boss *bs;                 /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
@@ -52,7 +54,7 @@ static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
 static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP", 0, "GOT FIREBALL", 0, "GOT SHIELD" };   /* Dash, Double jump, Fireball, Shield act so far */
 /* BG tile of the letter A..Z (0 = not in the font sheet). */
 static const unsigned char ftile[26] = {
-    37, 43, 33, 26, 30, 48, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 0, 35, 38, 34, 27, 32, 47, 0, 36, 0
+    37, 43, 33, 26, 30, 48, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 49, 35, 38, 34, 27, 32, 47, 0, 36, 0
 };
 static const unsigned char white = 0x30;
 static unsigned char hp_max, bar_hp;   /* max hp of the enemy; hp the bar shows (255 = redraw) */
@@ -82,6 +84,7 @@ static unsigned char arena_tile(unsigned char r, unsigned char c)
 {
     unsigned char i, c0;
     if (r == 24 && cur_dungeon == 4 && (c < 6 || c >= 26)) return 3;    /* dungeon 4: lava pools at both walls (decoration) */
+    if (r == 3 && cur_dungeon == 8 && c > 1 && c < 30) return 10;       /* dungeon 8: a ceiling for the spider queen */
     if (r >= 24) return r == 24 ? 11 : 10;
     if (c < 2 || c >= 30) return 10;
     if (r != 14 && r != 19) return 0;      /* platform rows only: keeps the redraw short */
@@ -108,7 +111,7 @@ static void clear_fb(void)
 static void arena_reset(void)
 {
     hearts = HEARTS_MAX;
-    invuln = sword_t = sword_cd = kb_t = gtick = paused = air_jumped = pf_x = pf_cd = shield = 0;
+    invuln = sword_t = sword_cd = kb_t = gtick = paused = air_jumped = pf_x = pf_cd = shield = slow = 0;
     vy = 0;
     on_ground = 1;
     facing = 0;
@@ -241,8 +244,9 @@ static void update_player(void)
     if (sword_t) --sword_t;
     if (dash_cd) --dash_cd;
     if (pf_cd) --pf_cd;
+    if (slow) --slow;
 
-    if (PRESSED(PAD_SELECT) && (abilities & AB_DASH) && !dash_cd && !kb_t) {
+    if (PRESSED(PAD_SELECT) && (abilities & AB_DASH) && !dash_cd && !kb_t && !slow) {
         dash_t = DASH_LEN; dash_cd = DASH_CD;
         if (invuln < DASH_LEN) invuln = DASH_LEN;       /* invulnerable (and blinking) while dashing */
     }
@@ -255,8 +259,8 @@ static void update_player(void)
         --kb_t;
         dx = kb_dir;
     } else if (!shield) {
-        if (pad & PAD_RIGHT) { dx = 2;  facing = 0; }
-        if (pad & PAD_LEFT)  { dx = -2; facing = 1; }
+        if (pad & PAD_RIGHT) { dx = slow ? 1 : 2;   facing = 0; }      /* webbed: half speed */
+        if (pad & PAD_LEFT)  { dx = slow ? -1 : -2; facing = 1; }
     }
     nx = (int)player_x + dx;
     if (nx < WALL) nx = WALL;
@@ -332,7 +336,7 @@ static void fireballs(void)
         else if (shield && overlap(facing ? player_x - 4 : player_x + 12, player_y, 8, 16, fb_x[k], fb_y[k], 8, 8))
             fb_x[k] = 0;                                    /* the shield sprite catches it */
         else if (!invuln && overlap(player_x + 3, player_y + 2, 10, 14, fb_x[k], fb_y[k], 8, 8)) {
-            hit(fb_x[k] + 4);
+            if (oam[O_FB + k * 4 + 1] == WEB_TILE) slow = SLOW_T; else hit(fb_x[k] + 4);    /* a web only slows */
             fb_x[k] = 0;
         }
     }
@@ -383,7 +387,7 @@ static void draw(void)
 
     oam[0] = oam[4] = py;
     oam[8] = oam[12] = py == 0xFF ? 0xFF : y + 7;
-    oam[2] = oam[6] = oam[10] = oam[14] = f << 6;         /* bit 6 = horizontal flip */
+    oam[2] = oam[6] = oam[10] = oam[14] = (f << 6) | (slow ? 3 : 0);   /* webbed: icy palette */         /* bit 6 = horizontal flip */
     oam[3] = oam[11] = x + (f ? 8 : 0);
     oam[7] = oam[15] = x + (f ? 0 : 8);
 

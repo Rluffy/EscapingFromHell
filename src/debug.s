@@ -5,7 +5,7 @@
 .export _hearts, _invuln, _on_ground, _sword_t, _vy, _en, _paused
 .export _boss_phase, _boss_dead, _intro, _fb_x, _fb_y, _boss_fx
 .export _abilities, _dash_t, _dash_cd, _victory, _cur_bank, _boss_hide, _iair
-.export _pf_x, _pf_y, _pf_cd, _mcx, _mcur, _tlen, _shield
+.export _pf_x, _pf_y, _pf_cd, _mcx, _mcur, _tlen, _shield, _slow
 
 .segment "DEBUG"
 _frame_count:      .res 2   ; $0300
@@ -43,3 +43,4 @@ _mcx:            .res 3   ; $032C Mirror demon: copies' x (0 = none / popped)
 _mcur:           .res 1   ; $032F Mirror demon: spot of the original (0 floor, 1/2 side platforms, 3 top)
 _tlen:           .res 1   ; $0330 Giant toad: tongue segments out (0..3)
 _shield:         .res 1   ; $0331 dungeon: 1 = the player holds the shield up (Down on the ground, with the ability)
+_slow:           .res 1   ; $0332 dungeon: frames the player is webbed (Spider queen): half walk speed, no dash
