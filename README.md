@@ -8,4 +8,4 @@ NES-Spiel: Ein Held flieht aus der Hölle, besiegt 10 Dämonen in 10 Dungeons un
 - Releases: `docs/RELEASE.md`
 - Ursprüngliches Konzept: `Concept/`
 
-Status: v0.7 – Overworld, Arena, Bosse 1–9, Sieg, Autosave, alle 5 Fähigkeiten. Bauen: `make`, testen: `make test`.
+Status: v0.8 – alle 10 Dämonen, alle 5 Fähigkeiten, Startmenü mit Cheat-Modus, Ende. Platzhalter-Grafik. Bauen: `make`, testen: `make test`.

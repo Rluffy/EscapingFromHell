@@ -26,7 +26,7 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | fertig, Tag nach Okay |
 | v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | fertig, Tag nach Okay |
 | v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | in Arbeit (Pakete 1 bis 3 erledigt) |
-| v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | offen |
+| v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | in Arbeit |
 | v1.0 | Balance, Fehlerbehebung, Release mit ROM | offen |
 
 Musik (Overworld, Dungeon, Boss) ist ein Folge-Meilenstein nach v1.0 oder, falls der Nutzer es will, Teil von v0.9.
@@ -87,9 +87,20 @@ Hinweis: fester Bereich nach v0.7 Paket 2 ca. 10,4 KB (10629 Byte) von 16 KB (na
 1. Dämon 10 Höllenfürst (Dungeon 10, Bank 9): riesig, Teleport, Flug, Feuer, Unsichtbarkeit; kombiniert Muster früherer Bosse, 3 Phasen, ca. 20 HP. Test-Dummy entfällt (alle Dungeons haben Bosse), Dummy-Tests wandern auf Bosse. Sonnet. **Erledigt** (`src/lord.c` in Bank 9, 20 HP, 32x32 aus 12 Sprites mit gespiegelten Hälften, `tests/lord.lua`, Dummy-Code entfernt, Dummy-Tests jetzt auf dem Imp; Stehbot 3 / 3 / 4 Herzen; fester Bereich 10497 Byte, Bank 9 2334 Byte; Screenshots `v0.8-lord-phase1.png`, `v0.8-lord-phase3.png`).
 2. Startmenü (Nutzerwunsch 2026-11-13): Auswahl **NORMAL** / **CHEAT**. Cheat: alle Dungeons offen, keine Herzen verlieren, kein Speichern (Normal-Spielstand bleibt unberührt). Menü so bauen, dass v0.9 Continue/Delete ergänzen kann. Sonnet. **Erledigt** (`src/menu.c`, `game_state` 1 = Menü, Eintragstabelle `item[]`; Cheat: `dungeons_cleared` = 1023 im RAM, `hit()` zieht keine Herzen ab, `save_game()` kehrt sofort zurück; keine neuen Buchstaben nötig; `tests/menu.lua`, alle anderen Tests drücken beim Boot Start; Screenshot `v0.8-menu.png`).
 3. Ende-Logik: nach Sieg über Dämon 10 Endbild „YOU ESCAPED" (Platzhalter, v0.9 macht es schön), dann frei weiterspielbar in der Overworld; End-Flag im Speicherstand. Test über die komplette Reihenfolge 1–10 (Tore, Fähigkeiten, Autosave). Sonnet. **Erledigt** (`game_state` 4 = Endbild in `src/menu.c`, Hook in `main.c`: `cur_dungeon == 10 && boss_dead`; End-Flag = Bit 7 von `$6004`, Version bleibt 1; `tests/ending.lua`, `tests/lord.lua` angepasst; Screenshot `v0.8-ending.png`).
-4. Tests, Screenshots, Docs, Bericht. Orchestrator.
+4. Tests, Screenshots, Docs, Bericht. Orchestrator. **Erledigt.**
 
-Pakete für v0.9 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
+## Arbeitspakete v0.9
+
+Ausgangslage: fester PRG-Bereich ca. 11,4 KB von 16 KB, Sprite-Pattern-Table voll (256 Kacheln).
+
+1. Platz schaffen: Menü/Ende/Text-Code in eine eigene PRG-Bank (UI-Bank, wird für Menü/Intro/Ende eingeblendet). CHR-Banking über MMC3-1-KB-Bänke: Spieler/HUD/Projektile gemeinsam, Boss-Grafik pro Dungeon in eigener CHR-Bank, beim Betreten umgeschaltet. Overworld-Animation per CHR-Bankwechsel vorbereiten. Sonnet.
+2. Art-Pass Hintergrund: Overworld (asiatische Höllen-Tempel, Laternen, Lava, Berge, Pflanzen im Stil von `Concept/DesignIdea1/2`), Idle-Animationen (Lava blubbert, Pflanzen wiegen sich) per CHR-Bankwechsel, Arena-Kacheln und Paletten pro Dungeon. Grafik-Quellen bleiben PNG in `assets/`. Sonnet.
+3. Art-Pass Sprites: Held, Projektile, Herzen, 10 Dämonen × 3 Phasen (jede Phase sichtbar schlimmer). Sonnet (ggf. in zwei Pakete geteilt).
+4. Soundeffekte: kleine APU-Engine (Pulse/Noise), Effekte für Sprung, Schwert, Treffer, Boss-Treffer, Phasenwechsel, Boss-Tod, Feuerball, Menü, Sieg. Sonnet.
+5. Titel/Intro/Ende: schöner Titelbildschirm, Menü um CONTINUE und DELETE SAVE erweitern, Intro (2–3 Textbildschirme: Flucht aus der Hölle), schönes Endbild „You escaped". Sonnet.
+6. Tests, Screenshots, Docs, Bericht. Orchestrator.
+
+Pakete für v1.0 legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
 ## Parallel-Aufgabe des Nutzers
 
