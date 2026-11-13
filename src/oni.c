@@ -9,9 +9,9 @@
    attack; fspd = shockwave px/frame. Phase 2 sends shockwaves both ways and charges faster, phase 3 adds the double smash
    (forward waves) and the leap (waves both ways on landing). */
 const struct phase oni_ph[3] = {
-    { BT + 0, 1, 30, 330, 1, 2, { 0x16, 0x06, 0x38 } },
-    { BT + 10, 2, 28, 300, 1, 2, { 0x26, 0x16, 0x30 } },
-    { BT + 20, 2, 26, 280, 2, 3, { 0x06, 0x0F, 0x28 } }
+    { BT + 0, 1, 30, 330, 1, 2, { 0x06, 0x26, 0x38 } },
+    { BT + 10, 2, 28, 300, 1, 2, { 0x06, 0x16, 0x30 } },
+    { BT + 20, 2, 26, 280, 2, 3, { 0x0F, 0x06, 0x28 } }
 };
 static const unsigned char cspd[3] = { 3, 4, 5 };      /* charge px/frame */
 

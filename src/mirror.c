@@ -7,9 +7,9 @@
 /* tile = first of 6 (16x24); spd = walk speed in quarter px/frame; wait = frames walking between teleports;
    rate = frames between shots; shots = fireballs per shot; fspd = fireball px/frame. The copies count equals the phase. */
 const struct phase mirror_ph[3] = {
-    { BT + 0, 2, 240, 150, 1, 1, { 0x31, 0x11, 0x16 } },
-    { BT + 6, 3, 190, 120, 1, 1, { 0x34, 0x14, 0x28 } },
-    { BT + 12, 4, 150, 100, 2, 1, { 0x16, 0x06, 0x38 } }
+    { BT + 0, 2, 240, 150, 1, 1, { 0x01, 0x21, 0x30 } },
+    { BT + 6, 3, 190, 120, 1, 1, { 0x04, 0x24, 0x38 } },
+    { BT + 12, 4, 150, 100, 2, 1, { 0x06, 0x16, 0x38 } }
 };
 
 /* iair = state. ig = frames of walking left, ai_t = fade / appear timer, fb_t = frames to the next shot. */

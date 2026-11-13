@@ -7,9 +7,9 @@
 /* tile = first of 6 (24x16, like the hound); spd = descent px/frame; wait = frames hanging low; rate = frames crawling on the
    ceiling between descents; shots = webs per volley; fspd = crawl px/frame. */
 const struct phase spider_ph[3] = {
-    { BT + 0, 2, 55, 200, 1, 1, { 0x13, 0x03, 0x2A } },
-    { BT + 6, 3, 45, 150, 2, 1, { 0x2A, 0x1A, 0x38 } },
-    { BT + 12, 4, 40, 110, 3, 2, { 0x16, 0x06, 0x38 } }
+    { BT + 0, 2, 55, 200, 1, 1, { 0x03, 0x13, 0x2A } },
+    { BT + 6, 3, 45, 150, 2, 1, { 0x05, 0x25, 0x2A } },
+    { BT + 12, 4, 40, 110, 3, 2, { 0x06, 0x16, 0x28 } }
 };
 static const unsigned char wint[3] = { 120, 80, 70 };      /* frames between web volleys while crawling */
 
