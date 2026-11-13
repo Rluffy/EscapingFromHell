@@ -297,5 +297,6 @@ void main(void)
         } else if (menu_frame()) {
             start_game();
         }
+        sfx_update();                  /* last: the vblank start belongs to the PPU writes above */
     }
 }

@@ -121,4 +121,4 @@ Asiatisch inspirierte Höllen-Tempel (Dächer, Laternen, Torbögen), nächtlich 
 
 ## Audio
 
-v1: Soundeffekte (Treffer, Sprung, Schwert, Boss-Tod u. a.). Musik (Overworld, Dungeon, Boss) kommt danach (v0.9 oder später, siehe `PLAN.md`).
+v1: Soundeffekte (v0.9 umgesetzt, NES-APU: 2 Pulse + Rauschen, Details und Ids `TECH.md` „Soundeffekte (v0.9)“): Sprung, Doppelsprung, Schwerthieb, Spieler getroffen, Boss getroffen, Phasenwechsel, Boss-Tod (Explosion) und Sieg-Jingle, Dash, Feuerball, Schwertwelle, Schild-Block, Boss-Spucken (leise), Schockwelle/Landung (dumpfer Rums), Menü bewegen/bestätigen, Dungeon betreten, Ende-Fanfare. Musik (Overworld, Dungeon, Boss) kommt danach (v0.9 oder später, siehe `PLAN.md`).

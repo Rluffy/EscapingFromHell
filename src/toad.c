@@ -134,7 +134,7 @@ void toad_ai(void)
         if (ivy >= 0 && en.y >= GROUND) {
             en.y = GROUND; shk = 12;
             ch = boss_phase == 3 && next() == lc;
-            iair = LAND; ai_t = ch ? 14 : LAND_T;
+            iair = LAND; ai_t = ch ? 14 : LAND_T; sfx_play(SFX_THUMP);
         }
         break;
     case LAND:                         /* stunned: sits still and blinks slowly */

@@ -64,6 +64,29 @@ extern unsigned char anim_bank;              /* $0338 CHR bank in R1: overworld 
 #define CHR_ANIM_A 2                         /* CHR layout: docs/TECH.md "CHR-Layout" */
 #define CHR_ANIM_B 4
 #define CHR_BOSS(n) (8 + 4 * ((n) - 1))      /* first 1 KB bank of the boss of dungeon n */
+extern unsigned char sfx_last;               /* $0339 id of the last effect that started (0 = none) */
+extern unsigned char sfx_id[3];              /* $033A..$033C effect playing on pulse 1 / pulse 2 / noise (0 = idle) */
+/* Sound effect ids: order of the tables in src/sfx.s (docs/TECH.md "Soundeffekte (v0.9)"). */
+#define SFX_JUMP 1
+#define SFX_DJUMP 2
+#define SFX_SWORD 3
+#define SFX_HURT 4
+#define SFX_BHIT 5
+#define SFX_PHASE 6
+#define SFX_BDEATH 7
+#define SFX_VICTORY 8
+#define SFX_DASH 9
+#define SFX_FIRE 10
+#define SFX_WAVE 11
+#define SFX_BLOCK 12
+#define SFX_SPIT 13
+#define SFX_THUMP 14
+#define SFX_MOVE 15
+#define SFX_OK 16
+#define SFX_GATE 17
+#define SFX_END 18
+void __fastcall__ sfx_play(unsigned char id);   /* sfx.s: start an effect (ignored while a higher-priority one plays on its channel) */
+void sfx_update(void);                      /* sfx.s: once per frame at the end of the main-loop iteration (not in the vblank start: PPU writes need it) */
 extern unsigned char pf_x, pf_y, pf_cd;      /* $0329..$032B player fireball: x (0 = none), y, cooldown frames left */
 
 extern const unsigned char ftile[26];       /* dungeon.c: BG tile of the letter A..Z (0 = none) */

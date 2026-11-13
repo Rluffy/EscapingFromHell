@@ -45,6 +45,8 @@ reset:
     stx $2000           ; NMI off
     stx $2001           ; rendering off
     stx $4010           ; DMC IRQ off
+    lda #$0B
+    sta $4015           ; APU: pulse 1, pulse 2, noise on (src/sfx.s)
     bit $2002
 :   bit $2002           ; PPU warm-up, 1st vblank
     bpl :-

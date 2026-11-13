@@ -58,10 +58,12 @@ void menu_enter(void)
 /* 1 = an entry was chosen (menu_sel). */
 unsigned char menu_frame(void)
 {
-    if (PRESSED(PAD_UP)) menu_sel = menu_sel ? menu_sel - 1 : NITEM - 1;
-    if (PRESSED(PAD_DOWN | PAD_SELECT)) menu_sel = menu_sel + 1 < NITEM ? menu_sel + 1 : 0;
+    if (PRESSED(PAD_UP)) { menu_sel = menu_sel ? menu_sel - 1 : NITEM - 1; sfx_play(SFX_MOVE); }
+    if (PRESSED(PAD_DOWN | PAD_SELECT)) { menu_sel = menu_sel + 1 < NITEM ? menu_sel + 1 : 0; sfx_play(SFX_MOVE); }
     oam[0] = (ITEM_ROW + 2 * menu_sel) * 8 - 1;
-    return PRESSED(PAD_A | PAD_START) != 0;
+    if (!PRESSED(PAD_A | PAD_START)) return 0;
+    sfx_play(SFX_OK);
+    return 1;
 }
 
 void end_enter(void)
@@ -70,6 +72,7 @@ void end_enter(void)
     put_text("YOU ESCAPED", 12, 0);
     put_text("PRESS START", 18, 0);
     end_t = END_LEN;
+    sfx_play(SFX_END);
     game_state = ST_END;
     screen_on(0x88);
 }

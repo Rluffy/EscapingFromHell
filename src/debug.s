@@ -6,6 +6,7 @@
 .export _boss_phase, _boss_dead, _intro, _fb_x, _fb_y, _boss_fx
 .export _abilities, _dash_t, _dash_cd, _victory, _cur_bank, _boss_hide, _iair
 .export _pf_x, _pf_y, _pf_cd, _mcx, _mcur, _tlen, _shield, _slow
+.export _sfx_last, _sfx_id
 .export _ending_seen, _cheat, _menu_sel, _end_t, _boss_chr, _anim_bank
 
 .segment "DEBUG"
@@ -51,3 +52,5 @@ _menu_sel:        .res 1   ; $0335 start menu cursor (0 NORMAL, 1 CHEAT)
 _end_t:           .res 1   ; $0336 ending screen frames left
 _boss_chr:        .res 1   ; $0337 CHR bank (1 KB number) in R3 = base of the current boss sheet (8 + 4 * (dungeon - 1))
 _anim_bank:       .res 1   ; $0338 CHR bank in R1 (overworld animation frame: 2 = A, 4 = B)
+_sfx_last:        .res 1   ; $0339 id of the last sound effect that started (0 = none yet)
+_sfx_id:          .res 3   ; $033A..$033C effect playing on pulse 1 / pulse 2 / noise (0 = channel idle)

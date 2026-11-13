@@ -201,6 +201,7 @@ void dungeon_enter(void)
 
     bs = &bosses[cur_dungeon - 1];
     bank_set(bs->bank);                 /* stays mapped for the whole fight */
+    sfx_play(SFX_GATE);
     pal_ph = pal_bg = 0;
     screen_off();
     boss_chr = CHR_BOSS(cur_dungeon);   /* the boss's sheet in R3..R5 = tile ids 0x40..0xFF (BT in boss.h) */
@@ -261,7 +262,7 @@ static void update_player(void)
     if (slow) --slow;
 
     if (PRESSED(PAD_SELECT) && (abilities & AB_DASH) && !dash_cd && !kb_t && !slow) {
-        dash_t = DASH_LEN; dash_cd = DASH_CD;
+        dash_t = DASH_LEN; dash_cd = DASH_CD; sfx_play(SFX_DASH);
         if (invuln < DASH_LEN) invuln = DASH_LEN;       /* invulnerable (and blinking) while dashing */
     }
     shield = (abilities & AB_SHIELD) && (pad & PAD_DOWN) && on_ground && !dash_t;   /* Down on the ground: stand still behind the shield */
@@ -284,6 +285,7 @@ static void update_player(void)
     if (PRESSED(PAD_A) && (on_ground || ((abilities & AB_DJUMP) && !air_jumped))) {
         air_jumped |= !on_ground;       /* double jump: once per airtime (also after a ledge or a knockback), a bit lower */
         vy = on_ground ? -6 : -5; gtick = 0;
+        sfx_play(on_ground ? SFX_JUMP : SFX_DJUMP);
     }
     else if (!(pad & PAD_A) && vy < -2) vy = -2;        /* variable jump height */
     if (++gtick == 3) {
@@ -309,15 +311,18 @@ static void update_player(void)
                 pf_y = player_y + 4;
                 pf_vx = facing ? -FIRE_VX : FIRE_VX;
                 pf_cd = FIRE_CD;
+                sfx_play(SFX_FIRE);
                 oam[O_PF + 1] = 29;
             }
         } else if (!sword_cd) {
             sword_t = SWORD_LEN; sword_cd = SWORD_CD;
+            sfx_play(SFX_SWORD);
             if ((abilities & AB_WAVE) && hearts == HEARTS_MAX && !pf_x) {     /* full hearts: the swing also throws a wave (shares the fireball projectile, no cooldown) */
                 pf_x = facing ? player_x - 4 : player_x + 12;
                 pf_y = player_y + 8;
                 pf_vx = facing ? -FIRE_VX : FIRE_VX;
                 oam[O_PF + 1] = WAVE_TILE;
+                sfx_play(SFX_WAVE);
             }
         }
     }
@@ -332,6 +337,7 @@ static void pfire(void)
 
 static void hit(unsigned char sx)     /* player hit by something at x = sx */
 {
+    sfx_play(SFX_HURT);
     if (!cheat && --hearts == 0) { arena_reset(); return; }       /* cheat: hearts stay 3, knockback and flash remain */
     invuln = INVULN;
     kb_t = KNOCK;
@@ -343,7 +349,7 @@ static void hit(unsigned char sx)     /* player hit by something at x = sx */
 /* Contact (bosses, body segments, tongue): the shield stops what touches it from the facing side and pushes the player back. */
 void hurt(unsigned char sx)
 {
-    if (shield && ((sx >= player_x + 8) ^ facing)) { kb_t = 4; kb_dir = facing ? 3 : -3; return; }
+    if (shield && ((sx >= player_x + 8) ^ facing)) { kb_t = 4; kb_dir = facing ? 3 : -3; sfx_play(SFX_BLOCK); return; }
     hit(sx);
 }
 
@@ -357,7 +363,7 @@ static void fireballs(void)
         if (fb_x[k] <= WALL || fb_x[k] >= 256 - WALL - 8 || fb_y[k] < 8 || fb_y[k] + 8 >= FLOOR_Y)
             fb_x[k] = 0;
         else if (shield && overlap(facing ? player_x - 4 : player_x + 12, player_y, 8, 16, fb_x[k], fb_y[k], 8, 8))
-            fb_x[k] = 0;                                    /* the shield sprite catches it */
+            { fb_x[k] = 0; sfx_play(SFX_BLOCK); }           /* the shield sprite catches it */
         else if (!invuln && overlap(player_x + 3, player_y + 2, 10, 14, fb_x[k], fb_y[k], 8, 8)) {
             if (oam[O_FB + k * 4 + 1] == WEB_TILE) slow = SLOW_T; else hit(fb_x[k] + 4);    /* a web only slows */
             fb_x[k] = 0;
@@ -365,12 +371,24 @@ static void fireballs(void)
     }
 }
 
+static unsigned char fb_mask(void)
+{
+    return (fb_x[0] != 0) | ((fb_x[1] != 0) << 1) | ((fb_x[2] != 0) << 2);
+}
+
 static void update_enemy(void)
 {
+    unsigned char m;
     if (en.flash) --en.flash;
     if (!en.hp) return;
     if (boss_fx) { --boss_fx; if (OWN_DRAW) bs->ai(); }        /* big bosses draw their own sprites: also while frozen */
-    else { bs->ai(); fireballs(); }
+    else {
+        m = fb_mask();
+        bs->ai();
+        m = fb_mask() & ~m;                                     /* a new boss projectile: shockwave = thump, anything else = spit */
+        if (m) sfx_play(oam[O_FB + ((m & 1) ? 0 : (m & 2) ? 4 : 8) + 1] == SHOCK ? SFX_THUMP : SFX_SPIT);
+        fireballs();
+    }
 }
 
 static void combat(void)
@@ -385,8 +403,9 @@ static void combat(void)
         nx = (int)en.x + (en.x >= player_x ? BOSS_KNOCK : -BOSS_KNOCK);
         en.x = nx < WALL ? WALL : nx > 256 - WALL - en.w ? 256 - WALL - en.w : nx;
         ph = en.hp <= ph_t3 ? 3 : en.hp <= ph_t2 ? 2 : 1;
-        if (!en.hp) { boss_dead = 1; clear_fb(); }
-        else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); }
+        sfx_play(SFX_BHIT);
+        if (!en.hp) { boss_dead = 1; clear_fb(); sfx_play(SFX_BDEATH); }
+        else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); sfx_play(SFX_PHASE); }
     }
     if (en.hp && !(boss_hide & 1) && !boss_fx && !en.flash && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
         hurt(en.x + en.w / 2);
@@ -482,7 +501,7 @@ unsigned char dungeon_frame(void)
         pfire();
         update_enemy();
         combat();
-        if (!en.hp) { victory = VICTORY_LEN; scroll_x = 0; text_prep("VICTORY", 0x2140, 1); }
+        if (!en.hp) { victory = VICTORY_LEN; scroll_x = 0; text_prep("VICTORY", 0x2140, 1); sfx_play(SFX_VICTORY); }
     }
     draw();
     return 0;
