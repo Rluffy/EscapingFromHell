@@ -44,6 +44,7 @@ extern unsigned char boss_hide;              /* $0327 bit 0 = boss untouchable (
 #define AB_DJUMP 2
 #define AB_FIRE 4
 #define AB_SHIELD 8
+#define AB_WAVE 16
 extern unsigned char shield;                 /* $0331 1 = shield raised (Down held on the ground, with AB_SHIELD) */
 extern unsigned char slow;                   /* $0332 frames the player is webbed (walks 1 px/frame, no dash) */
 extern unsigned char pf_x, pf_y, pf_cd;      /* $0329..$032B player fireball: x (0 = none), y, cooldown frames left */

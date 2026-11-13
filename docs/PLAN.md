@@ -77,10 +77,10 @@ Entscheidung: Feuerball auf Hoch + B (B bleibt Schwert, Select bleibt Dash). Tes
 ## Arbeitspakete v0.7
 
 1. Dämon 8 Spinnenkönigin (Dungeon 8, Bank 7): klettert an der Decke, seilt sich ab, Netze (verlangsamen den Spieler), 3 Phasen, ca. 16 HP. Test-Dummy wandert nach Dungeon 10. Sonnet. **Erledigt** (Körper 24x16, Faden aus Sprites, Netze verlangsamen 90 Frames ohne Herzverlust, Phase 3 mit Spinnlingen; fester Bereich 10453 Byte, Bank 7 1515 Byte).
-2. Dämon 9 Oni-Kriegsherr (Dungeon 9, Bank 8): rennt, schlägt mit Keule, Schockwellen am Boden (überspringbar), 3 Phasen, ca. 18 HP. Gibt **Schwertwelle** (Steuerung: Schwert bei vollen 3 Herzen schießt zusätzlich eine Welle). Sonnet.
+2. Dämon 9 Oni-Kriegsherr (Dungeon 9, Bank 8): rennt, schlägt mit Keule, Schockwellen am Boden (überspringbar), 3 Phasen, ca. 18 HP. Gibt **Schwertwelle** (Steuerung: Schwert bei vollen 3 Herzen schießt zusätzlich eine Welle). Sonnet. **Erledigt** (`src/oni.c` in Bank 8, Körper 24x32 mit eigenen Sprites, Schwertwelle in `src/dungeon.c`, `tests/oni.lua`, `tests/wave.lua`, Screenshots `v0.7-oni-phase1.png`, `v0.7-oni-phase3.png`, `v0.7-swordwave.png`; Stehbot 3 / 3 / 3 Herzen; fester Bereich 10629 Byte, Bank 8 2277 Byte).
 3. Tests, Screenshots, Docs, Bericht. Orchestrator.
 
-Hinweis: fester Bereich nach v0.7 Paket 1 ca. 10,2 KB (10453 Byte) von 16 KB (nach v0.6: 10286 Byte). Boss-spezifischer Code gehört in die Boss-Bank, gemeinsamer Code nur, wenn mehrere Bosse ihn brauchen.
+Hinweis: fester Bereich nach v0.7 Paket 2 ca. 10,4 KB (10629 Byte) von 16 KB (nach Paket 1: 10453 Byte, nach v0.6: 10286 Byte). Boss-spezifischer Code gehört in die Boss-Bank, gemeinsamer Code nur, wenn mehrere Bosse ihn brauchen.
 
 Pakete für v0.8 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 

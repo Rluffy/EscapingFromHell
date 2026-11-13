@@ -10,7 +10,7 @@
 #define SWORD_CD   14
 #define ENEMY_HP   5
 #define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
-#define NBOSS      8                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define NBOSS      9                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -21,6 +21,7 @@
 #define FIRE_CD    40                  /* player fireball cooldown (Up + B) */
 #define FIRE_VX    3                   /* player fireball px/frame */
 #define SLOW_T     90                  /* frames a web slows the player */
+#define WAVE_TILE  222                 /* sword wave sprite (the fireball is tile 29) */
 #define BOSS_KNOCK 16                  /* px the boss is pushed away from the player by a sword hit */
 
 /* One-way platforms, 48 px wide (6 tiles); x and y are multiples of 8. */
@@ -31,7 +32,7 @@ static const unsigned char plat_y[3] = { 152, 152, 112 };
 static const unsigned char dpal[10][4] = {
     {0x02,0x11,0x01,0x21}, {0x0F,0x16,0x06,0x26}, {0x01,0x14,0x04,0x24}, {0x06,0x16,0x07,0x27},
     {0x08,0x18,0x07,0x28}, {0x03,0x13,0x02,0x23}, {0x0F,0x14,0x04,0x24}, {0x09,0x19,0x0A,0x29},
-    {0x05,0x15,0x04,0x25}, {0x0F,0x00,0x2D,0x10}
+    {0x0F,0x06,0x07,0x16}, {0x0F,0x00,0x2D,0x10}
 };
 /* Sprite palettes 0..3 without the backdrop: player, enemy, heart + sword, player fireball. */
 static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x30,0x10, 0x21,0x31,0x30 };
@@ -46,17 +47,19 @@ static const struct boss bosses[NBOSS] = {
     { "WINGED DEMON", 14, 4, 16, 24, 56, winged_ai, winged_ph },
     { "MIRROR DEMON", 14, 5, 16, 24, FLOOR_Y - 24, mirror_ai, mirror_ph },
     { "GIANT TOAD", 16, 6, 32, 24, FLOOR_Y - 24, toad_ai, toad_ph },
-    { "SPIDER QUEEN", 16, 7, 24, 16, 32, spider_ai, spider_ph }
+    { "SPIDER QUEEN", 16, 7, 24, 16, 32, spider_ai, spider_ph },
+    { "ONI WARLORD", 18, 8, 24, 32, FLOOR_Y - 32, oni_ai, oni_ph }
 };
 const struct boss *bs;                 /* 0 = test dummy */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
 static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
-static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP", 0, "GOT FIREBALL", 0, "GOT SHIELD" };   /* Dash, Double jump, Fireball, Shield act so far */
+static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP", 0, "GOT FIREBALL", 0, "GOT SHIELD", 0, "GOT SWORD WAVE" };   /* Dash, Double jump, Fireball, Shield act so far */
 /* BG tile of the letter A..Z (0 = not in the font sheet). */
 static const unsigned char ftile[26] = {
     37, 43, 33, 26, 30, 48, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 49, 35, 38, 34, 27, 32, 47, 0, 36, 0
 };
 static const unsigned char white = 0x30;
+#define OWN_DRAW (en.w > 24 || en.h > 24)   /* the boss AI writes its own sprites (toad, oni) */
 static unsigned char hp_max, bar_hp;   /* max hp of the enemy; hp the bar shows (255 = redraw) */
 static unsigned char ph_t2, ph_t3;     /* phase 2 / 3 start at hp <= these */
 static unsigned char pal_ph, pal_bg;   /* what the PPU currently shows */
@@ -295,8 +298,17 @@ static void update_player(void)
                 pf_y = player_y + 4;
                 pf_vx = facing ? -FIRE_VX : FIRE_VX;
                 pf_cd = FIRE_CD;
+                oam[O_PF + 1] = 29;
             }
-        } else if (!sword_cd) { sword_t = SWORD_LEN; sword_cd = SWORD_CD; }
+        } else if (!sword_cd) {
+            sword_t = SWORD_LEN; sword_cd = SWORD_CD;
+            if ((abilities & AB_WAVE) && hearts == HEARTS_MAX && !pf_x) {     /* full hearts: the swing also throws a wave (shares the fireball projectile, no cooldown) */
+                pf_x = facing ? player_x - 4 : player_x + 12;
+                pf_y = player_y + 8;
+                pf_vx = facing ? -FIRE_VX : FIRE_VX;
+                oam[O_PF + 1] = WAVE_TILE;
+            }
+        }
     }
 }
 
@@ -347,7 +359,7 @@ static void update_enemy(void)
     if (en.flash) --en.flash;
     if (!en.hp) return;
     if (bs) {
-        if (boss_fx) { --boss_fx; if (bs->w > 24) bs->ai(); }      /* the toad draws its own sprites: also while frozen */
+        if (boss_fx) { --boss_fx; if (OWN_DRAW) bs->ai(); }        /* the toad and the oni draw their own sprites: also while frozen */
         else { bs->ai(); fireballs(); }
         return;
     }
@@ -380,7 +392,7 @@ static void draw(void)
 {
     unsigned char x = player_x, y = player_y, f = facing, i;
     unsigned char py = (invuln & 4) ? 0xFF : y - 1;       /* blink while invulnerable */
-    unsigned char ey = (en.hp && !(en.flash & 2) && !(boss_hide & 2) && en.w < 32) ? en.y - 1 : 0xFF;
+    unsigned char ey = (en.hp && !(en.flash & 2) && !(boss_hide & 2) && !OWN_DRAW) ? en.y - 1 : 0xFF;
     unsigned char t = bs ? bs->ph[boss_phase - 1].tile : 8;
 
     bar_sync();
@@ -454,7 +466,7 @@ unsigned char dungeon_frame(void)
     if (bs) pal_sync();                 /* PPU writes first: still in vblank */
     if (intro) {
         if (!--intro) text_prep(bs->name, 0x2140, 0);
-        if (bs->w > 24) bs->ai();       /* the toad draws its own sprites: also in the intro */
+        if (OWN_DRAW) bs->ai();         /* own sprites: also in the intro */
     } else if (!paused) {
         update_player();
         pfire();

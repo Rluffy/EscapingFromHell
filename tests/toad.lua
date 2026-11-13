@@ -268,7 +268,7 @@ co = coroutine.create(function()
   for i = 0, 2 do if rd(FBX + i) ~= 0 then k = i end end
   check(rd(OAM_FB + 4 * k + 1) == 167 and rd(OAM_FB + 4 * k + 2) == 1, "slime sprite: tile 167, palette 1")
   local y0, ymin, lastx = rd(FBY + k), 255, 0
-  check(y0 == 160, "blob starts above the toad's head, y=" .. y0)
+  check(y0 <= 160 and y0 >= 150, "blob starts above the toad's head (160, minus one flight step if the frame parity differs), y=" .. y0)
   local peakline = 0
   for _ = 1, 160 do
     park(); frames(1)

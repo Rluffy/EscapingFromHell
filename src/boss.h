@@ -52,5 +52,7 @@ void toad_ai(void);
 extern const struct phase toad_ph[3];
 void spider_ai(void);
 extern const struct phase spider_ph[3];
+void oni_ai(void);
+extern const struct phase oni_ph[3];
 
 #endif
