@@ -28,6 +28,7 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | erledigt |
 | v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | erledigt |
 | v1.0 | Balance, Fehlerbehebung, Release mit ROM | erledigt |
+| v1.1 | Nutzer-Feedback zu v1.0: Treffer-Spam-Fix, Fähigkeiten pro Level, Boss 9/10 schwerer, Dämonen in der Overworld sichtbar, Fähigkeiten-Erklärungen, Musik | in Arbeit |
 
 Musik (Overworld, Dungeon, Boss) ist ein Folge-Meilenstein nach v1.0 oder, falls der Nutzer es will, Teil von v0.9.
 
@@ -107,7 +108,17 @@ Ausgangslage: fester PRG-Bereich ca. 11,4 KB von 16 KB, Sprite-Pattern-Table vol
 3. Balance: alle Bosse auf das vom Nutzer akzeptierte Niveau (Imp mit 10 HP); Steh-Bot max. 3 Herzen pro Phase bei allen, Endboss inklusive; Werte in GAMEDESIGN. Sonnet. **Erledigt** (Ziele verschärft: Steh-Bot höchstens 2 Herzen je Phase bei Dämon 1–5 und 3 bei 6–10, Ausweich-Bot angestrebt 1–2; HP-Rampe 10 / 11 / 12 / 12 / 13 / 13 / 14 / 14 / 15 / 18; Angriffe seltener, Schlagfenster länger, drei kleine Regeländerungen (Imp, Hund, Flügeldämon Phase 3); `tests/balance.lua` mit beiden Bots auf allen 10 Bossen, Übersichtstabelle in GAMEDESIGN „Balance (v1.0)“, Methode und Entscheidungen in TECH „Balance-Messung (v1.0)“ und im Entscheidungslog 2026-11-13). Vor dem Release vom Nutzer gegenzuprüfen: Imp und Hund fühlen sich jetzt anders an (siehe Log).
 4. Release-Vorbereitung: README mit Steuerung und Spielanleitung, ROM `dist/EscapingFromHell-v1.0.nes`, Docs final, Bericht. Tags/Releases v0.5–v1.0 nach Okay des Nutzers. Orchestrator. **Erledigt.**
 
-Pakete nach v1.0 (Musik) legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
+## Arbeitspakete v1.1 (Nutzer-Feedback 2026-11-13)
+
+Feedback nach Test von v1.0: Boss 9 und 10 zu leicht; mit Angriffs-Spam kann sich der Gegner nicht mehr bewegen; im Cheat-Modus soll man pro Level genau die Fähigkeiten haben, die man dort normalerweise hätte; auch im Normalmodus alte Level nicht mit neueren Fähigkeiten spielen; Map-Design gefällt nicht, die Dämonen sollen außerhalb des Dungeons sichtbar sein; Erklärungen, wie man welche Fähigkeit einsetzt; Musik.
+
+1. Gameplay: Treffer-Spam darf Bosse nicht festhalten (Treffer unterbrechen die Boss-KI nicht, Mindest-Unverwundbarkeit nach Treffer); Fähigkeiten im Dungeon n = Fähigkeiten der Dämonen 1 bis n−1 (Normal und Cheat gleich); Boss 9 (Oni) und 10 (Höllenfürst) schwerer. Sonnet.
+2. Overworld: jeder Dämon als Figur vor/auf seinem Tempel sichtbar (besiegt = anders dargestellt), Tempel unterscheidbar (Farbe/Form pro Dungeon), Map näher an `Concept/MapDesignRough.png`. Sonnet.
+3. Fähigkeiten-Erklärungen: beim Erhalt Text mit Taste (z. B. „SELECT = DASH"), Pause-Bildschirm mit Liste der verfügbaren Fähigkeiten und Tasten. Sonnet.
+4. Musik: kleine Musik-Engine (neben den Soundeffekten), Stücke für Titel, Overworld, Boss-Kampf, Sieg, Ende. Sonnet.
+5. Tests, Screenshots, Docs, Bericht, ROM. Orchestrator.
+
+Pakete nach v1.1 legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
 ## Parallel-Aufgabe des Nutzers
 

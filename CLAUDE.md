@@ -14,6 +14,6 @@ NES-Spiel *Escaping From Hell*. Erst `docs/PLAN.md` lesen, dann `docs/GAMEDESIGN
 
 - Sprache: Docs deutsch; Code, Dateinamen, Commits und Spieltexte englisch.
 - `Concept/` ist die Quelle des Nutzers und bleibt unverändert.
-- Repo-Name auf GitHub: `EscapingFromHell` (CamelCase, privat bis v1.0).
+- Repo-Name auf GitHub: `EscapingFromHell` (CamelCase, öffentlich seit v1.0).
 - Installationen für Build/Test (`cc65`, `gh`, `xvfb`, `python3-pil`, Mesen2 in `tools/mesen/`) sind vom Nutzer erlaubt. Siehe `docs/TECH.md`.
 - Der GitHub-Login (`gh auth login`) macht der Nutzer parallel. Bis dahin lokal bauen und committen, danach pushen.

@@ -21,4 +21,4 @@ Ohne `gh`-Login (Schritt 4/5): lokal taggen, Push und Release nachholen, sobald 
 
 ## Repo
 
-GitHub: `EscapingFromHell`, privat bis zur Freigabe von v1.0.
+GitHub: `EscapingFromHell`, öffentlich seit v1.0 (Freigabe durch den Nutzer 2026-11-13).
