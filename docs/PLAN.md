@@ -23,8 +23,8 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.3 | Vertikal-Slice: Arena, Spielersteuerung, Schwert, 3 Herzen, Boss 1 (Imp) mit 3 Phasen, Sieg, Autosave, Dash | erledigt |
 | v0.4 | Boss 2 (Geist), Boss 3 (Knochenhund), Doppelsprung | erledigt |
 | v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | fertig, Tag nach Okay |
-| v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | in Arbeit |
-| v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | offen |
+| v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | fertig, Tag nach Okay |
+| v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | in Arbeit |
 | v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | offen |
 | v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | offen |
 | v1.0 | Balance, Fehlerbehebung, Release mit ROM | offen |
@@ -72,9 +72,17 @@ Entscheidung: Feuerball auf Hoch + B (B bleibt Schwert, Select bleibt Dash). Tes
 
 1. Dämon 6 Spiegeldämon (Dungeon 6, Bank 5): teleportiert, erzeugt Scheinkopien (nur das Original ist verwundbar, erkennbar an einem Detail), 3 Phasen, ca. 14 HP. Test-Dummy wandert nach Dungeon 8. Sonnet. **Erledigt** (`src/mirror.c` in Bank 5, `tests/mirror.lua`, Screenshots `v0.6-mirror-phase1.png`, `v0.6-mirror-phase3.png`; Test-Dummy-Tests jetzt in Dungeon 8; Linker-Bereiche `BANK6..BANK9` angelegt).
 2. Dämon 7 Riesenkröte (Dungeon 7, Bank 6): sehr groß (Sprites + ggf. Hintergrund-Kacheln), schwere Sprünge, Zunge, Schleim, 3 Phasen, ca. 16 HP. Gibt **Schild** (Steuerung: **Runter halten** am Boden: blockt Projektile und Kontakt von vorn, Spieler steht still). Sonnet. **Erledigt** (`src/toad.c` in Bank 6, Schild in `src/dungeon.c`, `tests/toad.lua`, `tests/shield.lua`, Screenshots `v0.6-toad-phase1.png`, `v0.6-toad-phase3.png`, `v0.6-shield.png`; Debug-Block auf `$0300-$033F` erweitert).
+3. Tests, Screenshots, Docs, Bericht. Orchestrator. **Erledigt.**
+
+## Arbeitspakete v0.7
+
+1. Dämon 8 Spinnenkönigin (Dungeon 8, Bank 7): klettert an der Decke, seilt sich ab, Netze (verlangsamen den Spieler), 3 Phasen, ca. 16 HP. Test-Dummy wandert nach Dungeon 10. Sonnet.
+2. Dämon 9 Oni-Kriegsherr (Dungeon 9, Bank 8): rennt, schlägt mit Keule, Schockwellen am Boden (überspringbar), 3 Phasen, ca. 18 HP. Gibt **Schwertwelle** (Steuerung: Schwert bei vollen 3 Herzen schießt zusätzlich eine Welle). Sonnet.
 3. Tests, Screenshots, Docs, Bericht. Orchestrator.
 
-Pakete für v0.7 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
+Hinweis: fester Bereich nach v0.6 ca. 10,3 KB von 16 KB. Boss-spezifischer Code gehört in die Boss-Bank, gemeinsamer Code nur, wenn mehrere Bosse ihn brauchen.
+
+Pakete für v0.8 ff. legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
 ## Parallel-Aufgabe des Nutzers
 
