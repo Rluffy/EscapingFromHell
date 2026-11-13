@@ -50,4 +50,4 @@ FCEUX unter Ubuntu/Wayland flackert: `QT_QPA_PLATFORM=xcb fceux <rom>`.
 - Releases: `docs/RELEASE.md`
 - Ursprüngliches Konzept: `Concept/`
 
-Status: v1.0 – komplettes Spiel: 10 Dämonen, 5 Fähigkeiten, Pixelgrafik, Soundeffekte, Titel, Intro, Ende, Cheat-Modus. v1.1 (in Arbeit): Musik (Titel, Overworld, Boss, Endboss, Sieg, Ende; Engine und Lieder `src/music.s`, `assets/songs.txt`, Vorschau `python3 tools/music.py wav assets/songs.txt docs/audio`).
+Status: v1.1 – komplettes Spiel mit Musik, Dämonen in der Overworld, Fähigkeiten-Hinweisen und Pausen-Übersicht.

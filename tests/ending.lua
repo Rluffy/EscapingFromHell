@@ -102,8 +102,10 @@ co = coroutine.create(function()
   for i = 0, 3 do check(rd(0x200 + 4 * i) ~= 0xFF and rd(0x201 + 4 * i) == i, "ending screen: hero sprite " .. i .. " shown") end
   for i = 4, 63 do check(rd(0x200 + 4 * i) == 0xFF, "ending screen: sprite " .. i .. " hidden") end
   press({start = true})
-  check(rd(STATE) == 4, "Start is ignored during the first second")
-  check(wait_until(function() return rd(ENDT) < 150 end, 200), "end timer runs")
+  check(rd(STATE) == 4, "Start is ignored during the first 2 seconds")
+  check(wait_until(function() return rd(ENDT) < 120 end, 200), "end timer runs")
+  frames(300)
+  check(rd(STATE) == 4 and rd(ENDT) == 0, "no auto-return: the timer stops at 0")
   press({start = true})
   check(rd(STATE) == 2 and rd(CUR) == 0, "Start leaves the ending screen")
   check(rd16(0x303) == 912 and rd(PY) == 48, "back at door 10, free play")

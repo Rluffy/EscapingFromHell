@@ -1,6 +1,6 @@
 -- Title/menu/intro test: logo and entries, cursor (Up/Down/Select, wrap), CONTINUE only with a valid save (loads it, no intro),
 -- NEW GAME = intro (A / timer / Start) then mask 0 with the old save kept, DELETE SAVE with confirmation, CHEAT = intro,
--- all gates open, hearts stay 3 on hits, nothing ever written to $6000, ending screen times out by itself.
+-- all gates open, hearts stay 3 on hits, nothing ever written to $6000, ending screen leaves with Start.
 -- Addresses, tiles and save layout: docs/TECH.md "Debug-Adressen", "Speicherstand", "Titel, Intro und Ende (v0.9)".
 local M = emu.memType.nesMemory
 local held = {}
@@ -222,10 +222,13 @@ co = coroutine.create(function()
   check(wait_until(function() return rd(STATE) == 2 end, 300), "victory over the Imp returns to the overworld")
   check(rd(ABIL) == 1 and rd16(MASK) == 1023, "abilities are earned in RAM, abilities=" .. rd(ABIL))
   check(save_bytes() == before, "cheat victory left the save untouched: " .. save_bytes())
-  enter(10)                                -- last demon in cheat: ending screen, times out without Start
+  enter(10)                                -- last demon in cheat: ending screen, stays until Start
   kill()
   check(wait_until(function() return rd(STATE) == 4 end, 300), "ending screen after the last demon")
-  check(wait_until(function() return rd(STATE) == 2 end, 400), "ending screen leaves by itself")
+  frames(300)
+  check(rd(STATE) == 4, "ending screen stays without Start")
+  wr(0x336, 100); press({start = true})
+  check(wait_until(function() return rd(STATE) == 2 end, 20), "Start leaves the ending screen")
   check(save_bytes() == before, "cheat ending left the save untouched: " .. save_bytes())
 
   -- CONTINUE after the cheat session: progress untouched

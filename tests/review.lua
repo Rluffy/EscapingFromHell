@@ -197,7 +197,8 @@ co = coroutine.create(function()
     check(rd(SAVE + 1) == 0x48, "boss " .. n .. ": PRG-RAM write-protected after the save")
     if n == 10 then
       check(wait_until(function() return rd(STATE) == 4 end, 60), "ending shown")
-      check(wait_until(function() return rd(STATE) == 2 end, 400), "ending over")
+      wr(0x336, 100); press({start = true})
+      check(wait_until(function() return rd(STATE) == 2 end, 20), "ending over")
     else
       check(rd(STATE) == 2, "boss " .. n .. ": back in the overworld")
     end
@@ -209,7 +210,8 @@ co = coroutine.create(function()
   enter(10); wr(EHP, 0); wr(DEAD, 1)
   check(wait_until(function() return rd(STATE) == 4 end, 400), "ending replay")
   check(save_ok() and rd(SAVE + 4) & 0x80 == 0x80, "save intact after the replay")
-  check(wait_until(function() return rd(STATE) == 2 end, 400), "replay over")
+  wr(0x336, 100); press({start = true})
+  check(wait_until(function() return rd(STATE) == 2 end, 20), "replay over")
   enter(1); wr(EHP, 0); wr(DEAD, 1); frames(10)
   local blank = true
   for c = 8, 23 do if ppu(0x21A0 + c) ~= 0 then blank = false end end

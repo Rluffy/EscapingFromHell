@@ -7,7 +7,7 @@
 #include "meta.h"                      /* overworld metatiles: the title and intro scenes reuse them */
 #include "ui.h"                        /* tile ids of the big letters, punctuation and the ending sky */
 
-#define END_LEN 240                    /* ending screen: 4 s, Start leaves after 1 s */
+#define END_LEN 240                    /* ending screen: end_t counts down and stops at 0; Start leaves after 2 s */
 #define INTRO_LEN 240                  /* intro page: 4 s, A turns the page early, Start skips the rest */
 #define NPAGE 3
 #define ITEM_ROW 12                    /* first menu entry; 2 tile rows apart */
@@ -264,5 +264,6 @@ void end_enter(void)
 /* 1 = back to the overworld. */
 unsigned char end_frame(void)
 {
-    return !--end_t || (end_t < END_LEN - 60 && PRESSED(PAD_START));
+    if (end_t) --end_t;                                /* no auto-return: the player leaves with Start */
+    return end_t < END_LEN - 120 && PRESSED(PAD_START);
 }

@@ -124,6 +124,7 @@ co = coroutine.create(function()
       frames(5)
       report("ending", measure(N // 5))
     end
+    if n == 10 then wr(0x336, 100); press({start = true}) end
     for _ = 1, 400 do if rd(STATE) == 2 then break end frames(1) end
     check(rd(STATE) == 2, "back in the overworld after dungeon " .. n)
     frames(5)
