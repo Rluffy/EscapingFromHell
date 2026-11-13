@@ -19,7 +19,7 @@ Läuft auf echter NES-Hardware (NTSC, MMC3 mit Batterie-RAM) und in Emulatoren w
 | D-Pad links/rechts | laufen |
 | A | springen (länger halten = höher) |
 | B | Schwert |
-| Start | Pause |
+| Start | Pause (zeigt PAUSE, die Fähigkeiten dieses Dungeons mit Tasten und den Hinweis zum Aufgeben) |
 | Start, dann Select | Kampf aufgeben |
 
 ### Fähigkeiten (dauerhaft, gespeichert)

@@ -10,8 +10,9 @@
 #define U_DITH 227
 #define U_UP 239
 #define U_DN 240
+#define U_PLUS 241
 #define U_BIGSET "ACDEFGHILMNOPRSUY"      /* big letter k = 4 tiles U_BIG0 + 4k: TL TR BL BR */
-/* last used tile id 240 */
+/* last used tile id 241 */
 static const unsigned char u_sky17[32] = { 226,239,0,240,226,226,226,226,226,226,226,226,226,228,229,230,231,232,233,226,226,226,239,0,240,226,226,226,239,240,226,226 };
 static const unsigned char u_sky18[32] = { 239,0,0,0,240,239,0,240,226,226,239,240,226,234,235,235,235,235,236,226,239,0,0,0,0,240,226,239,0,0,240,226 };
 static const unsigned char u_sky19[32] = { 0,0,0,0,0,0,0,0,240,239,0,0,240,237,235,235,235,235,238,239,0,0,0,0,0,0,0,0,0,0,0,0 };

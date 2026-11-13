@@ -17,6 +17,7 @@ PUNCT = {  # 5x7 glyphs in tile columns 1..5, like the font
     "!": [".3......", ".3......", ".3......", ".3......", ".3......", "........", ".3......", "........"],
     "?": [".3333...", ".3...3..", ".....3..", "...33...", "...3....", "........", "...3....", "........"],
     "X": [".3...3..", ".3...3..", "..3.3...", "...3....", "..3.3...", ".3...3..", ".3...3..", "........"],
+    "+": ["........", "...3....", "...3....", ".33333..", "...3....", "...3....", "........", "........"],
     "Z": [".33333..", ".....3..", "....3...", "...3....", "..3.....", ".3......", ".33333..", "........"],
 }
 
@@ -59,7 +60,8 @@ def build():
         return FIRST + tiles.index(rows)
 
     for ch, g in PUNCT.items():
-        add(g, {".": "DOT", "!": "EXC", "?": "Q", "X": "X", "Z": "Z"}[ch])
+        if ch != "+":
+            add(g, {".": "DOT", "!": "EXC", "?": "Q", "X": "X", "Z": "Z"}[ch])
     ids["BIG0"] = FIRST + len(tiles)
     fr = font_rows()
     for ch in BIGSET:
@@ -88,6 +90,7 @@ def build():
             if 13 <= c <= 18:
                 rows[j].append(sunid[j][c - 13]); continue
             rows[j].append(0 if min(a, b) >= lv + 1 else sky2 if max(a, b) <= lv else up if a < b else dn)
+    add(PUNCT["+"], "PLUS")                         # last, so no other id moves (v1.1: ability hints "UP + B")
     assert FIRST + len(tiles) <= 256, f"out of tile ids: {FIRST + len(tiles)}"
     return tiles, ids, rows
 

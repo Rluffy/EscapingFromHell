@@ -17,6 +17,8 @@ static void draw(void);
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
 #define DASH_CD    30                  /* frames from dash start until the next one */
 #define VICTORY_LEN 120                /* victory screen, 2 s */
+#define HINT_EXTRA  60                 /* +1 s when an ability is new, so its hint can be read */
+#define U_PLUS      241                /* "+" tile (ui.h, R1) */
 #define BAR_ADDR   0x2054              /* boss hp bar: row 2, columns 20..29 (10 tiles = 20 half steps) */
 #define BAR_N      10
 #define FIRE_CD    40                  /* player fireball cooldown (Up + B) */
@@ -58,6 +60,14 @@ const struct boss *bs;                 /* the demon of the current dungeon */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
 static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
 static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP", 0, "GOT FIREBALL", 0, "GOT SHIELD", 0, "GOT SWORD WAVE" };   /* Dash, Double jump, Fireball, Shield act so far */
+static const char *const gothint[10] = { "PRESS SELECT", 0, "A IN THE AIR", 0, "UP + B", 0, "HOLD DOWN", 0, "B AT FULL HEARTS" };  /* how to use it, under the GOT line */
+/* Pause overview: one line per ability bit (AB_*), key padded to 7 columns. */
+static const char *const abtxt[5] = { "SELECT DASH", "A      AIR JUMP", "UP+B   FIREBALL", "DOWN   SHIELD", "B      WAVE" };
+/* Pause slots: 0 = PAUSE (row 5), 1..5 = abilities (rows 7..11), 6 = quit hint (row 13); all inside columns 7..24, where the arena is empty. */
+static const unsigned int pzaddr[7] = { 0x20AD, 0x20E8, 0x2108, 0x2128, 0x2148, 0x2168, 0x21A7 };
+static const char *pzs[7];
+static unsigned char pz_set, pz_drawn;   /* slots that make up the overview / slots on screen */
+static unsigned char vict_len;         /* victory screen length of this win */
 /* BG tile of the letter A..Z (0 = not in the font sheet). */
 const unsigned char ftile[26] = {
     37, 43, 33, 26, 30, 48, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 49, 35, 38, 34, 27, 32, 47, 0, 36, 0
@@ -165,19 +175,23 @@ static void pal_sync(void)
     if (w != pal_bg) { pal_bg = w; setpal(0, w ? &white : &dpal[cur_dungeon - 1][0], 1); }
 }
 
-/* Text (A-Z and spaces, max 16 letters) centered on the nametable row at row_addr, or erased again (on = 0).
+/* Text (A-Z, "+" and spaces, max 16 letters; text_at: any start, up to 24) centered on the nametable row at row_addr, or erased again (on = 0).
    The tiles are prepared into tb[] during the frame and written by text_flush() at the start of the next
    one, while vblank is still on: the vblank is too short to do the letter lookup there.
    shortcut: a letter missing from ftile[] shows blank. */
-static unsigned char tb[18], tb_n;     /* PPU addr hi, lo, tiles; tb_n = end index, 0 = nothing pending */
+static unsigned char tb[26], tb_n;     /* PPU addr hi, lo, tiles; tb_n = end index, 0 = nothing pending */
+
+static void text_at(const char *n, unsigned int addr, unsigned char on)
+{
+    tb[0] = addr >> 8; tb[1] = addr;
+    for (tb_n = 2; *n; ++n) tb[tb_n++] = on && *n > ' ' ? *n == '+' ? U_PLUS : ftile[*n - 'A'] : 0;
+}
 
 static void text_prep(const char *n, unsigned int row_addr, unsigned char on)
 {
     unsigned char l = 0;
     while (n[l]) ++l;
-    row_addr += (32 - l) >> 1;
-    tb[0] = row_addr >> 8; tb[1] = row_addr;
-    for (tb_n = 2; *n; ++n) tb[tb_n++] = on && *n > ' ' ? ftile[*n - 'A'] : 0;
+    text_at(n, row_addr + ((32 - l) >> 1), on);
 }
 
 static void text_flush(void)
@@ -202,6 +216,27 @@ static void bar_sync(void)
     tb[0] = BAR_ADDR >> 8; tb[1] = BAR_ADDR & 0xFF;
     for (i = 0; i < BAR_N; ++i) tb[2 + i] = s >= 2 * i + 2 ? 40 : s > 2 * i ? 41 : 42;
     tb_n = 2 + BAR_N;
+}
+
+/* Pause overview, one slot per frame through tb[] (a row fits the vblank). Erasing writes blanks: the arena is empty there. */
+static void pause_build(void)
+{
+    unsigned char i, n = 0;
+    pzs[0] = "PAUSE";
+    pz_set = 1 | 64;
+    pzs[6] = "START+SELECT QUIT";
+    for (i = 0; i < 5; ++i)
+        if (ab_act & (1 << i)) { pzs[++n] = abtxt[i]; pz_set |= 1 << n; }
+}
+
+static void pause_sync(void)
+{
+    unsigned char d = paused && !intro ? pz_set : 0, k = 0;
+    d ^= pz_drawn;
+    if (!d || tb_n) return;
+    while (!((d >> k) & 1)) ++k;
+    pz_drawn ^= 1 << k;
+    text_at(pzs[k], pzaddr[k], (pz_drawn >> k) & 1);
 }
 
 void dungeon_enter(void)
@@ -251,7 +286,7 @@ void dungeon_enter(void)
     for (i = 0; i < cur_dungeon - 1; ++i) ab_act |= grant[i];
     arena_reset();
     intro = 0;
-    tb_n = 0; bar_hp = 255;
+    tb_n = pz_drawn = 0; bar_hp = 255;
     bar_sync(); text_flush();
     intro = INTRO_LEN; text_prep(bs->name, 0x2140, 1); text_flush();
     scroll_x = 0;
@@ -497,14 +532,16 @@ unsigned char dungeon_frame(void)
     text_flush();                       /* PPU writes first: still in vblank */
     if (!intro && !paused) ++ftick;     // the fight clock runs with the fight only (not in the intro, not while paused)
     if (victory) {                      /* input ignored */
-        if (victory == VICTORY_LEN - 1 && (grant[cur_dungeon - 1] & ~abilities) && gotname[cur_dungeon - 1])
-            text_prep(gotname[cur_dungeon - 1], 0x21A0, 1);
+        if (grant[cur_dungeon - 1] & ~abilities) {      /* new ability: its name, then how to use it */
+            if (victory == vict_len - 1) text_prep(gotname[cur_dungeon - 1], 0x21A0, 1);
+            if (victory == vict_len - 2) text_prep(gothint[cur_dungeon - 1], 0x21E0, 1);
+        }
         if (!--victory) { win(); return 1; }
         draw();
         return 0;
     }
     if (paused && PRESSED(PAD_SELECT)) return 1;    /* Start, then Select: give up the fight */
-    if (PRESSED(PAD_START)) paused ^= 1;
+    if (PRESSED(PAD_START) && (paused ^= 1)) pause_build();
     pal_sync();                         /* PPU writes first: still in vblank */
     if (intro) {
         if (!paused) {                  /* Start freezes the intro too (it used to run on and the fight began paused) */
@@ -516,8 +553,9 @@ unsigned char dungeon_frame(void)
         pfire();
         update_enemy();
         combat();
-        if (!en.hp) { victory = VICTORY_LEN; scroll_x = 0; text_prep("VICTORY", 0x2140, 1); sfx_play(SFX_VICTORY); }
+        if (!en.hp) { victory = vict_len = VICTORY_LEN + ((grant[cur_dungeon - 1] & ~abilities) ? HINT_EXTRA : 0); scroll_x = 0; text_prep("VICTORY", 0x2140, 1); sfx_play(SFX_VICTORY); }
     }
     draw();
+    pause_sync();                       /* after draw(): the hp bar has the buffer first */
     return 0;
 }
