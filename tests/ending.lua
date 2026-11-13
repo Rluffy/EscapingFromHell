@@ -1,7 +1,8 @@
 -- Full-order run in NORMAL mode: dungeons 1..10 in order. Per dungeon: its gate is open, the next one locked, boss killed by
 -- a real sword hit, mask grows bit by bit, ability appears at 1/3/5/7/9, save valid after each. After 10: ending screen
--- "YOU ESCAPED", Start only after a guard time, back at door 10 with the ending flag in the save.
--- Addresses and save layout: docs/TECH.md "Debug-Adressen", "Speicherstand", "Startmenü und Ende (v0.8)".
+-- the dawn ending screen (big "YOU ESCAPED", sun, hero, "THE END", "THANKS FOR PLAYING"), Start only after a guard time,
+-- back at door 10 with the ending flag in the save.
+-- Addresses and save layout: docs/TECH.md "Debug-Adressen", "Speicherstand", "Titel, Intro und Ende (v0.9)".
 local M = emu.memType.nesMemory
 local held = {}
 local function rd(a) return emu.read(a, M) end
@@ -44,7 +45,7 @@ end
 
 co = coroutine.create(function()
   for i = 0, 6 do wr(SAVE + i, 0) end
-  emu.reset(); frames(10); held = {start = true}; frames(3); held = {}; frames(60)
+  emu.reset(); frames(30); held = {start = true}; frames(3); held = {}; frames(20); held = {start = true}; frames(3); held = {}; frames(60)
   check(rd(STATE) == 2 and rd16(MASK) == 0 and rd(ENDING) == 0, "NORMAL new game")
 
   for n = 1, 10 do
@@ -75,15 +76,30 @@ co = coroutine.create(function()
   -- dungeon 10: ending screen first
   check(wait_until(function() return rd(STATE) == 4 end, 300), "ending screen after dungeon 10, state=" .. rd(STATE))
   check(rd(CUR) == 10, "still 'in' dungeon 10 for the way back")
-  local t = {}
-  for i = 0, 10 do t[#t + 1] = ppu(0x2000 + 12 * 32 + 10 + i) end
-  check(table.concat(t, ",") == "36,31,27,0,30,38,33,37,15,30,26", "'YOU ESCAPED' on screen: " .. table.concat(t, ","))
-  t = {}
-  for i = 0, 10 do t[#t + 1] = ppu(0x2000 + 18 * 32 + 10 + i) end
-  check(table.concat(t, ",") == "15,35,30,38,38,0,38,34,37,35,34", "'PRESS START' on screen: " .. table.concat(t, ","))
+  local function row(r, c, n)              -- n tile ids of nametable row r from column c
+    local t = {}
+    for i = 0, n - 1 do t[#t + 1] = ppu(0x2000 + r * 32 + c + i) end
+    return table.concat(t, ",")
+  end
+  local BIG0, BIGSET = 157, "ACDEFGHILMNOPRSUY"          -- src/ui.h: big letter k = tiles BIG0 + 4k (TL TR BL BR)
+  local top, bot = {}, {}
+  for ch in ("YOU ESCAPED"):gmatch(".") do
+    if ch == " " then top[#top + 1] = 0; bot[#bot + 1] = 0
+    else
+      local k = BIGSET:find(ch, 1, true) - 1
+      top[#top + 1] = BIG0 + 4 * k; top[#top + 1] = BIG0 + 4 * k + 1
+      bot[#bot + 1] = BIG0 + 4 * k + 2; bot[#bot + 1] = BIG0 + 4 * k + 3
+    end
+  end
+  check(row(2, 5, 21) == table.concat(top, ",") and row(3, 5, 21) == table.concat(bot, ","), "big 'YOU ESCAPED' on screen: " .. row(2, 5, 21))
+  check(row(22, 12, 7) == "34,39,30,0,30,28,26", "'THE END' on screen: " .. row(22, 12, 7))
+  check(row(25, 7, 18) == "34,39,37,28,46,38,0,48,31,35,0,15,44,37,36,13,28,29", "'THANKS FOR PLAYING' on screen: " .. row(25, 7, 18))
+  check(row(10, 0, 32) == string.rep("225,", 31) .. "225", "sky band tiles on row 10: " .. row(10, 0, 32))
+  check(row(19, 15, 2) ~= "0,0" and row(20, 0, 32) == string.rep("0,", 31) .. "0", "sun on the horizon, ground black")
   check(rd16(MASK) == 1023 and rd(ENDING) == 1, "mask 1023, ending flag set")
   save_ok(1023, 31, true)
-  for i = 0, 63 do check(rd(0x200 + 4 * i) == 0xFF, "ending screen: sprite " .. i .. " hidden") end
+  for i = 0, 3 do check(rd(0x200 + 4 * i) ~= 0xFF and rd(0x201 + 4 * i) == i, "ending screen: hero sprite " .. i .. " shown") end
+  for i = 4, 63 do check(rd(0x200 + 4 * i) == 0xFF, "ending screen: sprite " .. i .. " hidden") end
   press({start = true})
   check(rd(STATE) == 4, "Start is ignored during the first second")
   check(wait_until(function() return rd(ENDT) < 150 end, 200), "end timer runs")
@@ -95,7 +111,7 @@ co = coroutine.create(function()
   save_ok(1023, 31, true)
 
   -- reset + NORMAL keeps the flag
-  emu.reset(); frames(10); held = {start = true}; frames(3); held = {}; frames(60)
+  emu.reset(); frames(30); held = {start = true}; frames(3); held = {}; frames(20); held = {start = true}; frames(3); held = {}; frames(60)
   check(rd16(MASK) == 1023 and rd(ENDING) == 1 and rd(ABIL) == 31, "reset loads everything incl. the ending flag")
 
   print("ending test OK")

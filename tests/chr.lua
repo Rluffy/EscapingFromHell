@@ -24,8 +24,8 @@ local function nonblank(a)                   -- first 64 tiles of the 1 KB windo
 end
 
 co = coroutine.create(function()
-  frames(10); held = {down = true}; frames(3); held = {}; frames(5)
-  hold({start = true}, 3); frames(60)       -- menu: CHEAT, all gates open
+  frames(30); held = {down = true}; frames(3); held = {}; frames(5)
+  hold({start = true}, 3); frames(20); hold({start = true}, 3); frames(60)   -- menu: CHEAT (all gates open), Start skips the intro
   check(rd(STATE) == 2 and rd(BANK) == 10 and rd(0x8000) ~= 0, "overworld: UI bank 10 mapped, cur_bank=" .. rd(BANK))
 
   -- overworld animation hook: R1 flips between frame A (bank 2) and B (bank 4); the animated lava/lantern/grass tiles differ

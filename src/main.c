@@ -40,10 +40,21 @@ void save_game(void)
     SAVE[6] = save_sum();
 }
 
-/* NORMAL: a valid save is loaded, anything else is a new game. */
+unsigned char save_valid(void)
+{
+    return SAVE[0] == 'E' && SAVE[1] == 'H' && SAVE[2] == SAVE_VER && SAVE[6] == save_sum();
+}
+
+void save_clear(void)
+{
+    unsigned char i;
+    for (i = 0; i < 7; ++i) SAVE[i] = 0;
+}
+
+/* CONTINUE: the save is loaded (the menu only offers it when it is valid; the check stays for safety). */
 static void load_game(void)
 {
-    if (SAVE[0] == 'E' && SAVE[1] == 'H' && SAVE[2] == SAVE_VER && SAVE[6] == save_sum()) {
+    if (save_valid()) {
         dungeons_cleared = (SAVE[3] | ((unsigned int)SAVE[4] << 8)) & 0x3FF;
         abilities = SAVE[5];
         ending_seen = SAVE[4] >> 7;
@@ -258,19 +269,27 @@ static void overworld_frame(void)
     oam[7] = oam[15] = player_x - cam_x + 8;
 }
 
-/* Menu entry menu_sel chosen (0 NORMAL, 1 CHEAT). */
-static void start_game(void)
+static void to_overworld(void)
 {
-    cheat = menu_sel == 1;
-    if (cheat) dungeons_cleared = 0x3FF;      /* every gate open; save_game() is disabled */
-    else load_game();
     game_state = ST_OVERWORLD;
     init_player_oam();
     redraw_overworld();
 }
 
+/* Menu entry a chosen: 1 CONTINUE (loads the save, no intro), 2 NEW GAME (fresh in RAM, the old save stays until the
+   first autosave overwrites it), 3 CHEAT (every gate open; save_game() is disabled). NEW GAME and CHEAT show the intro. */
+static void start_game(unsigned char a)
+{
+    cheat = a == 3;
+    dungeons_cleared = cheat ? 0x3FF : 0;
+    abilities = ending_seen = 0;
+    if (a == 1) { load_game(); to_overworld(); }
+    else intro_enter();
+}
+
 void main(void)
 {
+    unsigned char a;
     bank_set(BANK_UI);
     anim_bank = CHR_ANIM_A;            /* what crt0 loaded into R1 / R3 */
     boss_chr = CHR_BOSS(1);
@@ -283,7 +302,7 @@ void main(void)
 
     for (;;) {
         wait_vblank();
-        if (game_state == ST_OVERWORLD) anim_tick();
+        if (game_state != ST_DUNGEON) anim_tick();     /* overworld, title, intro (lava, lanterns); harmless in the ending */
         read_pad();
         if (game_state == ST_OVERWORLD) {
             overworld_frame();
@@ -294,8 +313,10 @@ void main(void)
             }
         } else if (game_state == ST_END) {
             if (end_frame()) leave_dungeon();
-        } else if (menu_frame()) {
-            start_game();
+        } else if (game_state == ST_INTRO) {
+            if (intro_frame()) to_overworld();
+        } else if ((a = menu_frame())) {
+            start_game(a);
         }
         sfx_update();                  /* last: the vblank start belongs to the PPU writes above */
     }

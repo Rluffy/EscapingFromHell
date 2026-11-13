@@ -11,6 +11,7 @@
 
 #define ST_MENU 1                           /* game_state values the menu/ending code sets (menu.c, main.c) */
 #define ST_END  4
+#define ST_INTRO 5
 
 #define BANK_NONE 13                        /* empty PRG bank, mapped only until main() maps BANK_UI */
 #define BANK_UI   10                        /* menu.c + overworld map: mapped in menu, overworld and ending; a dungeon maps its boss bank */
@@ -28,7 +29,7 @@ void __fastcall__ chr_set(unsigned char r, unsigned char b);   /* crt0.s: MMC3 C
 
 /* Test-visible RAM, fixed at $0300 (see src/debug.s, cfg/mmc3.cfg). */
 extern volatile unsigned int  frame_count;  /* $0300/$0301, +1 per NMI */
-extern volatile unsigned char game_state;   /* $0302, 0 = boot, 1 = start menu, 2 = overworld, 3 = dungeon arena, 4 = ending */
+extern volatile unsigned char game_state;   /* $0302, 0 = boot, 1 = start menu, 2 = overworld, 3 = dungeon arena, 4 = ending, 5 = intro */
 extern unsigned int  player_x;              /* $0303/$0304 world x (top-left of the 16x16 sprite) */
 extern unsigned char player_y;              /* $0305 world y */
 extern unsigned int  cam_x;                 /* $0306/$0307 camera x, 0..768 */
@@ -57,13 +58,14 @@ extern unsigned char shield;                 /* $0331 1 = shield raised (Down he
 extern unsigned char slow;                   /* $0332 frames the player is webbed (walks 1 px/frame, no dash) */
 extern unsigned char ending_seen;            /* $0333 1 = the ending was seen (saved: bit 7 of $6004) */
 extern unsigned char cheat;                  /* $0334 1 = cheat mode: all gates open, no heart loss, no saving */
-extern unsigned char menu_sel;               /* $0335 start menu cursor (0 NORMAL, 1 CHEAT) */
+extern unsigned char menu_sel;               /* $0335 start menu cursor: index in the visible entry list */
 extern unsigned char end_t;                  /* $0336 ending screen frames left */
 extern unsigned char boss_chr;               /* $0337 CHR bank in R3 (R4, R5 = +1, +2): sheet of the current boss */
 extern unsigned char anim_bank;              /* $0338 CHR bank in R1: overworld animation frame (CHR_ANIM_A / CHR_ANIM_B) */
 #define CHR_ANIM_A 2                         /* CHR layout: docs/TECH.md "CHR-Layout" */
 #define CHR_ANIM_B 4
 #define CHR_BOSS(n) (8 + 4 * ((n) - 1))      /* first 1 KB bank of the boss of dungeon n */
+extern unsigned char ui_page, ui_t, menu_conf; /* $033D..$033F intro page / frames left on it, DELETE SAVE confirmation shown */
 extern unsigned char sfx_last;               /* $0339 id of the last effect that started (0 = none) */
 extern unsigned char sfx_id[3];              /* $033A..$033C effect playing on pulse 1 / pulse 2 / noise (0 = idle) */
 /* Sound effect ids: order of the tables in src/sfx.s (docs/TECH.md "Soundeffekte (v0.9)"). */
@@ -90,8 +92,12 @@ void sfx_update(void);                      /* sfx.s: once per frame at the end 
 extern unsigned char pf_x, pf_y, pf_cd;      /* $0329..$032B player fireball: x (0 = none), y, cooldown frames left */
 
 extern const unsigned char ftile[26];       /* dungeon.c: BG tile of the letter A..Z (0 = none) */
-void menu_enter(void);                      /* menu.c: start menu / ending screen (rendering off, then on) */
-unsigned char menu_frame(void);             /* 1 = entry chosen */
+void menu_enter(void);                      /* menu.c: title + start menu / intro / ending screen (rendering off, then on) */
+unsigned char menu_frame(void);             /* 0 = nothing yet, else the entry chosen: 1 CONTINUE, 2 NEW GAME, 3 CHEAT */
+void intro_enter(void);
+unsigned char intro_frame(void);            /* 1 = intro over (end or Start) */
+unsigned char save_valid(void);             /* main.c: a valid save is in $6000 */
+void save_clear(void);
 void end_enter(void);
 unsigned char end_frame(void);              /* 1 = back to the overworld */
 

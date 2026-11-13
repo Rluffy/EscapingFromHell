@@ -1,6 +1,7 @@
--- Start menu test: boot state and text, cursor (Up/Down/Select, wrap), NORMAL loads the save (incl. the ending bit),
--- CHEAT = all gates open, hearts stay 3 on hits, nothing ever written to $6000, ending screen times out by itself.
--- Addresses and save layout: docs/TECH.md "Debug-Adressen", "Speicherstand", "Startmenü und Ende (v0.8)".
+-- Title/menu/intro test: logo and entries, cursor (Up/Down/Select, wrap), CONTINUE only with a valid save (loads it, no intro),
+-- NEW GAME = intro (A / timer / Start) then mask 0 with the old save kept, DELETE SAVE with confirmation, CHEAT = intro,
+-- all gates open, hearts stay 3 on hits, nothing ever written to $6000, ending screen times out by itself.
+-- Addresses, tiles and save layout: docs/TECH.md "Debug-Adressen", "Speicherstand", "Titel, Intro und Ende (v0.9)".
 local M = emu.memType.nesMemory
 local held = {}
 local function rd(a) return emu.read(a, M) end
@@ -13,6 +14,7 @@ local HEARTS, INV = 0x30B, 0x30C
 local EX, EY, EHP, EFLASH = 0x310, 0x311, 0x314, 0x315
 local INTRO, DEAD, ABIL = 0x31A, 0x319, 0x322
 local ENDING, CHEAT, SEL = 0x333, 0x334, 0x335
+local PAGE, TIMER, CONF = 0x33D, 0x33E, 0x33F
 local SAVE = 0x6000
 local FLOOR_Y = 176
 
@@ -43,9 +45,32 @@ local function write_save(lo, hi, ab)       -- valid save: 'E' 'H' 1 lo hi abili
   for i = 1, 6 do wr(SAVE + i - 1, b[i]); s = s + b[i] end
   wr(SAVE + 6, s % 256)
 end
-local function boot()                        -- reset (PRG-RAM stays), wait for the menu
-  emu.reset(); frames(20)
+local function boot()                        -- reset (PRG-RAM stays), wait for the menu to be drawn
+  emu.reset(); frames(30)
   check(rd(STATE) == 1, "reset shows the start menu, state=" .. rd(STATE))
+end
+local BIG0, BIGSET = 157, "ACDEFGHILMNOPRSUY"   -- src/ui.h: big letter k = tiles BIG0 + 4k (TL TR BL BR)
+local function big(s, r, c)                  -- expected tiles of a big-letter line: top row (p = 0) or bottom row (p = 1)
+  local t = {}
+  for p = 0, 1 do
+    local w = {}
+    for ch in s:gmatch(".") do
+      if ch == " " then w[#w + 1] = 0
+      else local k = BIGSET:find(ch, 1, true) - 1; w[#w + 1] = BIG0 + 4 * k + 2 * p; w[#w + 1] = BIG0 + 4 * k + 2 * p + 1 end
+    end
+    t[#t + 1] = table.concat(w, ",")
+  end
+  return t
+end
+local function title_ok()                    -- the logo: ESCAPING on rows 3/4 (cols 8..23), FROM HELL on rows 6/7 (cols 7..23)
+  local e, f = big("ESCAPING"), big("FROM HELL")
+  check(row(3, 8, 16) == e[1] and row(4, 8, 16) == e[2], "logo ESCAPING, got " .. row(3, 8, 16))
+  check(row(6, 7, 17) == f[1] and row(7, 7, 17) == f[2], "logo FROM HELL, got " .. row(6, 7, 17))
+end
+local function skip_intro()                  -- Start leaves the intro for the overworld
+  press({start = true})
+  check(wait_until(function() return rd(STATE) == 2 end, 10), "Start skips the intro")
+  frames(40)
 end
 local function gate_tile(n)                  -- background tile at the gate of dungeon n
   local dr = (n % 2 == 1) and 5 or 3
@@ -71,45 +96,114 @@ end
 
 co = coroutine.create(function()
   for i = 0, 6 do wr(SAVE + i, 0) end
-  frames(20)
-  check(rd(STATE) == 1 and rd(SEL) == 0, "boot shows the start menu, state=" .. rd(STATE))
-  check(row(6, 12, 8) == "30,38,33,37,15,13,28,29", "title 'ESCAPING', got " .. row(6, 12, 8))
-  check(row(8, 11, 9) == "48,35,31,14,0,39,30,44,44", "title 'FROM HELL', got " .. row(8, 11, 9))
-  check(row(14, 13, 6) == "28,31,35,14,37,44", "entry 'NORMAL', got " .. row(14, 13, 6))
-  check(row(16, 13, 5) == "33,39,30,37,34", "entry 'CHEAT', got " .. row(16, 13, 5))
-  check(rd(0x200) == 14 * 8 - 1 and rd(0x203) == 88, "cursor beside NORMAL, y=" .. rd(0x200))
+  frames(30)
+
+  -- no save: title, NEW GAME and CHEAT only (no CONTINUE, no DELETE SAVE)
+  check(rd(STATE) == 1 and rd(SEL) == 0 and rd(CONF) == 0, "boot shows the start menu, state=" .. rd(STATE))
+  title_ok()
+  check(row(12, 12, 8) == "28,30,47,0,29,37,14,30", "entry 'NEW GAME', got " .. row(12, 12, 8))
+  check(row(14, 12, 5) == "33,39,30,37,34", "entry 'CHEAT', got " .. row(14, 12, 5))
+  check(row(16, 12, 11) == "0,0,0,0,0,0,0,0,0,0,0" and row(18, 12, 11) == "0,0,0,0,0,0,0,0,0,0,0", "no CONTINUE / DELETE SAVE row")
+  check(rd(0x200) == 12 * 8 - 1 and rd(0x203) == 80, "cursor beside NEW GAME, y=" .. rd(0x200))
   press({down = true}); frames(1)
-  check(rd(SEL) == 1 and rd(0x200) == 16 * 8 - 1, "Down moves to CHEAT")
+  check(rd(SEL) == 1 and rd(0x200) == 14 * 8 - 1, "Down moves to CHEAT")
   press({up = true}); frames(1)
-  check(rd(SEL) == 0, "Up moves back to NORMAL")
+  check(rd(SEL) == 0, "Up moves back to NEW GAME")
   press({up = true})
   check(rd(SEL) == 1, "Up wraps to CHEAT")
   press({select = true})
-  check(rd(SEL) == 0, "Select cycles (wraps to NORMAL)")
+  check(rd(SEL) == 0, "Select cycles (wraps to NEW GAME)")
   press({select = true})
   check(rd(STATE) == 1, "Select only moves the cursor")
 
-  -- NORMAL loads the save: dungeons 1+2, Dash, ending seen
-  write_save(3, 0x80, 1)
+  -- NEW GAME: intro (3 pages) then the overworld with nothing cleared
   boot()
-  press({start = true}); frames(60)
-  check(rd(STATE) == 2 and rd(CHEAT) == 0, "NORMAL starts the overworld")
-  check(rd16(MASK) == 3 and rd(ABIL) == 1 and rd(ENDING) == 1, "NORMAL loads the save, mask=" .. rd16(MASK))
+  press({start = true}); frames(20)
+  check(rd(STATE) == 5 and rd(CHEAT) == 0 and rd(PAGE) == 0, "NEW GAME starts the intro, state=" .. rd(STATE))
+  check(row(7, 11, 9) == "36,31,27,0,37,47,37,46,30" and row(10, 12, 8) == "13,28,0,39,30,44,44,152", "intro page 1 text: " .. row(7, 11, 9) .. " / " .. row(10, 12, 8))
+  press({a = true}); frames(20)
+  check(rd(STATE) == 5 and rd(PAGE) == 1, "A turns the page, page=" .. rd(PAGE))
+  check(row(7, 8, 16) == "34,30,28,0,26,30,14,31,28,38,0,29,27,37,35,26", "intro page 2 text: " .. row(7, 8, 16))
+  wr(TIMER, 2); frames(20)                   -- the page times out by itself
+  check(rd(STATE) == 5 and rd(PAGE) == 2, "page 2 auto-advances, page=" .. rd(PAGE))
+  check(row(7, 10, 12) == "26,30,48,30,37,34,0,34,39,30,14,152", "intro page 3 text: " .. row(7, 10, 12))
+  press({a = true})                          -- after the last page: overworld
+  check(wait_until(function() return rd(STATE) == 2 end, 10), "A on the last page ends the intro")
+  frames(40)
+  check(rd16(MASK) == 0 and rd(ABIL) == 0 and rd(ENDING) == 0 and rd(CHEAT) == 0, "NEW GAME: mask 0, abilities 0")
+
+  -- NEW GAME, Start skips the whole intro; an old save is not touched (only a later autosave overwrites it)
+  write_save(3, 0x80, 1)
+  local before = save_bytes()
+  boot()
+  press({down = true}); frames(1)
+  check(rd(SEL) == 1, "with a save NEW GAME is the second entry")
+  press({start = true}); frames(20)
+  check(rd(STATE) == 5, "NEW GAME with a save starts the intro")
+  skip_intro()
+  check(rd16(MASK) == 0 and rd(ABIL) == 0 and rd(ENDING) == 0, "NEW GAME ignores the save, mask=" .. rd16(MASK))
+  check(save_bytes() == before, "the old save stays until the first autosave: " .. save_bytes())
+
+  -- CONTINUE (first entry with a valid save): saved mask, abilities and ending bit, no intro
+  boot()
+  title_ok()
+  check(row(12, 12, 8) == "33,31,28,34,13,28,27,30", "entry 'CONTINUE', got " .. row(12, 12, 8))
+  check(row(14, 12, 8) == "28,30,47,0,29,37,14,30", "entry 'NEW GAME' second, got " .. row(14, 12, 8))
+  check(row(16, 12, 5) == "33,39,30,37,34", "entry 'CHEAT' third, got " .. row(16, 12, 5))
+  check(row(18, 12, 11) == "26,30,44,30,34,30,0,38,37,32,30", "entry 'DELETE SAVE' fourth, got " .. row(18, 12, 11))
+  check(rd(SEL) == 0 and rd(0x200) == 12 * 8 - 1, "cursor on CONTINUE")
+  press({start = true})
+  check(wait_until(function() return rd(STATE) ~= 1 end, 10) and rd(STATE) == 2, "CONTINUE goes straight to the overworld (no intro), state=" .. rd(STATE))
+  frames(40)
+  check(rd(CHEAT) == 0 and rd16(MASK) == 3 and rd(ABIL) == 1 and rd(ENDING) == 1, "CONTINUE loads the save, mask=" .. rd16(MASK))
   wr16(PX, (6 * 3 - 3) * 16); wr(PY, 80); frames(30)
   check(gate_tile(3) == 8 and gate_tile(4) == 7, "gate 3 open, gate 4 locked")
 
-  -- NORMAL with an old version-1 save without the ending bit, and with A as the confirm key
+  -- an old version-1 save without the ending bit, and A as the confirm key
   write_save(3, 0, 1)
   boot()
-  press({a = true}); frames(60)
+  press({a = true}); frames(40)
   check(rd(STATE) == 2 and rd16(MASK) == 3 and rd(ENDING) == 0, "A confirms; save without the ending bit loads")
 
-  -- CHEAT: every gate open, nothing granted or lost, nothing saved
-  write_save(3, 0, 1)
-  local before = save_bytes()
+  -- a damaged save counts as no save: CONTINUE is hidden
+  write_save(3, 0, 1); wr(SAVE + 6, 0)
   boot()
-  press({down = true})
-  press({a = true}); frames(60)
+  check(row(12, 12, 8) == "28,30,47,0,29,37,14,30", "bad checksum: no CONTINUE, got " .. row(12, 12, 8))
+
+  -- DELETE SAVE asks first: B cancels, A deletes
+  write_save(3, 0, 1)
+  before = save_bytes()
+  boot()
+  press({down = true}); press({down = true}); press({down = true}); frames(1)
+  check(rd(SEL) == 3 and rd(0x200) == 18 * 8 - 1, "cursor on DELETE SAVE")
+  press({start = true}); frames(30)
+  check(rd(STATE) == 1 and rd(CONF) == 1, "DELETE SAVE asks for confirmation")
+  check(row(14, 10, 12) == "26,30,44,30,34,30,0,38,37,32,30,154", "question 'DELETE SAVE?', got " .. row(14, 10, 12))
+  check(row(17, 10, 12) == "37,0,36,30,38,0,0,0,43,0,28,31", "hint 'A YES   B NO', got " .. row(17, 10, 12))
+  check(row(12, 12, 8) == "0,0,0,0,0,0,0,0" and rd(0x200) == 0xFF, "entries and cursor are gone while asking")
+  press({down = true}); press({start = true}); press({select = true}); frames(1)
+  check(rd(CONF) == 1 and save_bytes() == before, "other keys do nothing while asking")
+  press({b = true}); frames(30)
+  check(rd(CONF) == 0 and rd(STATE) == 1 and rd(SEL) == 3 and save_bytes() == before, "B cancels, save kept")
+  check(row(12, 12, 8) == "33,31,28,34,13,28,27,30", "CONTINUE still listed")
+  press({start = true}); frames(30)
+  check(rd(CONF) == 1, "asking again")
+  press({a = true}); frames(30)
+  check(rd(CONF) == 0 and rd(STATE) == 1 and rd(SEL) == 0, "A deletes and returns to the menu")
+  check(save_bytes() == "0,0,0,0,0,0,0", "save is cleared: " .. save_bytes())
+  check(row(12, 12, 8) == "28,30,47,0,29,37,14,30" and row(16, 12, 11) == "0,0,0,0,0,0,0,0,0,0,0", "CONTINUE and DELETE SAVE are gone")
+  boot()
+  check(row(12, 12, 8) == "28,30,47,0,29,37,14,30", "still no CONTINUE after a reset")
+
+  -- CHEAT (third entry with a save): intro, then every gate open, nothing granted or lost, nothing saved
+  write_save(3, 0, 1)
+  before = save_bytes()
+  boot()
+  press({down = true}); press({down = true})
+  check(rd(SEL) == 2, "cursor on CHEAT")
+  press({a = true}); frames(20)
+  check(rd(STATE) == 5 and rd(CHEAT) == 1, "CHEAT shows the intro too")
+  skip_intro()
   check(rd(STATE) == 2 and rd(CHEAT) == 1, "CHEAT starts the overworld")
   check(rd16(MASK) == 1023 and rd(ABIL) == 0, "CHEAT: all dungeons open, abilities start empty, mask=" .. rd16(MASK))
   wr16(PX, (6 * 10 - 3) * 16); wr(PY, 48 + 32); frames(30)
@@ -133,7 +227,7 @@ co = coroutine.create(function()
   check(wait_until(function() return rd(STATE) == 2 end, 400), "ending screen leaves by itself")
   check(save_bytes() == before, "cheat ending left the save untouched: " .. save_bytes())
 
-  -- NORMAL after the cheat session: progress untouched
+  -- CONTINUE after the cheat session: progress untouched
   boot()
   press({start = true}); frames(60)
   check(rd(CHEAT) == 0 and rd16(MASK) == 3 and rd(ABIL) == 1, "normal progress untouched, mask=" .. rd16(MASK))

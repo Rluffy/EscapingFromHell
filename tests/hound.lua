@@ -89,7 +89,7 @@ end
 local function seen(s, st) return longest(s, st) > 0 end
 
 co = coroutine.create(function()
-  frames(10); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NORMAL
+  frames(30); held = {start = true}; frames(3); held = {}; frames(20); held = {start = true}; frames(3); held = {}; frames(60)   -- boot menu: Start = NEW GAME (CONTINUE with a save), second Start skips the intro
   check(rd(STATE) == 2, "boot reaches overworld")
   wr16(0x308, 3)                          -- dungeons 1 and 2 cleared: gate 3 open
   wr16(PX, 240); wr(PY, 80)               -- door of dungeon 3

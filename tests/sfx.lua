@@ -80,7 +80,7 @@ co = coroutine.create(function()
   check(rd(ID) == 0 and sample()["apu.square1.envelope.volume"] == 0, "finished effect leaves the channel silent")
   expect(OK, "menu confirm", function() hold({a = true}, 3) end)
   check(rd(LAST) == OK, "last effect = menu confirm")
-  frames(60)
+  frames(20); hold({start = true}, 3); frames(60)      -- Start skips the intro
   check(rd(STATE) == 2 and rd(0x334) == 1, "cheat game started")
 
   -- dungeon 1 (Imp parked at the ceiling): entering plays the gate sound
