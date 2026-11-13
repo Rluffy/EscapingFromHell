@@ -23,6 +23,7 @@ static unsigned int  drawn_mask;         /* dungeons_cleared the gate tiles were
 /* Autosave in battery PRG-RAM, layout in docs/TECH.md "Speicherstand": 'E','H', version, cleared lo/hi (bit 7 of hi = ending seen), abilities, sum of bytes 0..5. */
 #define SAVE ((volatile unsigned char *)0x6000)
 #define SAVE_VER 1
+#define PRG_RAM (*(volatile unsigned char *)0xA001)   /* MMC3: $80 = RAM on, $C0 = on and write-protected (power-loss and stray-write guard) */
 
 static unsigned char save_sum(void)
 {
@@ -35,10 +36,12 @@ static unsigned char save_sum(void)
 void save_game(void)
 {
     if (cheat) return;                 /* cheat mode never touches the save */
+    PRG_RAM = 0x80;
     SAVE[0] = 'E'; SAVE[1] = 'H'; SAVE[2] = SAVE_VER;
     SAVE[3] = dungeons_cleared; SAVE[4] = (dungeons_cleared >> 8) | (ending_seen << 7);
     SAVE[5] = abilities;
     SAVE[6] = save_sum();
+    PRG_RAM = 0xC0;
 }
 
 unsigned char save_valid(void)
@@ -49,7 +52,9 @@ unsigned char save_valid(void)
 void save_clear(void)
 {
     unsigned char i;
+    PRG_RAM = 0x80;
     for (i = 0; i < 7; ++i) SAVE[i] = 0;
+    PRG_RAM = 0xC0;
 }
 
 /* CONTINUE: the save is loaded (the menu only offers it when it is valid; the check stays for safety). */
@@ -133,6 +138,8 @@ void screen_on(unsigned char ctrl)
     ppu_ctrl = ctrl;
     col_pending = 0;
     while (!(PPU_STATUS & 0x80)) ;    /* NMI is off: poll for vblank */
+    *(volatile unsigned char *)0x2003 = 0;
+    *(volatile unsigned char *)0x4014 = 2;   /* OAM DMA now: the first picture must not show the sprites of the old screen */
     PPU_CTRL = ppu_ctrl;
     PPU_MASK = 0x1E;
 }
@@ -153,6 +160,17 @@ static void update_camera(void)
     ppu_ctrl = 0x88 | ((cam_x >> 8) & 1);
 }
 
+/* The hero's four sprites at the player's place (walking: second foot frame); also called before a redraw shows the screen. */
+static void draw_player(unsigned char walking)
+{
+    unsigned char id = walking && (frame_count & 8) ? 32 : 0;
+    oam[1] = id; oam[5] = id + 1; oam[9] = id + 2; oam[13] = id + 3;
+    oam[0] = oam[4] = player_y - 1;
+    oam[8] = oam[12] = player_y + 7;
+    oam[3] = oam[11] = player_x - cam_x;
+    oam[7] = oam[15] = player_x - cam_x + 8;
+}
+
 /* Redraw every visible column with rendering off (entering the overworld, gate changes, teleports). */
 static void redraw_overworld(void)
 {
@@ -169,6 +187,7 @@ static void redraw_overworld(void)
         ppu_flush();
     }
     drawn_mask = dungeons_cleared;
+    draw_player(0);
     screen_on(ppu_ctrl);
 }
 
@@ -252,12 +271,7 @@ static void overworld_frame(void)
             col_pending = 1;
         }
     }
-    id = (dx | dy) && (frame_count & 8) ? 32 : 0;      /* walking: second foot frame */
-    oam[1] = id; oam[5] = id + 1; oam[9] = id + 2; oam[13] = id + 3;
-    oam[0] = oam[4] = player_y - 1;
-    oam[8] = oam[12] = player_y + 7;
-    oam[3] = oam[11] = player_x - cam_x;
-    oam[7] = oam[15] = player_x - cam_x + 8;
+    draw_player((dx | dy) != 0);
 }
 
 static void to_overworld(void)
@@ -293,6 +307,7 @@ void main(void)
 
     for (;;) {
         wait_vblank();
+        ++loops;
         if (game_state != ST_DUNGEON) anim_tick();     /* overworld, title, intro (lava, lanterns); harmless in the ending */
         read_pad();
         if (game_state == ST_OVERWORLD) {

@@ -32,7 +32,7 @@ extern unsigned char ig, iair, ai_t, rng, ftick, facing;   /* ftick: frame count
 extern unsigned      fb_t;
 
 unsigned char overlap(unsigned char ax, unsigned char ay, unsigned char aw, unsigned char ah,
-                      unsigned char bx, unsigned char by, unsigned char bw, unsigned char bh);   /* dungeon.c */
+                      unsigned char bx, unsigned char by, unsigned char bw, unsigned char bh);   /* math.s */
 void hurt(unsigned char sx);                        /* dungeon.c: player hit by something at x = sx */
 
 /* One line per boss: its behavior function and phase data (defined in src/<boss>.c, banked). */

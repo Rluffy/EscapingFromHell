@@ -66,6 +66,7 @@ extern unsigned char anim_bank;              /* $0338 CHR bank in R1: overworld 
 #define CHR_ANIM_B 4
 #define CHR_BOSS(n) (8 + 4 * ((n) - 1))      /* first 1 KB bank of the boss of dungeon n */
 extern unsigned char ui_page, ui_t, menu_conf; /* $033D..$033F intro page / frames left on it, DELETE SAVE confirmation shown */
+extern volatile unsigned int loops;          /* $0340/$0341 main-loop iterations: frame_count delta - loops delta = missed frames (tests/budget.lua) */
 extern unsigned char sfx_last;               /* $0339 id of the last effect that started (0 = none) */
 extern unsigned char sfx_id[3];              /* $033A..$033C effect playing on pulse 1 / pulse 2 / noise (0 = idle) */
 /* Sound effect ids: order of the tables in src/sfx.s (docs/TECH.md "Soundeffekte (v0.9)"). */
@@ -125,6 +126,7 @@ void ppu_flush(void);
 void __fastcall__ ppu_fill(unsigned char v, unsigned n);                   /* n >= 1 bytes of v */
 void __fastcall__ ppu_copy(const unsigned char *src, unsigned char n);     /* 1..255 bytes */
 void __fastcall__ scene_draw(const unsigned char *t, unsigned char r0, unsigned char n);   /* n metatile rows from cell row r0 to nametable 0, palette bits ORed into attr[] */
+unsigned char __fastcall__ mulhi(unsigned char a, unsigned char b);       /* src/math.s: (a * b) >> 8 */
 void oam_hide(void);                                                       /* all 64 sprites off screen */
 void __fastcall__ col_tiles(const unsigned char *mm);                      /* colbuf = tile columns of metatiles mm[0..14] */
 void __fastcall__ pair_meta(const unsigned char *e);                       /* me[], mo[] = cell_meta of the map columns e[0..15], e[16..31] */

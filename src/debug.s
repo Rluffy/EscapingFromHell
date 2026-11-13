@@ -7,7 +7,7 @@
 .export _abilities, _dash_t, _dash_cd, _victory, _cur_bank, _boss_hide, _iair
 .export _pf_x, _pf_y, _pf_cd, _mcx, _mcur, _tlen, _shield, _slow
 .export _sfx_last, _sfx_id, _ui_page, _ui_t, _menu_conf
-.export _ending_seen, _cheat, _menu_sel, _end_t, _boss_chr, _anim_bank
+.export _loops, _ftick, _ending_seen, _cheat, _menu_sel, _end_t, _boss_chr, _anim_bank
 
 .segment "DEBUG"
 _frame_count:      .res 2   ; $0300
@@ -57,3 +57,5 @@ _sfx_id:          .res 3   ; $033A..$033C effect playing on pulse 1 / pulse 2 / 
 _ui_page:         .res 1   ; $033D intro: page 0..2
 _ui_t:            .res 1   ; $033E intro: frames left on the page
 _menu_conf:       .res 1   ; $033F start menu: 1 = DELETE SAVE confirmation shown
+_loops:          .res 2   ; $0340 main-loop iterations (frame budget test: frame_count - loops = frames the main loop missed)
+_ftick:          .res 1   ; $0342 fight clock: frames of the fight so far (not in the intro, not while paused)

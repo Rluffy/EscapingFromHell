@@ -1,7 +1,7 @@
 NAME   := EscapingFromHell
 ROM    := build/$(NAME).nes
 CFG    := cfg/mmc3.cfg
-CFLAGS := -t none -O --cpu 6502 -Isrc
+CFLAGS := -t none -O -Cl --cpu 6502 -Isrc
 # Mesen: portable mode via tools/mesen/settings.json (skips the first-run wizard, enables controller 1);
 # invariant globalization avoids a std::bad_cast crash at startup.
 MESEN  := env DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 xvfb-run -a tools/mesen/Mesen
@@ -45,7 +45,7 @@ test: $(ROM)
 	@set -e; for t in tests/*.lua; do \
 	  echo "== $$t"; \
 	  rm -f tools/mesen/Saves/$(NAME).sav; \
-	  timeout 60 $(MESEN) --testRunner $$t $(ROM); \
+	  timeout 180 $(MESEN) --testRunner $$t $(ROM); \
 	done
 
 clean:

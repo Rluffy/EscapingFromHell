@@ -4,7 +4,8 @@ local M = emu.memType.nesMemory
 local held = {}
 local function rd(a) return emu.read(a, M) end
 local function rd16(a) return rd(a) + 256 * rd(a + 1) end
-local function wr(a, v) emu.write(a, v, M) end
+-- PRG-RAM is write-protected by the game (MMC3 $A001 = $C0 outside save_game): the test writes the save RAM directly
+local function wr(a, v) if a >= 0x6000 and a < 0x8000 then emu.write(a - 0x6000, v, emu.memType.nesSaveRam) else emu.write(a, v, M) end end
 local function wr16(a, v) wr(a, v % 256); wr(a + 1, v // 256) end
 local STATE, PX, PY, CUR, MASK = 0x302, 0x303, 0x305, 0x30A, 0x308
 local HEARTS, INV, PAUSED = 0x30B, 0x30C, 0x317

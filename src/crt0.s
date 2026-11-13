@@ -62,8 +62,8 @@ reset:
     sta $8001
     lda #0
     sta $A000
-    lda #$80
-    sta $A001
+    lda #$C0
+    sta $A001           ; PRG-RAM enabled but write-protected: only save_game / save_clear unlock it (main.c)
     sta $E000           ; IRQ disable (value irrelevant)
     ; CHR (bit 7 of $8000 = 0, no A12 inversion): R0/R1 = 2 KB banks at $0000/$0800 (background),
     ; R2..R5 = 1 KB banks at $1000..$1FFF (sprites). Start: tiles, anim frame A, common, boss 1 (docs/TECH.md "CHR-Layout")
@@ -112,6 +112,8 @@ nmi:
     pha
     tya
     pha
+    lda #0
+    sta $2003           ; OAMADDR = 0: the DMA must start at sprite 0 (also while rendering is off)
     lda #$02
     sta $4014           ; OAM DMA from $0200
     lda _col_pending
