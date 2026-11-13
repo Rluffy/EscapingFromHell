@@ -28,7 +28,7 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | erledigt |
 | v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | erledigt |
 | v1.0 | Balance, Fehlerbehebung, Release mit ROM | erledigt |
-| v1.1 | Nutzer-Feedback zu v1.0: Treffer-Spam-Fix, Fähigkeiten pro Level, Boss 9/10 schwerer, Dämonen in der Overworld sichtbar, Fähigkeiten-Erklärungen, Musik | fertig, Tag nach Okay |
+| v1.1 | Nutzer-Feedback zu v1.0: Treffer-Spam-Fix, Fähigkeiten pro Level, Boss 9/10 schwerer, Dämonen in der Overworld sichtbar, Fähigkeiten-Erklärungen, Musik | erledigt |
 
 Musik: v1.1 Paket 4 (erledigt).
 
