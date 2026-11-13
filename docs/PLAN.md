@@ -26,8 +26,8 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | fertig, Tag nach Okay |
 | v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | fertig, Tag nach Okay |
 | v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | fertig, Tag nach Okay |
-| v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | in Arbeit |
-| v1.0 | Balance, Fehlerbehebung, Release mit ROM | offen |
+| v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | fertig, Tag nach Okay |
+| v1.0 | Balance, Fehlerbehebung, Release mit ROM | in Arbeit |
 
 Musik (Overworld, Dungeon, Boss) ist ein Folge-Meilenstein nach v1.0 oder, falls der Nutzer es will, Teil von v0.9.
 
@@ -98,9 +98,16 @@ Ausgangslage: fester PRG-Bereich ca. 11,4 KB von 16 KB, Sprite-Pattern-Table vol
 3. Art-Pass Sprites: Held, Projektile, Herzen, 10 Dämonen × 3 Phasen (jede Phase sichtbar schlimmer). Sonnet (ggf. in zwei Pakete geteilt). **3a erledigt** (Held mit Gehen/Sprung, Projektile, Herzen, Schild, Dämonen 1–5; `tools/art/sprart.py`, Screenshots `v0.9-hero.png`, `v0.9-boss01..05.png`; Details `TECH.md` „Sprite-Kunst (v0.9)“). **3b erledigt** (Dämonen 6–10: Spiegeldämon mit Scheinkopien (stumpfe Augen) und Original (leuchtende Augen), Riesenkröte mit Zunge/Maul/Schleim, Spinnenkönigin mit Faden/Netz/Spinnling, Oni-Kriegsherr mit Keule, Höllenfürst; `tools/art/sprart.py` reproduziert alle PNGs, nur Phasenpaletten in `src/mirror|toad|spider|oni|lord.c` und erwartete Palettenwerte in den Tests geändert; Screenshots `v0.9-boss06..10.png`; Details `TECH.md` „Sprite-Kunst (v0.9)“).
 4. Soundeffekte: kleine APU-Engine (Pulse/Noise), Effekte für Sprung, Schwert, Treffer, Boss-Treffer, Phasenwechsel, Boss-Tod, Feuerball, Menü, Sieg. Sonnet. **Erledigt** (`src/sfx.s`, 18 Effekte auf 3 Kanälen mit Priorität, `sfx_play`/`sfx_update` am Ende der Hauptschleife, Debug `$0339-$033C`, `tests/sfx.lua`; fester Bereich +799 Byte; Details `TECH.md` „Soundeffekte (v0.9)“).
 5. Titel/Intro/Ende: schöner Titelbildschirm, Menü um CONTINUE und DELETE SAVE erweitern, Intro (2–3 Textbildschirme: Flucht aus der Hölle), schönes Endbild „You escaped". Sonnet. **Erledigt** (Titelbild mit 2x2-Kachel-Logo, Tempeln, Laternen und animierter Lava; Menü CONTINUE (nur mit Stand) / NEW GAME / CHEAT / DELETE SAVE (nur mit Stand, Bestätigung A/B); Intro mit 3 Seiten für NEW GAME und CHEAT; Endbild Morgenröte mit Sonne, Bergen, Held, „YOU ESCAPED / THE END / THANKS FOR PLAYING"; `tools/art/uiart.py`, `src/ui.h`, UI-Kacheln R1 152..240; `tests/menu.lua`, `tests/ending.lua` neu, Boot aller Tests mit zweitem Start; UI-Bank 4447 Byte, fester Bereich 11572 Byte; Screenshots `v0.9-title.png`, `v0.9-intro.png`, `v0.9-ending.png`; Details `TECH.md` „Titel, Intro und Ende (v0.9)").
-6. Tests, Screenshots, Docs, Bericht. Orchestrator.
+6. Tests, Screenshots, Docs, Bericht. Orchestrator. **Erledigt.**
 
-Pakete für v1.0 legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
+## Arbeitspakete v1.0
+
+1. Stabilität: Boss-Zufall pro Dungeon-Eintritt deterministisch seeden (Tests nicht mehr von Frame-Timing abhängig), gelockerte Tests wieder straffen, Compiler-Warnungen beseitigen, Bildschirmaufbau schneller (kürzeres Schwarzbild). Sonnet.
+2. Fehlersuche: Review des gesamten Codes auf Korrektheitsfehler (Grenzen, Überläufe, vblank, Sprite-Limits, Speicherstand), gefundene Fehler beheben, je mit Test. Sonnet.
+3. Balance: alle Bosse auf das vom Nutzer akzeptierte Niveau (Imp mit 10 HP); Steh-Bot max. 3 Herzen pro Phase bei allen, Endboss inklusive; Werte in GAMEDESIGN. Sonnet.
+4. Release-Vorbereitung: README mit Steuerung und Spielanleitung, ROM `dist/EscapingFromHell-v1.0.nes`, Docs final, Bericht. Tags/Releases v0.5–v1.0 nach Okay des Nutzers. Orchestrator.
+
+Pakete nach v1.0 (Musik) legt der Orchestrator selbst am Start des Meilensteins fest und trägt sie hier ein.
 
 ## Parallel-Aufgabe des Nutzers
 
