@@ -1,5 +1,5 @@
 -- Fireball ability test: Up + B. Without the ability it is a normal sword swing; with it a single projectile flies in the
--- facing direction (3 px/frame, gone at the wall, cooldown 40, no sword swing), hurts bosses and the dummy by exactly 1
+-- facing direction (3 px/frame, gone at the wall, cooldown 40, no sword swing), hurts bosses by exactly 1
 -- through the shared hit path (phases work), and passes through an untouchable boss. Addresses: docs/TECH.md "Debug-Adressen".
 local M = emu.memType.nesMemory
 local held = {}
@@ -130,14 +130,6 @@ co = coroutine.create(function()
   check(wait_until(function() place(100); return rd(PFX) == 0 end, 80), "projectile flew to the wall")
   check(rd(EHP) == hp, "untouchable: hp unchanged, hp=" .. rd(EHP))
   leave()
-
-  -- test dummy (dungeon 10)
-  enter(10, 511, 912, 48)
-  hold({right = true}, 2)
-  wr(EHP, 5); wr(EFLASH, 0); wr(EX, 140); wr(EY, FLOOR_Y); place(100)
-  shoot()
-  check(wait_until(function() return rd(EHP) < 5 end, 30), "projectile hits the dummy")
-  check(rd(EHP) == 4 and rd(PFX) == 0, "dummy loses exactly 1 hp, hp=" .. rd(EHP))
 
   print("fireball test OK")
   emu.stop(0)

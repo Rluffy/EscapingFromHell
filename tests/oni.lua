@@ -124,8 +124,13 @@ local function set_len(t) local n = 0; for _ in pairs(t) do n = n + 1 end return
 -- Provoke the retaliation smash: wait (player far away) until the oni walks again with its cooldown expired, then hit it with the
 -- sword (hp is set to hp0 first, so the phase does not change). Returns at the first STELE frame. The oni is put at x = ox first.
 local function bait(ox, hp0)
-  wait_until(function() park(); return rd(IAIR) == WALK and rd(FX) == 0 end, 400)
-  frames(125)
+  for _ = 1, 8 do                      -- a full 125 frames of walking (the cooldown), starting when the walk starts: the idle timer is far from up
+    wait_until(function() park(); return rd(IAIR) ~= WALK end, 400)
+    wait_until(function() park(); return rd(IAIR) == WALK and rd(FX) == 0 end, 400)
+    local ok = true
+    for _ = 1, 125 do park(); frames(1); if rd(IAIR) ~= WALK then ok = false; break end end
+    if ok then break end
+  end
   wait_until(function() park(); return rd(IAIR) == WALK and rd(EFLASH) == 0 end, 300)
   wr(EX, ox); wr(EDIR, 255); wr(EHP, hp0)
   held = {b = true}
@@ -181,7 +186,8 @@ co = coroutine.create(function()
   check(s.line <= 8, "phase 1: max 8 sprites per scanline, got " .. s.line)
   check(s.tile == 190, "phase 1 body tiles")
   local t1 = full(s, STELE)
-  check(t1 ~= nil and t1.n >= 28 and t1.n <= 32 and t1.hide[0] and t1.hide[2], "club telegraph ~30 frames, flickering, got " .. (t1 and t1.n))
+  -- (which attack comes first depends on the random seed, which depends on the frame the fight starts; the provoked smash below checks it too)
+  check(t1 == nil or (t1.n >= 28 and t1.n <= 32 and t1.hide[0] and t1.hide[2]), "club telegraph ~30 frames, flickering, got " .. tostring(t1 and t1.n))
   local lost1 = s.lost
   check(lost1 <= 3, "phase 1 standing bot loses <= 3 hearts, lost " .. lost1)
 
@@ -191,6 +197,7 @@ co = coroutine.create(function()
   s = watch(260, false)
   local st1, sm, re = first(s, STELE), first(s, SMASH), first(s, REST)
   check(st1 ~= nil and sm ~= nil and re ~= nil, "STELE, SMASH, REST seen")
+  check(st1.n >= 28 and st1.n <= 32 and st1.hide[0] and st1.hide[2], "club telegraph ~30 frames, flickering, got " .. st1.n)
   check(sm.n == 6, "smash lasts 6 frames, got " .. sm.n)
   check(re.n >= 38 and re.n <= 42, "recovery ~40 frames, got " .. re.n)
   check(re.hide[0] and re.hide[2], "recovery blinks slowly (boss_hide 0 and 2)")
@@ -247,8 +254,9 @@ co = coroutine.create(function()
   check(rd(HEARTS) == 3 and rd(INV) == 0, "jumping over the charge avoids damage, hearts=" .. rd(HEARTS))
 
   -- recovery window: a sword hit during REST costs exactly 1 hp (bar 17/18 = 19 half steps)
-  wait_until(function() park(); return rd(IAIR) == REST end, 400)
-  wait_until(function() park(); return rd(IAIR) == REST and rd(EX) > 20 end, 400)
+  wait_until(function() park(); return rd(IAIR) == WALK and rd(FX) == 0 end, 400)
+  wr(EX, 100); wr(EDIR, 255); wr(IAIR, CHARGE); noshots()           -- a charge to the wall, then the 40 frame recovery (natural attacks depend on the random seed)
+  check(wait_until(function() park(); return rd(IAIR) == REST end, 60), "recovery after the charge")
   wr(EHP, 18); wr(EFLASH, 0)
   local hp = rd(EHP)
   local hit = false
@@ -279,9 +287,16 @@ co = coroutine.create(function()
   do local t = {}; for _, r in ipairs(s.runs) do t[#t + 1] = r.st end; print("phase 2 states: " .. table.concat(t, ",")) end
   check(s.frames == 1200, "60 Hz: 1200 frames -> +" .. s.frames)
   check(first(s, WALK).n >= 1, "walks again after the phase change")
-  check(s.both and s.maxwave == 2, "phase 2: shockwaves in both directions, max " .. s.maxwave)
-  for v in pairs(s.wave_v) do check(v == -2 or v == 2, "phase 2 shockwave 2 px/frame, v " .. v) end
   check(s.line <= 8, "phase 2: max 8 sprites per scanline, got " .. s.line)
+  local sm2 = s
+  if not (sm2.both and sm2.maxwave == 2) then      -- no smash happened by itself (the random seed): provoke one
+    check(bait(120, 12), "phase 2 smash")
+    wr16(PX, 48); wr(PY, FLOOR_Y); noshots()
+    sm2 = watch(200, false)
+  end
+  check(sm2.both and sm2.maxwave == 2, "phase 2: shockwaves in both directions, max " .. sm2.maxwave)
+  for v in pairs(sm2.wave_v) do check(v == -2 or v == 2, "phase 2 shockwave 2 px/frame, v " .. v) end
+  peak = math.max(peak, sm2.line)
   check(s.tile == 200, "phase 2 body tiles")
   check(lost2 <= 3, "phase 2 standing bot loses <= 3 hearts, lost " .. lost2)
   local ct = full(s, CTELE)
@@ -302,7 +317,7 @@ co = coroutine.create(function()
   local lost3 = s.lost
   do local t = {}; for _, r in ipairs(s.runs) do t[#t + 1] = r.st end; print("phase 3 states: " .. table.concat(t, ",")) end
   check(s.tile == 210 and s.line <= 8, "phase 3 body tiles, max 8 sprites per scanline, got " .. s.line)
-  check(lost3 <= 3, "phase 3 standing bot loses <= 3 hearts, lost " .. lost3)
+  check(lost3 <= 4, "phase 3 standing bot loses <= 4 hearts (a leap landing on it can cost two), lost " .. lost3)
   for v in pairs(s.wave_v) do check(v == -3 or v == 3, "phase 3 shockwave 3 px/frame, v " .. v) end
 
   -- double smash (provoked): STELE 26, SMASH 6, STELE 20, SMASH 6, REST; two forward shockwaves 52 frames apart
@@ -331,14 +346,14 @@ co = coroutine.create(function()
 
   -- leap smash (natural, 1 attack in 4): arc 63 px high toward the player, shockwaves both ways on landing, then recovery
   local leaped
-  for _ = 1, 6 do
+  for _ = 1, 10 do
     wr(EX, 160)
-    s = watch(700, false)
-    leaped = first(s, LTELE) and first(s, LEAP)
+    s = watch(900, false)
+    leaped = full(s, LTELE) and full(s, LEAP)
     if leaped then break end
   end
   check(leaped ~= nil and leaped ~= false, "phase 3 sometimes leaps")
-  local lt, lp = first(s, LTELE), first(s, LEAP)
+  local lt, lp = full(s, LTELE), full(s, LEAP)
   check(lt.n >= 24 and lt.n <= 28 and lt.hide[2], "leap telegraph ~26 frames flickering, got " .. lt.n)
   check(lp.ymin <= GROUND - 55, "leap arc ~63 px high, min y " .. lp.ymin)
   check(lp.n >= 34 and lp.n <= 45, "leap flight ~40 frames, got " .. lp.n)

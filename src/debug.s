@@ -23,7 +23,7 @@ _vy:               .res 1   ; $030F dungeon: vertical speed (signed, px/frame)
 _en:               .res 7   ; $0310 enemy struct: x, y, w, h, hp, flash, dir (see src/nes.h)
 _paused:           .res 1   ; $0317 dungeon: 1 = paused
 
-_boss_phase:       .res 1   ; $0318 boss fight: phase 1..3 (0 = no boss, test dummy)
+_boss_phase:       .res 1   ; $0318 boss fight: phase 1..3
 _boss_dead:        .res 1   ; $0319 boss fight: 1 = boss defeated
 _intro:            .res 1   ; $031A boss fight: intro frames left (player and boss frozen)
 _fb_x:             .res 3   ; $031B fireball x (0 = slot free)

@@ -8,9 +8,7 @@
 #define KNOCK      8                   /* knockback frames, 3 px/frame */
 #define SWORD_LEN  8
 #define SWORD_CD   14
-#define ENEMY_HP   5
-#define ENEMY_HIT  12                  /* enemy invulnerable after a sword hit (blinks) */
-#define NBOSS      9                   /* dungeons 1..NBOSS have a boss, the rest a test dummy */
+#define ENEMY_HIT  12                  /* boss invulnerable after a hit (blinks) */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -32,14 +30,14 @@ static const unsigned char plat_y[3] = { 152, 152, 112 };
 static const unsigned char dpal[10][4] = {
     {0x02,0x11,0x01,0x21}, {0x0F,0x16,0x06,0x26}, {0x01,0x14,0x04,0x24}, {0x06,0x16,0x07,0x27},
     {0x08,0x18,0x07,0x28}, {0x03,0x13,0x02,0x23}, {0x0F,0x14,0x04,0x24}, {0x09,0x19,0x0A,0x29},
-    {0x0F,0x06,0x07,0x16}, {0x0F,0x00,0x2D,0x10}
+    {0x0F,0x06,0x07,0x16}, {0x0F,0x16,0x06,0x28}
 };
 /* Sprite palettes 0..3 without the backdrop: player, enemy, heart + sword, player fireball. */
 static const unsigned char spal[12] = { 0x17,0x21,0x36, 0x06,0x16,0x30, 0x16,0x30,0x10, 0x21,0x31,0x30 };
 
 /* Boss table (docs/TECH.md "Boss-Rahmen"). Phase 1 = 100..71 %, 2 = 70..51 %, 3 = 50..0 % of max hp.
    Behavior function and phase data live in the boss's PRG bank (src/boss.h); the table itself stays fixed. */
-static const struct boss bosses[NBOSS] = {
+static const struct boss bosses[] = {
     { "IMP", 10, 0, 16, 16, FLOOR_Y - 16, imp_ai, imp_ph },
     { "GHOST", 12, 1, 16, 24, 104, ghost_ai, ghost_ph },
     { "BONE HOUND", 14, 2, 24, 16, FLOOR_Y - 16, hound_ai, hound_ph },
@@ -48,9 +46,10 @@ static const struct boss bosses[NBOSS] = {
     { "MIRROR DEMON", 14, 5, 16, 24, FLOOR_Y - 24, mirror_ai, mirror_ph },
     { "GIANT TOAD", 16, 6, 32, 24, FLOOR_Y - 24, toad_ai, toad_ph },
     { "SPIDER QUEEN", 16, 7, 24, 16, 32, spider_ai, spider_ph },
-    { "ONI WARLORD", 18, 8, 24, 32, FLOOR_Y - 32, oni_ai, oni_ph }
+    { "ONI WARLORD", 18, 8, 24, 32, FLOOR_Y - 32, oni_ai, oni_ph },
+    { "HELL LORD", 20, 9, 32, 32, FLOOR_Y - 32, lord_ai, lord_ph }
 };
-const struct boss *bs;                 /* 0 = test dummy */
+const struct boss *bs;                 /* the demon of the current dungeon */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
 static const unsigned char grant[10] = { 1, 0, 2, 0, 4, 0, 8, 0, 16, 0 };
 static const char *const gotname[10] = { "GOT DASH", 0, "GOT DOUBLE JUMP", 0, "GOT FIREBALL", 0, "GOT SHIELD", 0, "GOT SWORD WAVE" };   /* Dash, Double jump, Fireball, Shield act so far */
@@ -59,7 +58,7 @@ static const unsigned char ftile[26] = {
     37, 43, 33, 26, 30, 48, 29, 39, 13, 45, 46, 44, 14, 28, 31, 15, 49, 35, 38, 34, 27, 32, 47, 0, 36, 0
 };
 static const unsigned char white = 0x30;
-#define OWN_DRAW (en.w > 24 || en.h > 24)   /* the boss AI writes its own sprites (toad, oni) */
+#define OWN_DRAW (en.w > 24 || en.h > 24)   /* the boss AI writes its own sprites (toad, oni, hell lord) */
 static unsigned char hp_max, bar_hp;   /* max hp of the enemy; hp the bar shows (255 = redraw) */
 static unsigned char ph_t2, ph_t3;     /* phase 2 / 3 start at hp <= these */
 static unsigned char pal_ph, pal_bg;   /* what the PPU currently shows */
@@ -120,18 +119,15 @@ static void arena_reset(void)
     facing = 0;
     player_x = 48;
     player_y = FLOOR_Y - 16;
-    en.x = 160; en.y = FLOOR_Y - 16; en.w = 16; en.h = 16;
-    en.hp = hp_max = ENEMY_HP; en.flash = 0; en.dir = -1;
-    boss_phase = bs ? 1 : 0;
+    en.x = 160; en.flash = 0; en.dir = -1;
+    en.hp = hp_max = bs->hp;
+    en.w = bs->w; en.h = bs->h; en.y = bs->y0;
+    boss_phase = 1;
     boss_dead = boss_fx = boss_hide = ivx = ivy = ig = iair = dash_t = dash_cd = victory = 0;
     clear_fb();
-    if (bs) {
-        en.hp = hp_max = bs->hp;
-        en.w = bs->w; en.h = bs->h; en.y = bs->y0;
-        ph_t2 = (unsigned)en.hp * 70 / 100;
-        ph_t3 = en.hp / 2;
-        ai_t = 40; fb_t = 70;
-    }
+    ph_t2 = (unsigned)en.hp * 70 / 100;
+    ph_t3 = en.hp / 2;
+    ai_t = 40; fb_t = 70;
 }
 
 /* PPU palette write; only in vblank (start of the frame). Leaves the scroll at 0/0 (the arena never scrolls). */
@@ -193,8 +189,8 @@ void dungeon_enter(void)
     unsigned char i, j, r, c;
     const unsigned char *p = dpal[cur_dungeon - 1];
 
-    bs = cur_dungeon <= NBOSS ? &bosses[cur_dungeon - 1] : 0;
-    if (bs) bank_set(bs->bank);         /* stays mapped for the whole fight */
+    bs = &bosses[cur_dungeon - 1];
+    bank_set(bs->bank);                 /* stays mapped for the whole fight */
     pal_ph = pal_bg = 0;
     screen_off();
     PPU_ADDR = 0x3F;
@@ -230,7 +226,7 @@ void dungeon_enter(void)
     intro = 0;
     tb_n = 0; bar_hp = 255;
     bar_sync(); text_flush();
-    if (bs) { intro = INTRO_LEN; text_prep(bs->name, 0x2140, 1); text_flush(); }
+    intro = INTRO_LEN; text_prep(bs->name, 0x2140, 1); text_flush();
     scroll_x = 0;
     game_state = ST_DUNGEON;
     screen_on(0x88);
@@ -358,13 +354,8 @@ static void update_enemy(void)
 {
     if (en.flash) --en.flash;
     if (!en.hp) return;
-    if (bs) {
-        if (boss_fx) { --boss_fx; if (OWN_DRAW) bs->ai(); }        /* the toad and the oni draw their own sprites: also while frozen */
-        else { bs->ai(); fireballs(); }
-        return;
-    }
-    en.x += en.dir;
-    if (en.x <= WALL || en.x >= 256 - WALL - en.w) en.dir = -en.dir;
+    if (boss_fx) { --boss_fx; if (OWN_DRAW) bs->ai(); }        /* big bosses draw their own sprites: also while frozen */
+    else { bs->ai(); fireballs(); }
 }
 
 static void combat(void)
@@ -376,13 +367,11 @@ static void combat(void)
     if (hit) {
         --en.hp;
         en.flash = ENEMY_HIT;
-        if (bs) {
-            nx = (int)en.x + (en.x >= player_x ? BOSS_KNOCK : -BOSS_KNOCK);
-            en.x = nx < WALL ? WALL : nx > 256 - WALL - en.w ? 256 - WALL - en.w : nx;
-            ph = en.hp <= ph_t3 ? 3 : en.hp <= ph_t2 ? 2 : 1;
-            if (!en.hp) { boss_dead = 1; clear_fb(); }
-            else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); }
-        }
+        nx = (int)en.x + (en.x >= player_x ? BOSS_KNOCK : -BOSS_KNOCK);
+        en.x = nx < WALL ? WALL : nx > 256 - WALL - en.w ? 256 - WALL - en.w : nx;
+        ph = en.hp <= ph_t3 ? 3 : en.hp <= ph_t2 ? 2 : 1;
+        if (!en.hp) { boss_dead = 1; clear_fb(); }
+        else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); }
     }
     if (en.hp && !(boss_hide & 1) && !boss_fx && !en.flash && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
         hurt(en.x + en.w / 2);
@@ -393,7 +382,7 @@ static void draw(void)
     unsigned char x = player_x, y = player_y, f = facing, i;
     unsigned char py = (invuln & 4) ? 0xFF : y - 1;       /* blink while invulnerable */
     unsigned char ey = (en.hp && !(en.flash & 2) && !(boss_hide & 2) && !OWN_DRAW) ? en.y - 1 : 0xFF;
-    unsigned char t = bs ? bs->ph[boss_phase - 1].tile : 8;
+    unsigned char t = bs->ph[boss_phase - 1].tile;
 
     bar_sync();
 
@@ -443,7 +432,7 @@ static void draw(void)
     if (!en.hp) for (i = O_BODY; i < 212; i += 4) oam[i] = 0xFF;      /* dead: hide a boss's body segments / copies (up to O_COPY + 72) */
 }
 
-/* Demon (or dummy) beaten and the victory screen is over: clear the dungeon, grant the ability, autosave. */
+/* Demon beaten and the victory screen is over: clear the dungeon, grant the ability, autosave. */
 static void win(void)
 {
     dungeons_cleared |= 1u << (cur_dungeon - 1);
@@ -463,7 +452,7 @@ unsigned char dungeon_frame(void)
     }
     if (paused && PRESSED(PAD_SELECT)) return 1;    /* Start, then Select: give up the fight */
     if (PRESSED(PAD_START)) paused ^= 1;
-    if (bs) pal_sync();                 /* PPU writes first: still in vblank */
+    pal_sync();                         /* PPU writes first: still in vblank */
     if (intro) {
         if (!--intro) text_prep(bs->name, 0x2140, 0);
         if (OWN_DRAW) bs->ai();         /* own sprites: also in the intro */

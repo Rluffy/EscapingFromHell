@@ -19,12 +19,12 @@ struct boss {
     const char *name;                  /* letters must exist in ftile[] */
     unsigned char hp;
     unsigned char bank;                /* PRG bank at $8000 holding ai and ph */
-    unsigned char w, h, y0;            /* sprite width (16 or 24 px), height (16 or 24 px) and start y */
+    unsigned char w, h, y0;            /* sprite width (16..32 px), height (16..32 px) and start y */
     void (*ai)(void);                  /* runs every frame; in bank `bank` */
     const struct phase *ph;            /* 3 phases; in bank `bank` */
 };
 
-extern const struct boss *bs;          /* current boss, 0 = test dummy */
+extern const struct boss *bs;          /* current boss */
 extern signed char   ivx, ivy, fb_vx[3], fb_vy[3];
 extern unsigned char ig, iair, ai_t, rng, facing;   /* iair = boss state, debug byte $0328; facing: player, 0 right / 1 left */
 extern unsigned      fb_t;
@@ -54,5 +54,7 @@ void spider_ai(void);
 extern const struct phase spider_ph[3];
 void oni_ai(void);
 extern const struct phase oni_ph[3];
+void lord_ai(void);
+extern const struct phase lord_ph[3];
 
 #endif
