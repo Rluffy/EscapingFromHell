@@ -12,7 +12,7 @@ local function wr16(a, v) wr(a, v % 256); wr(a + 1, v // 256) end
 local STATE, PX, PY, CLEARED, HEARTS, INV, EHP = 0x302, 0x303, 0x305, 0x308, 0x30B, 0x30C, 0x314
 local INTRO, ABIL, DEAD, LOOPS, FRAMES = 0x31A, 0x322, 0x319, 0x340, 0x300
 local N = 600
-local HP = {{10, 11, 12, 12, 13, 13, 14, 14, 15, 18}}          -- max hp per dungeon (src/dungeon.c)
+local HP = {{10, 11, 12, 12, 13, 13, 14, 14, 20, 26}}          -- max hp per dungeon (src/dungeon.c)
 local PHASE_HP = function(n, ph)                                -- hp inside phase ph (thresholds: 70 % and 50 % of max)
   local m = HP[1][n]
   return ph == 1 and m or ph == 2 and math.floor(m * 70 / 100) or math.floor(m / 2)
@@ -101,7 +101,7 @@ co = coroutine.create(function()
     press({a = true})
     for _ = 1, 200 do if rd(STATE) == 3 and rd(INTRO) == 0 then break end frames(1) end
     check(rd(STATE) == 3 and rd(INTRO) == 0, "dungeon " .. n .. " fight started")
-    wr(ABIL, 31)
+    wr(0x343, 31)                                   -- active abilities of this dungeon: all five (the level rule gives fewer)
     for ph = 1, 3 do
       local hp = PHASE_HP(n, ph)
       held = {}; frames(4)                          -- the hp bar of the last hit is written first (a forced phase change right behind it would put bar and palette into one vblank, which the game itself never does)

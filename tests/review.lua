@@ -14,7 +14,7 @@ local HEARTS, INV, SWORD, PAUSED = 0x30B, 0x30C, 0x30E, 0x317
 local EX, EY, EHP, PHASE, DEAD, INTRO, FBX = 0x310, 0x311, 0x314, 0x318, 0x319, 0x31A, 0x31B
 local ABIL, DASH, VICT, HIDE, PFX, SHIELD, SLOW, TLEN, FTICK = 0x322, 0x323, 0x325, 0x327, 0x329, 0x331, 0x332, 0x330, 0x342
 local SAVE = 0x6000
-local MAXHP = {10, 11, 12, 12, 13, 13, 14, 14, 15, 18}
+local MAXHP = {10, 11, 12, 12, 13, 13, 14, 14, 20, 26}
 
 local co
 local function frames(n) for _ = 1, n do coroutine.yield() end end
@@ -129,7 +129,7 @@ co = coroutine.create(function()
   check(wait_until(function() return rd(INTRO) == 0 end, 300), "intro ends")
 
   -- shield / dash combos (abilities 31)
-  wr(ABIL, 31); wr(HEARTS, 3); wr(INV, 99); wr16(PX, 100); wr(PY, 176)
+  wr(0x343, 31); wr(HEARTS, 3); wr(INV, 99); wr16(PX, 100); wr(PY, 176)
   hold({down = true}, 8); check(rd(SHIELD) == 1, "shield up with Down")
   held = {down = true}; frames(1); held = {down = true, select = true}; frames(2); held = {down = true}
   check(rd(DASH) > 0 and rd(SHIELD) == 0, "dash drops the shield")
@@ -146,7 +146,7 @@ co = coroutine.create(function()
   for n = 1, 10 do
     wr(ABIL, acc)
     enter(n)
-    wr(ABIL, 31)
+    wr(0x343, 31)
     -- arena invariants under a busy input pattern
     local pat = {{right = true, b = true}, {left = true, b = true}, {up = true, b = true}, {down = true}, {right = true, a = true},
                  {select = true, right = true}, {left = true, a = true, b = true}, {right = true}}

@@ -7,7 +7,7 @@ Läuft auf echter NES-Hardware (NTSC, MMC3 mit Batterie-RAM) und in Emulatoren w
 ## Spielen
 
 - **Titelmenü:** CONTINUE (wenn ein Spielstand da ist), NEW GAME, CHEAT, DELETE SAVE.
-- **CHEAT:** alle 10 Dungeons offen, keine Herzen verlieren, es wird nichts gespeichert.
+- **CHEAT:** alle 10 Dungeons offen, keine Herzen verlieren, es wird nichts gespeichert. Pro Dungeon hast du genau die Fähigkeiten, die du dort normalerweise hättest.
 - **Overworld:** sicher, keine Gegner. Zum offenen Tor laufen, **A** = Dungeon betreten. Die Dungeons sind der Reihe nach 1 bis 10 freigeschaltet.
 - **Dungeon:** ein Boss-Kampf, 3 Herzen. Jeder Dämon hat 3 Phasen und wird mit jeder stärker. Bei 0 Herzen startet der Kampf neu.
 - **Sieg:** Autosave, zurück in die Overworld, das nächste Tor ist offen. Nach Dämon 10 kommt das Ende, danach frei weiterspielen.
@@ -32,7 +32,7 @@ Läuft auf echter NES-Hardware (NTSC, MMC3 mit Batterie-RAM) und in Emulatoren w
 | 7 Riesenkröte | Schild (blockt von vorn) | Runter halten am Boden |
 | 9 Oni-Kriegsherr | Schwertwelle | B bei vollen 3 Herzen |
 
-Alle Dungeons sind auch ohne Fähigkeiten schaffbar.
+Alle Dungeons sind auch ohne Fähigkeiten schaffbar. In Dungeon n wirken nur die Fähigkeiten der Dämonen 1 bis n−1 (auch beim Wiederholen alter Dungeons).
 
 FCEUX unter Ubuntu/Wayland flackert: `QT_QPA_PLATFORM=xcb fceux <rom>`.
 

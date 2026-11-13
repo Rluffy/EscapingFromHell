@@ -84,7 +84,7 @@ co = coroutine.create(function()
   end
   -- the hit boss is pushed 16 px away from the player (112 -> 128) and its flash blocks contact damage
   check(rd(EX) >= 128, "boss knocked back, x=" .. rd(EX))
-  duel(5); wr(EX, 100); wr(EFLASH, 10); frames(1)
+  duel(5); wr(EX, 100); wr(EFLASH, 20); frames(1)
   check(rd(HEARTS) == 3, "no contact damage during the boss hit-flash")
 
   -- phase thresholds from max hp 10: phase 2 at hp <= 7, phase 3 at hp <= 5

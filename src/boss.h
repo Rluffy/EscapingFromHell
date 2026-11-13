@@ -8,6 +8,8 @@
 #define FB_MAX  3
 #define BT 0x40                        /* tile id of tile 0 of a boss sheet (R3 = $1400; docs/TECH.md "CHR-Layout"): boss tiles are BT + n */
 #define WEB_TILE (BT + 19)             /* fireball sprite tile of a web ball (spider sheet): slows the player instead of costing a heart */
+#define FLASH_FX 12                    /* the first FLASH_FX frames after a hit the boss blinks and is harmless (en.flash counts down from 24, the rest is damage immunity only) */
+#define BLINK    (en.flash > FLASH_FX && (en.flash & 2))
 #define SHOCK    17                    /* shockwave tile (common sheet, shared by oni and lord) */
 
 struct phase {

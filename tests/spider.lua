@@ -14,6 +14,7 @@ local HEARTS, INV, SWORD, VY = 0x30B, 0x30C, 0x30E, 0x30F
 local EX, EY, EW, EH, EHP, EFLASH, EDIR = 0x310, 0x311, 0x312, 0x313, 0x314, 0x315, 0x316
 local PHASE, DEAD, INTRO, FBX, FBY, FX = 0x318, 0x319, 0x31A, 0x31B, 0x31E, 0x321
 local ABIL, DASHT, VICT = 0x322, 0x323, 0x325
+local AACT = 0x343                      -- abilities active in this dungeon (set on entry from the demons before it; `abilities` $322 is only the saved progress)
 local BANK, HIDE, IAIR, SLOW = 0x326, 0x327, 0x328, 0x332
 local CRAWL, TELE, DESC, HANG, CLIMB = 1, 2, 3, 4, 5
 local FLOOR_Y, CEIL, HANGY = 176, 32, 144
@@ -201,7 +202,7 @@ co = coroutine.create(function()
   local k = wait_web(900)
   check(k ~= nil, "a web was shot")
   check(rd(OAM_FB + 4 * k + 1) == WEB and rd(OAM_FB + 4 * k + 2) == 1, "web sprite: boss tile 19, palette 1")
-  wr(ABIL, 1); wr(HEARTS, 3); wr(INV, 0); wr16(PX, 48); wr(PY, FLOOR_Y)
+  wr(AACT, 1); wr(HEARTS, 3); wr(INV, 0); wr16(PX, 48); wr(PY, FLOOR_Y)
   wr(FBX + k, 52); wr(FBY + k, FLOOR_Y + 4)
   frames(1)
   check(rd(FBX + k) == 0, "web consumed")
@@ -221,10 +222,10 @@ co = coroutine.create(function()
   wr(INV, 0); frames(40)
   hold({select = true}, 3)
   check(rd(DASHT) > 0 or rd(0x324) > 0, "dash works again")
-  wr(ABIL, 0)
+  wr(AACT, 0)
 
   -- shield stops a web from the front: no heart, no slow
-  wr(ABIL, 8)
+  wr(AACT, 8)
   k = wait_web(900)
   wr(INV, 0); wr16(PX, 100)
   hold({right = true}, 3)                    -- face right (the shield is on the right)
@@ -236,7 +237,7 @@ co = coroutine.create(function()
   frames(1)
   held = {}
   check(rd(FBX + k) == 0 and rd(HEARTS) == 3 and rd(SLOW) == 0, "shield: the web dies at the shield, no heart, no slow, slow=" .. rd(SLOW))
-  wr(ABIL, 0)
+  wr(AACT, 0)
   until_state(CRAWL, 900)
 
   -- contact with the hanging spider costs a heart

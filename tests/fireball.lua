@@ -12,6 +12,7 @@ local STATE, PX, PY, CUR, MASK = 0x302, 0x303, 0x305, 0x30A, 0x308
 local HEARTS, INV, SWORD, PAUSED = 0x30B, 0x30C, 0x30E, 0x317
 local EX, EY, EHP, EFLASH = 0x310, 0x311, 0x314, 0x315
 local PHASE, INTRO, FX, ABIL = 0x318, 0x31A, 0x321, 0x322
+local AACT = 0x343                      -- abilities active in this dungeon (set on entry from the demons before it; `abilities` $322 is only the saved progress)
 local HIDE, PFX, PFY, PFCD = 0x327, 0x329, 0x32A, 0x32B
 local FLOOR_Y = 176
 local OAM_PF = 0x200 + 136
@@ -56,7 +57,7 @@ co = coroutine.create(function()
   frames(25)
 
   -- With the ability: one projectile, no sword swing.
-  wr(ABIL, 4)
+  wr(AACT, 4)
   wr(EY, 0); place(100); frames(2)
   check(rd(SWORD) == 0, "sword idle before the shot")
   shoot()

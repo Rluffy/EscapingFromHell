@@ -89,8 +89,8 @@ co = coroutine.create(function()
   check(rd16(MASK) == 0 and rd(ABIL) == 0, "bad checksum = new game")
 
   -- Dash (ability written directly: the new game has none)
-  wr(ABIL, 1)
   enter1()
+  wr(0x343, 1)
   wr(HEARTS, 3); wr(INV, 0); wr16(PX, 48); wr(PY, FLOOR_Y); wr(EX, 200)
   frames(2)
   x0 = rd16(PX)
@@ -114,7 +114,7 @@ co = coroutine.create(function()
   -- Double jump: a second A in the air jumps again (once per airtime), only with the ability bit; Dash still works
   local function signed(v) return v >= 128 and v - 256 or v end
   local function jump_and_air_a(ability)
-    wr(ABIL, ability)
+    wr(0x343, ability)
     wr(HEARTS, 3); wr(INV, 99); wr16(PX, 100); wr(PY, FLOOR_Y); wr(VY, 0); wr(EX, 200); wr(EY, FLOOR_Y)
     frames(3)
     held = {a = true}; frames(12)         -- full jump, hold A while rising

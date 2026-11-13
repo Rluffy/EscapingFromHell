@@ -14,6 +14,7 @@ local HEARTS, INV = 0x30B, 0x30C
 local EX, EY, EHP, EFLASH = 0x310, 0x311, 0x314, 0x315
 local PHASE, DEAD, INTRO, FBX, FX = 0x318, 0x319, 0x31A, 0x31B, 0x321
 local ABIL, VICT = 0x322, 0x325
+local AACT = 0x343                      -- abilities active in this dungeon (set on entry from the demons before it; `abilities` $322 is only the saved progress)
 local BANK, HIDE, IAIR, PFX = 0x326, 0x327, 0x328, 0x329
 local MCX, MCUR = 0x32C, 0x32F
 local WALK, OUT, IN = 1, 2, 3
@@ -234,7 +235,7 @@ co = coroutine.create(function()
   check(maxline <= 8, "sword swing + overlap: max 8 sprites per scanline, got " .. maxline)
 
   -- player fireball (ability bit 2): pops a copy, hurts the original by exactly 1
-  wr(ABIL, 4); wr(EFLASH, 0)
+  wr(AACT, 4); wr(EFLASH, 0)
   check(wait_until(function() safe(); wr16(PX, 48); wr(PY, FLOOR_Y); return rd(IAIR) == OUT end, 400), "next teleport")
   check(wait_until(function() safe(); wr16(PX, 48); wr(PY, FLOOR_Y); return rd(IAIR) == WALK end, 100), "walking")
   k = 0
@@ -265,7 +266,7 @@ co = coroutine.create(function()
     if got then break end
   end
   check(rd(EHP) == hp - 1, "fireball hits the original for exactly 1 hp, hp=" .. rd(EHP))
-  wr(ABIL, 0)
+  wr(AACT, 0)
 
   -- contact with the original costs exactly one heart, the invulnerability protects afterwards
   check(wait_until(function() safe(); wr16(PX, 48); wr(PY, FLOOR_Y); return rd(IAIR) == WALK and rd(EFLASH) == 0 end, 900), "walking")

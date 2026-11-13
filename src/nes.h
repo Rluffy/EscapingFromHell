@@ -49,6 +49,7 @@ extern unsigned char abilities;             /* $0322 bit 0 Dash, 1 Double jump, 
 extern unsigned char dash_t, dash_cd, victory;   /* $0323..$0325 */
 extern unsigned char cur_bank;               /* $0326 PRG bank at $8000 (set by bank_set) */
 extern unsigned char boss_hide;              /* $0327 bit 0 = boss untouchable (no hit, no contact), bit 1 = not drawn */
+extern unsigned char ab_act;                   /* $0343 abilities that work in this dungeon (set on entry from the demons 1..n-1; gameplay reads this, not `abilities`) */
 #define AB_DASH 1
 #define AB_DJUMP 2
 #define AB_FIRE 4

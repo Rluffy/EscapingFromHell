@@ -46,7 +46,7 @@ static void sprites(void)
 {
     unsigned char *o = oam + O_TOAD;
     unsigned char j, r, c, x, t = bs->ph[boss_phase - 1].tile;
-    unsigned char hide = (boss_hide & 2) || (en.flash & 2) || !en.hp;
+    unsigned char hide = (boss_hide & 2) || BLINK || !en.hp;
     unsigned char fl = en.dir > 0 ? 1 : 0x41;
     unsigned char n = iair == TONGUE ? tlen : 0;
     unsigned char open = iair == TTELE || iair == STELE;

@@ -16,6 +16,7 @@ local HEARTS, INV, ONG, SWORD, VY = 0x30B, 0x30C, 0x30D, 0x30E, 0x30F
 local EX, EY, EW, EH, EHP, EFLASH, EDIR = 0x310, 0x311, 0x312, 0x313, 0x314, 0x315, 0x316
 local PHASE, DEAD, INTRO, FBX, FBY, FX = 0x318, 0x319, 0x31A, 0x31B, 0x31E, 0x321
 local ABIL, VICT = 0x322, 0x325
+local AACT = 0x343                      -- abilities active in this dungeon (set on entry from the demons before it; `abilities` $322 is only the saved progress)
 local BANK, HIDE, IAIR, SHIELD = 0x326, 0x327, 0x328, 0x331
 local WALK, STELE, SMASH, REST, CTELE, CHARGE, LTELE, LEAP = 1, 2, 3, 4, 5, 6, 7, 8
 local FLOOR_Y, GROUND = 176, 160
@@ -125,7 +126,10 @@ local function set_len(t) local n = 0; for _ in pairs(t) do n = n + 1 end return
 -- sword (hp is set to hp0 first, so the phase does not change). Returns at the first STELE frame. The oni is put at x = ox first.
 local function bait(ox, hp0)
   wait_until(function() park(); return rd(IAIR) == WALK and rd(FX) == 0 end, 400)
-  frames(125)                          -- the cooldown
+  wr(EX, 100); wr(EDIR, 255); wr(IAIR, CHARGE); noshots()           -- a forced charge: after the recovery it walks again with fresh timers (idle 190..300, cooldown 120)
+  wait_until(function() park(); return rd(IAIR) == REST end, 60)
+  wait_until(function() park(); return rd(IAIR) == WALK end, 100)
+  frames(122)                          -- the cooldown
   wait_until(function() park(); return rd(IAIR) == WALK and rd(EFLASH) == 0 end, 300)
   wr(EX, ox); wr(EDIR, 255); wr(EHP, hp0)
   held = {b = true}
@@ -151,7 +155,7 @@ co = coroutine.create(function()
 
   -- intro: "ONI WARLORD" (O N I _ W A R L O R D = 31 28 13 0 47 37 35 44 31 35 26 at row 10, columns 10..20)
   check(rd(INTRO) > 0, "intro running")
-  check(rd(EHP) == 15 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "oni: 15 hp, phase 1, full bar")
+  check(rd(EHP) == 20 and rd(PHASE) == 1 and bar() == "FFFFFFFFFF", "oni: 20 hp, phase 1, full bar")
   check(rd(EW) == 24 and rd(EH) == 32 and rd(EY) == GROUND, "oni is 24x32 on the floor, w=" .. rd(EW) .. " h=" .. rd(EH) .. " y=" .. rd(EY))
   local name = {}
   for c = 10, 20 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
@@ -166,32 +170,32 @@ co = coroutine.create(function()
   check(ppu(0x3F16) == 0x26, "phase 1 palette")
   check(ppu(0x3F00) == 0x0F and ppu(0x3F01) == 0x04, "own purple/black dungeon palette")
 
-  -- phase 1, standing bot (x 48): walks 1 px/frame, stops 32 px in front, attacks after 480 frames idle, hearts <= 3
+  -- phase 1, standing bot (x 48): walks 1 px/frame, stops 32 px in front, attacks after 300 frames idle, hearts <= 4
   local s = watch(1200, true)
   check(s.frames == 1200, "game loop runs at 60 Hz: 1200 frames -> frame_count +" .. s.frames)
   local w1 = s.runs[1]
   check(w1.st == WALK and w1.x0 >= 150 and w1.x0 <= 160 and w1.xe == 88, "walks toward the player and stops at x 88 (front edge 32 px from the player's center), x " .. w1.x0 .. " -> " .. w1.xe)
-  check(w1.n >= 470 and w1.n <= 483, "first attack after ~480 idle frames, walk run " .. w1.n)
+  check(w1.n >= 290 and w1.n <= 303, "first attack after ~300 idle frames, walk run " .. w1.n)
   local seen = {}
   for _, r in ipairs(s.runs) do seen[#seen + 1] = r.st end
   print("phase 1 states: " .. table.concat(seen, ","))
   check(s.maxwave <= 1 and not s.both, "phase 1: one shockwave at a time, one direction")
   for y in pairs(s.wave_y) do check(y == 183, "shockwave on the floor (8 px above the floor line 192), y " .. y) end
-  for v in pairs(s.wave_v) do check(v == -2, "phase 1 shockwave 2 px/frame toward the player, v " .. v) end
+  for v in pairs(s.wave_v) do check(v == -2 or v == 2, "phase 1 shockwave 2 px/frame (toward the player, from either side after a charge), v " .. v) end
   check(s.line <= 8, "phase 1: max 8 sprites per scanline, got " .. s.line)
   check(s.tile == 0x40, "phase 1 body tiles")
   local t1 = full(s, STELE)
-  check(t1 ~= nil and t1.n >= 28 and t1.n <= 32 and t1.hide[0] and t1.hide[2], "club telegraph ~30 frames, flickering, got " .. tostring(t1 and t1.n))
+  check(t1 ~= nil and t1.n >= 24 and t1.n <= 28 and t1.hide[0] and t1.hide[2], "club telegraph ~26 frames, flickering, got " .. tostring(t1 and t1.n))
   local lost1 = s.lost
-  check(lost1 <= 3, "phase 1 standing bot loses <= 3 hearts, lost " .. lost1)
+  check(lost1 <= 4, "phase 1 standing bot loses <= 4 hearts, lost " .. lost1)
 
-  -- reaction smash: telegraph ~30 frames (club up, flickers), smash 6 frames, shockwave from the club, recovery ~40 frames
-  check(bait(120, 14), "a sword hit while it walks gets a smash in return")
+  -- reaction smash: telegraph ~26 frames (club up, flickers), smash 6 frames, shockwave from the club, recovery ~40 frames
+  check(bait(120, 19), "a sword hit while it walks gets a smash in return")
   wr16(PX, 48); wr(PY, FLOOR_Y); noshots()
   s = watch(260, false)
   local st1, sm, re = first(s, STELE), first(s, SMASH), first(s, REST)
   check(st1 ~= nil and sm ~= nil and re ~= nil, "STELE, SMASH, REST seen")
-  check(st1.n >= 28 and st1.n <= 32 and st1.hide[0] and st1.hide[2], "club telegraph ~30 frames, flickering, got " .. st1.n)
+  check(st1.n >= 24 and st1.n <= 28 and st1.hide[0] and st1.hide[2], "club telegraph ~26 frames, flickering, got " .. st1.n)
   check(sm.n == 6, "smash lasts 6 frames, got " .. sm.n)
   check(re.n >= 38 and re.n <= 42, "recovery ~40 frames, got " .. re.n)
   check(re.hide[0] and re.hide[2], "recovery blinks slowly (boss_hide 0 and 2)")
@@ -201,12 +205,12 @@ co = coroutine.create(function()
   check(s.maxwave == 1, "one wave in phase 1")
 
   -- shockwave: standing player is hit once, a jumper is not. (bait puts the oni at x 120, wave starts at x 112 going left)
-  check(bait(120, 14), "second smash")
+  check(bait(120, 19), "second smash")
   wr16(PX, 48); wr(PY, FLOOR_Y); wr(VY, 0); wr(HEARTS, 3); wr(INV, 0); noshots()
   check(wait_until(function() return rd(FBX) ~= 0 or rd(FBX + 1) ~= 0 end, 80), "a shockwave appears")
   check(wait_until(function() return rd(HEARTS) < 3 end, 80), "the shockwave hits a standing player")
   check(rd(HEARTS) == 2, "exactly one heart, hearts=" .. rd(HEARTS))
-  check(bait(120, 14), "third smash")
+  check(bait(120, 19), "third smash")
   wr16(PX, 48); wr(PY, FLOOR_Y); wr(VY, 0); wr(HEARTS, 3); wr(INV, 0); noshots()
   check(wait_until(function() return rd(FBX) ~= 0 or rd(FBX + 1) ~= 0 end, 80), "a shockwave appears again")
   frames(8)
@@ -216,8 +220,8 @@ co = coroutine.create(function()
   check(gone and rd(HEARTS) == 3 and rd(INV) == 0, "jumping over the shockwave avoids damage, hearts=" .. rd(HEARTS))
   frames(60)
   -- the shield blocks it from the front
-  wr(ABIL, 8)
-  check(bait(120, 14), "fourth smash")
+  wr(AACT, 8)
+  check(bait(120, 19), "fourth smash")
   wr16(PX, 48); wr(PY, FLOOR_Y); wr(VY, 0); wr(HEARTS, 3); wr(INV, 0); noshots()
   hold({right = true}, 3)
   held = {down = true}
@@ -225,10 +229,10 @@ co = coroutine.create(function()
   local blocked = wait_until(function() return rd(FBX) == 0 and rd(FBX + 1) == 0 and rd(FBX + 2) == 0 end, 80)
   held = {}
   check(blocked and rd(HEARTS) == 3 and rd(SHIELD) == 1 and rd(INV) == 0, "the shield stops the shockwave from the front, hearts=" .. rd(HEARTS))
-  wr(ABIL, 0)
+  wr(AACT, 0)
   frames(10)
 
-  -- charge, forced: 3 px/frame to the wall, then dazed 40 frames; jumpable; body contact costs a heart
+  -- charge, forced: 4 px/frame to the wall, then dazed 40 frames; jumpable; body contact costs a heart
   local function charge(jump)
     wait_until(function() park(); return rd(IAIR) == WALK and rd(FX) == 0 end, 400)
     wr(EX, 100); wr(EDIR, 255); wr(IAIR, CHARGE); noshots()
@@ -241,7 +245,7 @@ co = coroutine.create(function()
   end
   local xs = charge(false)
   check(rd(HEARTS) == 2, "a charging oni costs a heart, hearts=" .. rd(HEARTS))
-  check(xs[1] == 97 and xs[2] == 94, "charge 3 px/frame, x " .. xs[1] .. "," .. xs[2])
+  check(xs[1] == 96 and xs[2] == 92, "charge 4 px/frame, x " .. xs[1] .. "," .. xs[2])
   check(xs[#xs] == 16 and rd(IAIR) == REST, "dazed at the wall (x 16, REST), x=" .. xs[#xs] .. " iair=" .. rd(IAIR))
   frames(5)
   xs = charge(true)
@@ -251,7 +255,7 @@ co = coroutine.create(function()
   wait_until(function() park(); return rd(IAIR) == WALK and rd(FX) == 0 end, 400)
   wr(EX, 100); wr(EDIR, 255); wr(IAIR, CHARGE); noshots()           -- a charge to the wall, then the 40 frame recovery (natural attacks depend on the random seed)
   check(wait_until(function() park(); return rd(IAIR) == REST end, 60), "recovery after the charge")
-  wr(EHP, 15); wr(EFLASH, 0)
+  wr(EHP, 20); wr(EFLASH, 0)
   local hp = rd(EHP)
   local hit = false
   for _ = 1, 3 do
@@ -262,15 +266,15 @@ co = coroutine.create(function()
     if rd(EHP) < hp then hit = true; break end
   end
   check(hit and rd(EHP) == hp - 1, "a hit in the recovery window costs 1 hp, hp " .. hp .. " -> " .. rd(EHP))
-  check(bar() == "FFFFFFFFFH", "bar 14/15 = FFFFFFFFFH, got " .. bar())
+  check(bar() == "FFFFFFFFFH", "bar 19/20 = FFFFFFFFFH, got " .. bar())
   park()
   local ek = rd(EX)
   check(ek >= 16 and ek <= 80, "knocked back but still in the arena, x=" .. ek)
-  wr(EHP, 15)
+  wr(EHP, 20)
 
-  -- phase 2 at hp <= 10 (70 % of 15, rounded down)
-  wr(EHP, 11); wr(EFLASH, 0)
-  check(strike() == 10 and rd(PHASE) == 2, "hp 10 -> phase 2, phase=" .. rd(PHASE))
+  -- phase 2 at hp <= 14 (70 % of 20)
+  wr(EHP, 15); wr(EFLASH, 0)
+  check(strike() == 14 and rd(PHASE) == 2, "hp 14 -> phase 2, phase=" .. rd(PHASE))
   check(wait_until(function() return ppu(0x3F16) == 0x16 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(bar() == "FFFFFFH...." or bar() == "FFFFFFH.." or bar():sub(1, 6) == "FFFFFF", "phase 2 bar " .. bar())
@@ -290,20 +294,20 @@ co = coroutine.create(function()
   check(s.line <= 8, "phase 2: max 8 sprites per scanline, got " .. s.line)
   local sm2 = s
   check(sm2.both and sm2.maxwave == 2, "phase 2: shockwaves in both directions, max " .. sm2.maxwave)
-  for v in pairs(sm2.wave_v) do check(v == -2 or v == 2, "phase 2 shockwave 2 px/frame, v " .. v) end
+  for v in pairs(sm2.wave_v) do check(v == -3 or v == 3, "phase 2 shockwave 3 px/frame, v " .. v) end
   peak = math.max(peak, sm2.line)
   check(s.tile == 0x40 + 10, "phase 2 body tiles")
-  check(lost2 <= 3, "phase 2 standing bot loses <= 3 hearts, lost " .. lost2)
+  check(lost2 <= 4, "phase 2 standing bot loses <= 4 hearts, lost " .. lost2)
   local ct = full(s, CTELE)
   if ct then
-    check(ct.n >= 26 and ct.n <= 30 and ct.hide[2], "phase 2 charge telegraph ~28 frames flickering, got " .. ct.n)
+    check(ct.n >= 20 and ct.n <= 24 and ct.hide[2], "phase 2 charge telegraph ~22 frames flickering, got " .. ct.n)
     local ch = full(s, CHARGE)
-    check(ch ~= nil and ch.n >= 8 and math.abs(ch.xe - ch.x0) >= 8 * 4, "charge runs at 4 px/frame")
+    check(ch ~= nil and ch.n >= 8 and math.abs(ch.xe - ch.x0) >= 8 * 5, "charge runs at 5 px/frame")
   end
 
-  -- phase 3 at hp <= 7
-  wr(EHP, 8); wr(EFLASH, 0)
-  check(strike() == 7 and rd(PHASE) == 3, "hp 7 -> phase 3, phase=" .. rd(PHASE))
+  -- phase 3 at hp <= 10
+  wr(EHP, 11); wr(EFLASH, 0)
+  check(strike() == 10 and rd(PHASE) == 3, "hp 10 -> phase 3, phase=" .. rd(PHASE))
   check(wait_until(function() return ppu(0x3F16) == 0x06 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(rd(OAM_BODY + 1) == 0x40 + 20, "phase 3 look (boss tile 20)")
@@ -312,11 +316,11 @@ co = coroutine.create(function()
   local lost3 = s.lost
   do local t = {}; for _, r in ipairs(s.runs) do t[#t + 1] = r.st end; print("phase 3 states: " .. table.concat(t, ",")) end
   check(s.tile == 0x40 + 20 and s.line <= 8, "phase 3 body tiles, max 8 sprites per scanline, got " .. s.line)
-  check(lost3 <= 3, "phase 3 standing bot loses <= 3 hearts, lost " .. lost3)
+  check(lost3 <= 4, "phase 3 standing bot loses <= 4 hearts, lost " .. lost3)
   for v in pairs(s.wave_v) do check(v == -3 or v == 3, "phase 3 shockwave 3 px/frame, v " .. v) end
 
-  -- double smash (provoked): STELE 26, SMASH 6, STELE 20, SMASH 6, REST; two forward shockwaves 52 frames apart
-  check(bait(120, 7), "phase 3 smash")
+  -- double smash (provoked): STELE 22, SMASH 6, STELE 20, SMASH 6, REST; two forward shockwaves ~48 frames apart
+  check(bait(120, 9), "phase 3 smash")
   wr16(PX, 48); wr(PY, FLOOR_Y); noshots()
   s = watch(120, false, true)                      -- sword swinging all the time
   held = {}
@@ -326,16 +330,16 @@ co = coroutine.create(function()
   local o = table.concat(order, ",")
   check(o:find("2,3,2,3,4", 1, true) ~= nil, "double smash STELE SMASH STELE SMASH REST, states " .. o)
   check(#s.waves == 2 and s.waves[2].fc - s.waves[1].fc >= 20 and not s.both, "two shockwaves in succession, forward only, spawns " .. #s.waves)
-  check(first(s, STELE).n >= 24 and first(s, STELE).n <= 28, "first telegraph ~26 frames, got " .. first(s, STELE).n)
+  check(first(s, STELE).n >= 20 and first(s, STELE).n <= 24, "first telegraph ~22 frames, got " .. first(s, STELE).n)
   local second = runs_of(s, STELE)[2]
   check(second.n >= 18 and second.n <= 22, "second telegraph ~20 frames, got " .. second.n)
 
   -- worst case for the sprite budget: double smash (2 shockwaves alive) while the sword swings and throws waves (ability, 3 hearts)
-  check(bait(120, 7), "phase 3 smash (worst case)")
-  wr(ABIL, 16)
+  check(bait(120, 9), "phase 3 smash (worst case)")
+  wr(AACT, 16)
   local pk = peak
   local w = watch(120, false, true)
-  held = {}; wr(ABIL, 0); peak = pk
+  held = {}; wr(AACT, 0); peak = pk
   wave_peak = w.line
   check(w.line <= 9, "worst case (sword wave + 2 shockwaves): max 9 sprites per scanline, got " .. w.line)
 
@@ -349,7 +353,7 @@ co = coroutine.create(function()
   end
   check(leaped ~= nil and leaped ~= false, "phase 3 sometimes leaps")
   local lt, lp = full(s, LTELE), full(s, LEAP)
-  check(lt.n >= 24 and lt.n <= 28 and lt.hide[2], "leap telegraph ~26 frames flickering, got " .. lt.n)
+  check(lt.n >= 30 and lt.n <= 34 and lt.hide[2], "leap telegraph ~32 frames flickering, got " .. lt.n)
   check(lp.ymin <= GROUND - 55, "leap arc ~63 px high, min y " .. lp.ymin)
   check(lp.n >= 34 and lp.n <= 45, "leap flight ~40 frames, got " .. lp.n)
   check(math.abs(lp.xe - lp.x0) >= 20, "the leap covers ground toward the player, dx " .. (lp.xe - lp.x0))

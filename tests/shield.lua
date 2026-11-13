@@ -14,6 +14,7 @@ local HEARTS, INV, ONG, SWORD, VY = 0x30B, 0x30C, 0x30D, 0x30E, 0x30F
 local EX, EY, EHP = 0x310, 0x311, 0x314
 local INTRO, FBX, FBY = 0x31A, 0x31B, 0x31E
 local ABIL, DASH, PFX = 0x322, 0x323, 0x329
+local AACT = 0x343                      -- abilities active in this dungeon (set on entry from the demons before it; `abilities` $322 is only the saved progress)
 local SHIELD = 0x331
 local FLOOR_Y = 176
 local OAM_SH = 0x200 + 16                       -- the sword's two sprites: shield when it is up
@@ -71,7 +72,7 @@ co = coroutine.create(function()
   local function reset_fight() wr(HEARTS, 3); wr(INV, 0); noshots() end
 
   -- no ability: Down does nothing (the player still walks, no shield, no sprite); a shot hits
-  wr(ABIL, 0)
+  wr(AACT, 0)
   stand(100, 0)
   local x0 = rd16(PX)
   hold({down = true, right = true}, 10)
@@ -83,7 +84,7 @@ co = coroutine.create(function()
   wait_until(function() return rd(INV) == 0 end, 130)
 
   -- with the ability: Down on the ground = stand still, shield in front
-  wr(ABIL, 8)
+  wr(AACT, 8)
   stand(100, 0)
   x0 = rd16(PX)
   hold({down = true, right = true}, 10)
@@ -160,7 +161,7 @@ co = coroutine.create(function()
   held = {}
 
   -- dash still works (and ends the shield for its duration), also double jump and fireball with all abilities
-  wr(ABIL, 8 | 1 | 2 | 4)
+  wr(AACT, 8 | 1 | 2 | 4)
   stand(100, 0); reset_fight(); park_imp(); noshots()
   held = {down = true}; frames(2)
   x0 = rd16(PX)

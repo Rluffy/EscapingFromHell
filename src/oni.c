@@ -9,11 +9,12 @@
    attack; fspd = shockwave px/frame. Phase 2 sends shockwaves both ways and charges faster, phase 3 adds the double smash
    (forward waves) and the leap (waves both ways on landing). */
 const struct phase oni_ph[3] = {
-    { BT + 0, 1, 30, 480, 1, 2, { 0x06, 0x26, 0x38 } },
-    { BT + 10, 2, 28, 400, 1, 2, { 0x06, 0x16, 0x30 } },
-    { BT + 20, 2, 26, 330, 2, 3, { 0x0F, 0x06, 0x28 } }
+    { BT + 0, 1, 26, 300, 1, 2, { 0x06, 0x26, 0x38 } },
+    { BT + 10, 2, 22, 220, 1, 3, { 0x06, 0x16, 0x30 } },
+    { BT + 20, 2, 22, 190, 2, 3, { 0x0F, 0x06, 0x28 } }
 };
-static const unsigned char cspd[3] = { 3, 4, 5 };      /* charge px/frame */
+static const unsigned char cspd[3] = { 4, 5, 5 };      /* charge px/frame */
+static const unsigned char rest[3] = { 40, 34, 28 };   /* recovery frames: the hit window shrinks */
 
 /* iair = state, ai_t = state timer, fb_t = idle frames until the next attack, ig/ivx/ivy = leap tick and speed. */
 enum { INIT, WALK, STELE, SMASH, REST, CTELE, CHARGE, LTELE, LEAP };
@@ -23,7 +24,6 @@ enum { INIT, WALK, STELE, SMASH, REST, CTELE, CHARGE, LTELE, LEAP };
 #define COOL    120                    /* frames after a recovery in which a sword hit gets no smash in return */
 #define SMASH_T 6                      /* frames the club contact box is live */
 #define TELE2   20                     /* club raised again before the second smash */
-#define REST_T  40                     /* recovery after a smash, a charge or a leap: the window to hit it */
 #define O_ONI   72                     /* OAM byte offset: 10 body sprites, then 2 club sprites (up to byte 119) */
 #define O_FB    52                     /* the boss fireball sprites (dungeon.c): shockwaves here */
 #define CLUB    (BT + 30)                   /* club head tile, handle = +1 */
@@ -77,7 +77,7 @@ static void pick(const struct phase *p)                 /* idle time is up: smas
     unsigned char r = rng >> 6;
     face();
     if (boss_phase == 1 ? r == 3 : boss_phase == 2 ? r > 1 : r == 0) { iair = CTELE; ai_t = p->wait; }
-    else if (boss_phase == 3 && r == 1) { iair = LTELE; ai_t = p->wait; }
+    else if (boss_phase == 3 && r == 1) { iair = LTELE; ai_t = p->wait + 10; }   /* the leap lands on where he stands: a longer warning */
     else smash(p);
 }
 
@@ -86,7 +86,7 @@ static void sprites(void)
 {
     unsigned char *o = oam + O_ONI;
     unsigned char r, c, n, x0, t = bs->ph[boss_phase - 1].tile;
-    unsigned char hide = (boss_hide & 2) || (en.flash & 2) || !en.hp;
+    unsigned char hide = (boss_hide & 2) || BLINK || !en.hp;
     unsigned char fl = en.dir > 0 ? 1 : 0x41;
     for (r = 0; r < 4; ++r) {
         n = r < 2 ? 3 : 2;
@@ -127,6 +127,7 @@ void oni_ai(void)
         if (cool) --cool;
         g = gap();
         if (g > STAND) step(en.dir * (signed char)p->spd);
+        else if (g < STAND / 2) step(-en.dir * (signed char)p->spd);     /* the player is in its face (after a leap or a charge): it backs off instead of sitting on him */
         if (fb_t) --fb_t;
         if (!fb_t) pick(p);
         else if (en.flash && !cool) smash(p);        /* hit while walking: retaliates */
@@ -142,14 +143,14 @@ void oni_ai(void)
         if (!invuln && overlap(player_x + 3, player_y + 2, 10, 14, d, FLOOR_Y - 24, 16, 24)) hurt(d + 8);
         if (--ai_t) break;
         if (--left) { iair = STELE; ai_t = TELE2; }
-        else { iair = REST; ai_t = REST_T; }
+        else { iair = REST; ai_t = rest[boss_phase - 1]; }
         break;
     case CTELE:                        /* charge telegraph: flickers, stands still */
         boss_hide = (ftick & 4) ? 2 : 0;
         if (!--ai_t) iair = CHARGE;
         break;
     case CHARGE:                       /* across the arena (jumpable, dashable), dazed at the wall */
-        if (step(en.dir * (signed char)cspd[boss_phase - 1])) { iair = REST; ai_t = REST_T; }
+        if (step(en.dir * (signed char)cspd[boss_phase - 1])) { iair = REST; ai_t = rest[boss_phase - 1]; }
         break;
     case LTELE:                        /* crouch: flickers, then a leap to where the player stands */
         boss_hide = (ftick & 4) ? 2 : 0;
@@ -163,7 +164,7 @@ void oni_ai(void)
         step(ivx);
         en.y += ivy;
         if (++ig == 3) { ig = 0; ++ivy; }
-        if (ivy >= 0 && en.y >= GROUND) { en.y = GROUND; quake(p, 1); iair = REST; ai_t = REST_T; }
+        if (ivy >= 0 && en.y >= GROUND) { en.y = GROUND; quake(p, 1); iair = REST; ai_t = rest[boss_phase - 1]; }
         break;
     default:                           /* REST: sits still and blinks slowly, the main hit window */
         boss_hide = (ftick & 16) ? 2 : 0;

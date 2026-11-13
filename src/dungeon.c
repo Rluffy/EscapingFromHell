@@ -11,7 +11,7 @@ static void draw(void);
 #define KNOCK      8                   /* knockback frames, 3 px/frame */
 #define SWORD_LEN  8
 #define SWORD_CD   14
-#define ENEMY_HIT  12                  /* boss invulnerable after a hit (blinks) */
+#define ENEMY_HIT  24                  /* boss immune to damage for this many frames after a hit (en.flash counts down; no AI pause, spamming B cannot out-damage it) */
 #define INTRO_LEN  75                  /* boss name on screen, everything frozen (1.25 s) */
 #define PHASE_FX   30                  /* phase change: boss frozen and harmless, backdrop flashes */
 #define DASH_LEN   10                  /* dash: 4 px/frame for 10 frames, invulnerable */
@@ -51,8 +51,8 @@ static const struct boss bosses[] = {
     { "MIRROR DEMON", 13, 5, 16, 24, FLOOR_Y - 24, mirror_ai, mirror_ph },
     { "GIANT TOAD", 14, 6, 32, 24, FLOOR_Y - 24, toad_ai, toad_ph },
     { "SPIDER QUEEN", 14, 7, 24, 16, 32, spider_ai, spider_ph },
-    { "ONI WARLORD", 15, 8, 24, 32, FLOOR_Y - 32, oni_ai, oni_ph },
-    { "HELL LORD", 18, 9, 32, 32, FLOOR_Y - 32, lord_ai, lord_ph }
+    { "ONI WARLORD", 20, 8, 24, 32, FLOOR_Y - 32, oni_ai, oni_ph },
+    { "HELL LORD", 26, 9, 32, 32, FLOOR_Y - 32, lord_ai, lord_ph }
 };
 const struct boss *bs;                 /* the demon of the current dungeon */
 /* Ability bit a demon grants (index = dungeon - 1; GAMEDESIGN table) and the text shown the first time. */
@@ -247,6 +247,8 @@ void dungeon_enter(void)
         oam[O_HEART + i * 4 + 2] = 2;
         oam[O_HEART + i * 4 + 3] = 24 + i * 10;
     }
+    ab_act = 0;                         /* abilities by level: only what demons 1..n-1 gave, whatever the save holds */
+    for (i = 0; i < cur_dungeon - 1; ++i) ab_act |= grant[i];
     arena_reset();
     intro = 0;
     tb_n = 0; bar_hp = 255;
@@ -271,11 +273,11 @@ static void update_player(void)
     if (pf_cd) --pf_cd;
     if (slow) --slow;
 
-    if (PRESSED(PAD_SELECT) && (abilities & AB_DASH) && !dash_cd && !kb_t && !slow) {
+    if (PRESSED(PAD_SELECT) && (ab_act & AB_DASH) && !dash_cd && !kb_t && !slow) {
         dash_t = DASH_LEN; dash_cd = DASH_CD; sfx_play(SFX_DASH);
         if (invuln < DASH_LEN) invuln = DASH_LEN;       /* invulnerable (and blinking) while dashing */
     }
-    shield = (abilities & AB_SHIELD) && (pad & PAD_DOWN) && on_ground && !dash_t;   /* Down on the ground: stand still behind the shield */
+    shield = (ab_act & AB_SHIELD) && (pad & PAD_DOWN) && on_ground && !dash_t;   /* Down on the ground: stand still behind the shield */
     if (shield) sword_t = 0;
     if (dash_t) {                       /* gravity keeps working: in the air the dash is a flat arc */
         --dash_t;
@@ -292,7 +294,7 @@ static void update_player(void)
     if (nx > 256 - WALL - 16) nx = 256 - WALL - 16;
     player_x = nx;
 
-    if (PRESSED(PAD_A) && (on_ground || ((abilities & AB_DJUMP) && !air_jumped))) {
+    if (PRESSED(PAD_A) && (on_ground || ((ab_act & AB_DJUMP) && !air_jumped))) {
         air_jumped |= !on_ground;       /* double jump: once per airtime (also after a ledge or a knockback), a bit lower */
         vy = on_ground ? -6 : -5; gtick = 0;
         sfx_play(on_ground ? SFX_JUMP : SFX_DJUMP);
@@ -315,7 +317,7 @@ static void update_player(void)
     player_y = ny;
 
     if (PRESSED(PAD_B) && !shield) {
-        if ((pad & PAD_UP) && (abilities & AB_FIRE)) {      /* Up + B with the ability: fireball instead of a sword swing */
+        if ((pad & PAD_UP) && (ab_act & AB_FIRE)) {      /* Up + B with the ability: fireball instead of a sword swing */
             if (!pf_x && !pf_cd) {
                 pf_x = facing ? player_x - 4 : player_x + 12;
                 pf_y = player_y + 4;
@@ -327,7 +329,7 @@ static void update_player(void)
         } else if (!sword_cd) {
             sword_t = SWORD_LEN; sword_cd = SWORD_CD;
             sfx_play(SFX_SWORD);
-            if ((abilities & AB_WAVE) && hearts == HEARTS_MAX && !pf_x) {     /* full hearts: the swing also throws a wave (shares the fireball projectile, no cooldown) */
+            if ((ab_act & AB_WAVE) && hearts == HEARTS_MAX && !pf_x) {     /* full hearts: the swing also throws a wave (shares the fireball projectile, no cooldown) */
                 pf_x = facing ? player_x - 4 : player_x + 12;
                 pf_y = player_y + 8;
                 pf_vx = facing ? -FIRE_VX : FIRE_VX;
@@ -417,7 +419,7 @@ static void combat(void)
         if (!en.hp) { boss_dead = 1; clear_fb(); sfx_play(SFX_BDEATH); }
         else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); sfx_play(SFX_PHASE); }
     }
-    if (en.hp && !(boss_hide & 1) && !boss_fx && !en.flash && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
+    if (en.hp && !(boss_hide & 1) && !boss_fx && en.flash <= FLASH_FX && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
         hurt(en.x + en.w / 2);
 }
 
@@ -428,7 +430,7 @@ static void draw(void)
     unsigned char x = player_x, y = player_y, f = facing, i;
     unsigned char pt = !on_ground ? 22 : px_prev != x ? ((ftick & 8) ? 8 : 18) : 4;     /* hero tiles: jump / walk A, B / stand (common sheet) */
     unsigned char py = (invuln & 4) ? 0xFF : y - 1;       /* blink while invulnerable */
-    unsigned char ey = (en.hp && !(en.flash & 2) && !(boss_hide & 2) && !OWN_DRAW) ? en.y - 1 : 0xFF;
+    unsigned char ey = (en.hp && !BLINK && !(boss_hide & 2) && !OWN_DRAW) ? en.y - 1 : 0xFF;
     unsigned char t = bs->ph[boss_phase - 1].tile;
 
     bar_sync();

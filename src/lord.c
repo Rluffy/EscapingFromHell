@@ -8,12 +8,12 @@
    spd = dive px/frame; wait = idle frames (hit window) after every action; rate = frames invisible (0 = never);
    shots = 1: shockwaves on landing; fspd = fireball and shockwave px/frame. */
 const struct phase lord_ph[3] = {
-    { BT + 0, 0, 140,  0, 0, 2, { 0x06, 0x16, 0x28 } },
-    { BT + 6, 5, 130,  0, 0, 2, { 0x05, 0x15, 0x38 } },
-    { BT + 12, 6, 100, 90, 1, 3, { 0x0F, 0x06, 0x30 } }
+    { BT + 0, 0, 130,   0, 0, 3, { 0x06, 0x16, 0x28 } },
+    { BT + 6, 6, 100,   0, 0, 3, { 0x05, 0x15, 0x38 } },
+    { BT + 12, 7, 80, 110, 1, 4, { 0x0F, 0x06, 0x30 } }
 };
 /* Action cycle per phase: F aimed fireball, P 3-way spread, T teleport, S flying swoop, I invisible teleport (fires while unseen). */
-static const char seq[3][6] = { "FTT", "SPTT", "ISTPT" };
+static const char seq[3][7] = { "FTFT", "SPTFTT", "ISPTTF" };
 
 /* iair = state, ai_t = state timer. */
 enum { INIT, IDLE, FTELE, FADE, GONE, APPEAR, RISE, HOVER, STELE, DIVE, REST };
@@ -25,7 +25,7 @@ enum { INIT, IDLE, FTELE, FADE, GONE, APPEAR, RISE, HOVER, STELE, DIVE, REST };
 #define APPEAR_T 30                    /* telegraph at the new spot: flickers, untouchable, harmless */
 #define HOVER_T  45
 #define STELE_T  28                    /* swoop warning: hovers over the player, then locks on */
-#define REST_T   40                    /* after a swoop: the main hit window */
+#define REST_T   (40 - 6 * (boss_phase - 1))   /* after a swoop: the main hit window, shorter each phase (40 / 34 / 28) */
 #define MIN_GAP  56                    /* a teleport never lands closer than this to the player */
 #define O_LORD   72                    /* OAM byte offset: 12 body sprites (up to byte 119) */
 #define O_FB     52                    /* the boss fireball sprites (dungeon.c) */
@@ -99,7 +99,7 @@ static void sprites(void)
 {
     unsigned char *o = oam + O_LORD;
     unsigned char r, c, n, off, t = bs->ph[boss_phase - 1].tile;
-    unsigned char hide = (boss_hide & 2) || (en.flash & 2) || !en.hp;
+    unsigned char hide = (boss_hide & 2) || BLINK || !en.hp;
     for (r = 0; r < 4; ++r) {
         n = r < 2 ? 2 : 1;
         for (c = 0; c < n; ++c) {
@@ -145,7 +145,7 @@ void lord_ai(void)
         break;
     case GONE:                         /* invisible and untouchable, but the fireballs show */
         boss_hide = 3;
-        if (ai_t == 60 || ai_t == 30) fire(p, 1);
+        if (ai_t == 80 || ai_t == 50 || ai_t == 20) fire(p, 1);     /* three aimed shots while unseen */
         if (--ai_t) break;
         iair = APPEAR; ai_t = APPEAR_T;
         break;

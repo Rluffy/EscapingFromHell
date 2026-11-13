@@ -33,7 +33,7 @@ static void thread(void)
 {
     unsigned char *o = oam + O_THREAD;
     unsigned char i, y = en.y, n = (en.y - CEIL_Y + 7) >> 3;
-    unsigned char hide = (boss_hide & 2) || (en.flash & 2) || !en.hp;
+    unsigned char hide = (boss_hide & 2) || BLINK || !en.hp;
     for (i = 0; i < NTHREAD; ++i) {
         y -= 8;
         *o++ = hide || i >= n ? 0xFF : y - 1;

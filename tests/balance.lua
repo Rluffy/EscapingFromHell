@@ -20,8 +20,8 @@ local FLOOR_Y = 176
 local SAMPLE = 600
 local SHOT_RANGE, BODY_RANGE = 24, 48
 local DODGE_X = 90                                         -- between the left and the top platform: a jump from x 48 would land on the left platform
-local HP = {10, 11, 12, 12, 13, 13, 14, 14, 15, 18}        -- max hp per dungeon (src/dungeon.c)
-local LIMIT_STAND = {2, 2, 2, 2, 2, 3, 3, 3, 3, 3}          -- standing bot per 1200 frames: bosses 1..5 <= 2 hearts per phase, 6..10 <= 3
+local HP = {10, 11, 12, 12, 13, 13, 14, 14, 20, 26}        -- max hp per dungeon (src/dungeon.c)
+local LIMIT_STAND = {2, 2, 2, 2, 2, 3, 3, 3, 4, 4}          -- standing bot per 1200 frames: bosses 1..5 <= 2 hearts per phase, 6..8 <= 3, the climax 9 and 10 <= 4 (v1.1)
 local LIMIT_DODGE = 3                                      -- dodger bot per 1200 frames, every boss and phase (the aim is 1..2, see docs/GAMEDESIGN.md "Balance")
 local function limit(t) return (t * SAMPLE + 1199) // 1200 end   -- the targets are per 1200 frames: scaled (rounded up) to the sampled window
 

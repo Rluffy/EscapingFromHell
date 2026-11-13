@@ -12,6 +12,7 @@ local STATE, PX, PY, CUR, MASK = 0x302, 0x303, 0x305, 0x30A, 0x308
 local HEARTS, INV, SWORD = 0x30B, 0x30C, 0x30E
 local EX, EY, EHP, EFLASH = 0x310, 0x311, 0x314, 0x315
 local INTRO, ABIL = 0x31A, 0x322
+local AACT = 0x343                      -- abilities active in this dungeon (set on entry from the demons before it; `abilities` $322 is only the saved progress)
 local PFX, PFY, PFCD = 0x329, 0x32A, 0x32B
 local FLOOR_Y = 176
 local OAM_PF = 0x200 + 136
@@ -48,14 +49,14 @@ co = coroutine.create(function()
   check(wait_until(function() return rd(INTRO) == 0 end, 100), "intro ends")
 
   -- no ability: a swing is only a swing
-  wr(ABIL, 0)
+  wr(AACT, 0)
   face(0, 100)
   swing(); frames(2)
   check(rd(PFX) == 0 and rd(SWORD) > 0, "no ability: sword swings, no wave")
   frames(25); place(100)
 
   -- ability + 3 hearts: the swing throws a wave in the facing direction
-  wr(ABIL, 16)
+  wr(AACT, 16)
   face(0, 100)
   held = {b = true}; place(100); frames(1); held = {}
   place(100); frames(1)
@@ -95,7 +96,7 @@ co = coroutine.create(function()
   frames(20); place(100)
 
   -- the fireball is unchanged (Up + B, tile 29, cooldown 40) with both abilities; the swing afterwards waves only when it is gone
-  wr(ABIL, 20)
+  wr(AACT, 20)
   face(0, 100)
   held = {up = true, b = true}; place(100); frames(1); held = {}
   place(100); frames(1)
@@ -110,7 +111,7 @@ co = coroutine.create(function()
   check(wait_until(function() place(100); return rd(PFX) == 0 end, 100), "wave gone")
 
   -- a wave hits the boss: exactly 1 hp, wave consumed, hit blink (shared hit path)
-  wr(ABIL, 16)
+  wr(AACT, 16)
   pin = 200
   face(0, 48)
   place(48)

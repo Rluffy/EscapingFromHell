@@ -11,6 +11,7 @@ local STATE, PX, PY, MASK, CUR = 0x302, 0x303, 0x305, 0x308, 0x30A
 local HEARTS, INV = 0x30B, 0x30C
 local EX, EY, EHP, EFLASH = 0x310, 0x311, 0x314, 0x315
 local INTRO, DEAD, ABIL = 0x31A, 0x319, 0x322
+local AACT = 0x343                      -- abilities active in this dungeon (set on entry from the demons before it; `abilities` $322 is only the saved progress)
 local LAST, ID = 0x339, 0x33A        -- ID + channel: 0 pulse 1, 1 pulse 2, 2 noise
 local FLOOR_Y = 176
 local JUMP, DJUMP, SWORD, HURT, BHIT, PHASE, BDEATH, VICTORY, DASH, FIRE, WAVE, BLOCK, SPIT, THUMP, MOVE, OK, GATE, ENDING =
@@ -93,13 +94,13 @@ co = coroutine.create(function()
   check(wait_until(function() return rd(INTRO) == 0 end, 100), "intro ends")
   pin = function() wr(EY, 0) end
 
-  wr(ABIL, 0); safe(); frames(30); idle(0)
+  wr(AACT, 0); safe(); frames(30); idle(0)
   expect(JUMP, "jump", function() hold({a = true}, 3) end)
   check(rd(LAST) == JUMP, "jump is the last effect, " .. rd(LAST))
   check((maxp[JUMP] or 0) > 100, "jump sets a pulse period, " .. tostring(maxp[JUMP]))
   check(wait_until(function() return rd(0x30D) == 1 end, 80), "landed"); idle(0)
 
-  wr(ABIL, 2); safe(); frames(2)                 -- double jump: a second A press in the air
+  wr(AACT, 2); safe(); frames(2)                 -- double jump: a second A press in the air
   expect(DJUMP, "double jump", function()
     held = {a = true}; frames(3); held = {}; frames(8); held = {a = true}; frames(3); held = {}
   end)
@@ -110,20 +111,20 @@ co = coroutine.create(function()
   expect(SWORD, "sword swing", function() hold({b = true}, 3) end)
   idle(2)
 
-  wr(ABIL, 1); frames(30)
+  wr(AACT, 1); frames(30)
   expect(DASH, "dash", function() hold({select = true}, 3) end)
   idle(2)
 
-  wr(ABIL, 4); frames(45); idle(0)
+  wr(AACT, 4); frames(45); idle(0)
   expect(FIRE, "player fireball", function() hold({up = true, b = true}, 3) end)
   frames(45); idle(0)
 
-  wr(ABIL, 16); wr(0x329, 0); frames(30)
+  wr(AACT, 16); wr(0x329, 0); frames(30)
   expect(WAVE, "sword wave", function() safe(); face_right(); hold({b = true}, 3) end)
   frames(40); idle(0); idle(2)
 
   -- boss hit + phase change: the Imp (10 hp, phase 2 from hp 7) next to the player, one swing
-  wr(ABIL, 0)
+  wr(AACT, 0)
   pin = function() safe(); wr(EX, 114); wr(EY, FLOOR_Y); wr(EFLASH, 0) end
   wr(EHP, 8); wr(0x318, 1); frames(3)
   expect(BHIT, "boss hit", function() held = {b = true}; frames(3); held = {} end)
@@ -138,7 +139,7 @@ co = coroutine.create(function()
   frames(10)
 
   -- shield block: shield up (Down), boss touching from the front
-  wr(ABIL, 8)
+  wr(AACT, 8)
   pin = function() wr16(PX, 100); wr(PY, FLOOR_Y); wr(HEARTS, 3); wr(EFLASH, 0) end
   wr(INV, 99); wr(EX, 140); frames(60); idle(0); idle(2)
   held = {down = true}; frames(3)
@@ -147,7 +148,7 @@ co = coroutine.create(function()
 
   -- boss spit (Imp fireballs) at a safe distance
   pin = function() wr16(PX, 100); wr(PY, FLOOR_Y); wr(HEARTS, 3); wr(INV, 99); wr(EY, 100); wr(EFLASH, 0) end
-  wr(ABIL, 0)
+  wr(AACT, 0)
   seen = {}
   check(wait_until(function() return seen[SPIT] ~= nil end, 600) and seen[SPIT] == 1, "boss spit: sfx 13 on pulse 2")
 

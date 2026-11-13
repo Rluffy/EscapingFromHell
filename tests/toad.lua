@@ -14,6 +14,7 @@ local HEARTS, INV, SWORD, VY = 0x30B, 0x30C, 0x30E, 0x30F
 local EX, EY, EW, EH, EHP, EFLASH, EDIR = 0x310, 0x311, 0x312, 0x313, 0x314, 0x315, 0x316
 local PHASE, DEAD, INTRO, FBX, FBY, FX = 0x318, 0x319, 0x31A, 0x31B, 0x31E, 0x321
 local ABIL, VICT = 0x322, 0x325
+local AACT = 0x343                      -- abilities active in this dungeon (set on entry from the demons before it; `abilities` $322 is only the saved progress)
 local BANK, HIDE, IAIR = 0x326, 0x327, 0x328
 local TLEN, SHIELD = 0x330, 0x331
 local SIT, CROUCH, HOP, LAND, TTELE, TONGUE, STELE = 1, 2, 3, 4, 5, 6, 7
@@ -221,7 +222,7 @@ co = coroutine.create(function()
   check(rd(TLEN) == 0 and rd(OAM_TONGUE) == 0xFF, "tongue retracted")
 
   -- shield stops the tongue and pushes back
-  wr(ABIL, 8)
+  wr(AACT, 8)
   check(until_state(TTELE, 700), "tongue telegraph again")
   wr(EX, 100)
   wr(HEARTS, 3); wr(INV, 0)
@@ -232,7 +233,7 @@ co = coroutine.create(function()
   for _ = 1, 45 do reach(); frames(1); x1 = x1 or rd16(PX) end
   held = {}
   check(rd(HEARTS) == 3 and rd(INV) == 0, "shield: the tongue costs no heart, hearts=" .. rd(HEARTS))
-  wr(ABIL, 0)
+  wr(AACT, 0)
   wait_until(function() park(); return rd(IAIR) == SIT end, 80)
 
   -- contact with the toad costs a heart (also while it crouches), at the stun too
