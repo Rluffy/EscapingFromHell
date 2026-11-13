@@ -25,7 +25,7 @@ Umsetzbar durch einen Orchestrator-Agenten. Zuerst `CLAUDE.md` lesen. Spielregel
 | v0.5 | Boss 4 (Lavaschlange), Boss 5 (Geflügelter Dämon), Feuerball | fertig, Tag nach Okay |
 | v0.6 | Boss 6 (Spiegeldämon), Boss 7 (Riesenkröte), Schild | fertig, Tag nach Okay |
 | v0.7 | Boss 8 (Spinnenkönigin), Boss 9 (Oni-Kriegsherr), Schwertwelle | fertig, Tag nach Okay |
-| v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | in Arbeit (Pakete 1 bis 3 erledigt) |
+| v0.8 | Boss 10 (Höllenfürst), komplette Spielreihenfolge, Ende-Logik | fertig, Tag nach Okay |
 | v0.9 | Art-Pass (Pixelkunst im Stil von DesignIdea1/2), Soundeffekte, Titelbildschirm, Intro, Ende, Overworld-Dekor mit Idle-Animationen | in Arbeit |
 | v1.0 | Balance, Fehlerbehebung, Release mit ROM | offen |
 
