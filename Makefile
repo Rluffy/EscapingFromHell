@@ -20,7 +20,7 @@ build/%.s: src/%.c src/nes.h src/boss.h src/meta.h src/arena.h src/ui.h | build
 	cc65 $(CFLAGS) -o $@ $<
 
 build/%.o: src/%.s | build
-	ca65 --cpu 6502 -o $@ $<
+	ca65 --cpu 6502 -Ibuild -o $@ $<
 
 # CHR sheets are padded to their slot in the CHR-ROM (docs/TECH.md "CHR-Layout"): 2 KB for tiles/anim/common, 4 KB per boss.
 PAD_tiles := 2048
@@ -33,6 +33,11 @@ build/%.chr: assets/sprites/%.png tools/png2chr.py | build
 build/overworld.bin: assets/overworld.txt tools/mapconv.py | build
 	python3 tools/mapconv.py $< $@
 
+# Songs: assets/songs.txt -> build/songs.inc (included by src/music.s), docs/TECH.md "Musik (v1.1)".
+build/songs.inc: assets/songs.txt tools/music.py | build
+	python3 tools/music.py asm $< $@
+
+build/music.o: build/songs.inc
 build/chr.o: $(patsubst assets/sprites/%.png,build/%.chr,$(wildcard assets/sprites/*.png))
 build/map.o: build/overworld.bin
 

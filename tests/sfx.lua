@@ -78,7 +78,7 @@ co = coroutine.create(function()
   expect(MOVE, "menu move", function() hold({down = true}, 3) end)
   check(rd(LAST) == MOVE, "last effect = menu move, " .. rd(LAST))
   frames(15)
-  check(rd(ID) == 0 and sample()["apu.square1.envelope.volume"] == 0, "finished effect leaves the channel silent")
+  check(rd(ID) == 0 and rd(0x346) & 1 == 0, "finished effect hands the channel back to the music (mus_mute bit 0 clear)")   -- v1.1: the title song plays, the register is no longer silent
   expect(OK, "menu confirm", function() hold({a = true}, 3) end)
   check(rd(LAST) == OK, "last effect = menu confirm")
   frames(20); hold({start = true}, 3); frames(60)      -- Start skips the intro

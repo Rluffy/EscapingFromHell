@@ -158,4 +158,17 @@ Asiatisch inspirierte Höllen-Tempel (Dächer, Laternen, Torbögen), nächtlich 
 
 ## Audio
 
-v1: Soundeffekte (v0.9 umgesetzt, NES-APU: 2 Pulse + Rauschen, Details und Ids `TECH.md` „Soundeffekte (v0.9)“): Sprung, Doppelsprung, Schwerthieb, Spieler getroffen, Boss getroffen, Phasenwechsel, Boss-Tod (Explosion) und Sieg-Jingle, Dash, Feuerball, Schwertwelle, Schild-Block, Boss-Spucken (leise), Schockwelle/Landung (dumpfer Rums), Menü bewegen/bestätigen, Dungeon betreten, Ende-Fanfare. Musik (Overworld, Dungeon, Boss) kommt danach (v0.9 oder später, siehe `PLAN.md`).
+**Soundeffekte** (v0.9, NES-APU: 2 Pulse + Rauschen, Details und Ids `TECH.md` „Soundeffekte (v0.9)“): Sprung, Doppelsprung, Schwerthieb, Spieler getroffen, Boss getroffen, Phasenwechsel, Boss-Tod (Explosion) und Sieg-Jingle, Dash, Feuerball, Schwertwelle, Schild-Block, Boss-Spucken (leise), Schockwelle/Landung (dumpfer Rums), Menü bewegen/bestätigen, Dungeon betreten, Ende-Fanfare.
+
+**Musik** (v1.1, vier Kanäle: Pulse 1 Melodie, Pulse 2 Arpeggio/Gegenstimme, Dreieck Bass, Rauschen Schlagzeug; leiser als die Effekte; Effekte haben Vorrang und übertönen den jeweiligen Musikkanal kurz, Details `TECH.md` „Musik (v1.1)“). Stil: dunkle, asiatisch angehauchte Höllentempel bei Nacht, daher Pentatonik und Moll-Skalen (Insen, Hirajoshi, Phrygisch).
+
+| Lied | Wann | Stimmung |
+|---|---|---|
+| **Titel** (D-Insen, 90 BPM) | Titel, Startmenü und Intro | geheimnisvoll: Herzschlag, Gongschläge, gezupfte Arpeggios |
+| **Overworld** (A-Pentatonik/Hirajoshi, 100 BPM) | Overworld | ruhig, aber unheimlich: gleichmäßiger Wandergang im Bass, hallende Glockenarpeggios |
+| **Boss** (E-Phrygisch, 128 BPM) | Dungeon 1..9, bei Betreten und Neustart von vorn; **ab Phase 3 schneller (150 BPM)** | treibend, gespannt: Bass in Achteln, Melodie mit Sprüngen, Schlagzeug |
+| **Endboss** (D-Phrygisch dominant, 150 BPM, Phase 3: 180 BPM) | Dungeon 10 | wie der Boss, härter: 16tel-Galopp im Bass, schnellere Arpeggios |
+| **Sieg** (C-Dur, knapp 2 s, einmal) | nach dem Sieg über einen Dämon, beginnt mit dem Sieg-Jingle-Arpeggio C-E-G-C | Fanfare |
+| **Ende** (C-Dur-Pentatonik, 112 BPM) | Endbild | hoffnungsvoll, Morgendämmerung (das Endbild dauert nur 4 s, es erklingt der Anfang) |
+
+Pause im Dungeon: die Musik schweigt und geht beim Weiterspielen an derselben Stelle weiter. Hör-Vorschau der Lieder (Näherung): `python3 tools/music.py wav assets/songs.txt docs/audio`.

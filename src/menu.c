@@ -175,6 +175,7 @@ static void menu_draw(void)
 void menu_enter(void)
 {
     menu_sel = menu_conf = 0;
+    music_play(MUS_TITLE);              /* the intro goes on with it */
     game_state = ST_MENU;
     menu_draw();
 }
@@ -255,6 +256,7 @@ void end_enter(void)
     put_hero(146);                                     /* the hero walks out of hell into the dawn */
     end_t = END_LEN;
     sfx_play(SFX_END);
+    music_play(MUS_ENDING);
     game_state = ST_END;
     screen_go();
 }

@@ -151,6 +151,8 @@ static void arena_reset(void)
     en.hp = hp_max = bs->hp;
     en.w = bs->w; en.h = bs->h; en.y = bs->y0;
     boss_phase = 1;
+    music_stop();                       /* entry and restart: the battle theme from the top, at normal tempo */
+    music_play(cur_dungeon == 10 ? MUS_FINAL : MUS_BOSS);
     boss_dead = boss_fx = boss_hide = ivx = ivy = ig = iair = dash_t = dash_cd = victory = 0;
     clear_fb();
     ph_t2 = (unsigned)en.hp * 70 / 100;
@@ -452,7 +454,7 @@ static void combat(void)
         ph = en.hp <= ph_t3 ? 3 : en.hp <= ph_t2 ? 2 : 1;
         sfx_play(SFX_BHIT);
         if (!en.hp) { boss_dead = 1; clear_fb(); sfx_play(SFX_BDEATH); }
-        else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); sfx_play(SFX_PHASE); }
+        else if (ph != boss_phase) { boss_phase = ph; boss_fx = PHASE_FX; clear_fb(); sfx_play(SFX_PHASE); if (ph == 3) music_fast(); }
     }
     if (en.hp && !(boss_hide & 1) && !boss_fx && en.flash <= FLASH_FX && !invuln && overlap(player_x + 3, player_y + 2, 10, 14, en.x, en.y, en.w, en.h))
         hurt(en.x + en.w / 2);
@@ -541,7 +543,7 @@ unsigned char dungeon_frame(void)
         return 0;
     }
     if (paused && PRESSED(PAD_SELECT)) return 1;    /* Start, then Select: give up the fight */
-    if (PRESSED(PAD_START) && (paused ^= 1)) pause_build();
+    if (PRESSED(PAD_START)) { paused ^= 1; music_pause(paused); if (paused) pause_build(); }
     pal_sync();                         /* PPU writes first: still in vblank */
     if (intro) {
         if (!paused) {                  /* Start freezes the intro too (it used to run on and the fight began paused) */
@@ -553,7 +555,7 @@ unsigned char dungeon_frame(void)
         pfire();
         update_enemy();
         combat();
-        if (!en.hp) { victory = vict_len = VICTORY_LEN + ((grant[cur_dungeon - 1] & ~abilities) ? HINT_EXTRA : 0); scroll_x = 0; text_prep("VICTORY", 0x2140, 1); sfx_play(SFX_VICTORY); }
+        if (!en.hp) { victory = vict_len = VICTORY_LEN + ((grant[cur_dungeon - 1] & ~abilities) ? HINT_EXTRA : 0); scroll_x = 0; text_prep("VICTORY", 0x2140, 1); sfx_play(SFX_VICTORY); music_play(MUS_VICTORY); }
     }
     draw();
     pause_sync();                       /* after draw(): the hp bar has the buffer first */

@@ -6,3 +6,4 @@ dist/*.nes
 *.dbg
 *.lbl
 __pycache__/
+docs/audio/*.wav

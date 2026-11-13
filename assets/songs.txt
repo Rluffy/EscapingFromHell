@@ -1,0 +1,212 @@
+; Songs of Escaping From Hell. Format and tools: docs/TECH.md "Musik (v1.1)", tools/music.py.
+;   song NAME ID TEMPO      TEMPO = frames per row (a row = a 16th note: 10 = 90 BPM, 7 = 128, 6 = 150)
+;   ch p1|p2|noi|tri        channel (pulse 1, pulse 2, noise = drums, triangle = bass)
+;   def NAME tokens         pattern (1 bar, 16 rows, a body starts at octave 4, default length 4); NAME starts with a capital letter
+;   other lines             the channel's main stream: tokens, pattern names (call), `loop` = loop point (default start), `end` = stop
+; Tokens: c d e f g a b [+|-] [rows] [.]   note (c4 = C of the octave, default length l)     r[rows]  rest
+;         oN octave (o4 c = middle C)  < >  octave -/+   lN default length   vN volume 0..15 (music <= 7, SFX go to 10)
+;         yN duty 0..3   @N volume decay (frames per step down to half the volume, 0 = flat)
+;         noise: k kick  s snare  h hat  p open hat  x crash  t tom  (each with rows)
+
+; ---- TITLE: D insen scale (D Eb G A C), slow and mysterious; heartbeat and gongs ----
+song TITLE 1 10
+ch p1
+  def L1 o5 d6 e-2 d4 c4
+  def L2 o4 a8 r2 o5 c2 d4
+  def L3 o5 e-6 d2 c4 o4 g4
+  def L4 o5 d12 r4
+  def L5 o5 g6 a2 g4 d4
+  def L6 o5 c6 d2 e-4 d4
+  def L7 o5 e-8 g4 e-4
+  def L8 o5 a10 g2 a4
+  def L9 o6 d6 c2 o5 a4 g4
+  def L10 o5 a4 o6 c4 d8
+  def L11 o6 e-6 d2 c4 o5 g4
+  def L12 o6 d4 o5 a4 d8
+  def L13 o5 g4 a4 o6 c4 o5 a4
+  def L14 o6 c8 o5 g4 a4
+  def L15 o5 e-4 g4 b-4 o6 c4
+  def L16 o5 a12 r4
+  v6 y2 @8
+  loop L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16
+ch p2
+  def AD o4 d2 a2 o5 d2 o4 a2 d2 a2 o5 d2 o4 a2
+  def AE o4 e-2 b-2 o5 e-2 o4 b-2 e-2 b-2 o5 e-2 o4 b-2
+  def AG o4 g2 o5 d2 g2 d2 o4 g2 o5 d2 g2 d2
+  def AC o4 c2 g2 o5 c2 o4 g2 c2 g2 o5 c2 o4 g2
+  def AA o4 a2 o5 c2 d2 c2 o4 a2 o5 c2 d2 c2
+  v4 y0 @2
+  loop AD AD AE AD AG AC AE AA AD AD AE AD AG AC AE AA
+ch noi
+  def H1 k2 r2 k2 r10
+  def H2 x4 r2 k2 r2 k2 r4
+  loop H2 H1 H1 H1 H2 H1 H1 H1 H2 H1 H1 H1 H2 H1 H1 H1
+ch tri
+  def BD o2 d8 a8
+  def BE o2 e-8 b-8
+  def BG o2 g8 o3 d8
+  def BC o2 c8 g8
+  def BA o2 a8 o3 d8
+  loop BD BD BE BD BG BC BE BA BD BD BE BD BG BC BE BA
+
+; ---- OVERWORLD: A minor pentatonic / hirajoshi (A B C E F), calm walking pace, eerie bells ----
+song OVERWORLD 2 9
+ch p1
+  def O1 o5 e8 c4 o4 a4
+  def O2 o5 f8 c4 a4
+  def O3 o5 c4 e4 g8
+  def O4 o4 b8 o5 e8
+  def O5 o5 a6 g2 e8
+  def O6 o5 f6 e2 c8
+  def O7 o5 g4 e4 c4 e4
+  def O8 o4 b12 r4
+  def O9 o5 a4 o6 c4 o5 b4 a4
+  def O10 o5 a4 o6 c4 o5 a4 f4
+  def O11 o5 g4 e4 g4 o6 c4
+  def O12 o5 b8 o6 e8
+  def O13 o5 e8 o4 b4 o5 e4
+  v5 y1 @6
+  loop O1 O2 O3 O4 O5 O6 O7 O8 O9 O10 O11 O12 O1 O2 O3 O13
+ch p2
+  def QA o4 a2 o5 c2 e2 c2 o4 a2 o5 c2 e2 c2
+  def QF o4 f2 a2 o5 c2 o4 a2 f2 a2 o5 c2 o4 a2
+  def QC o5 c2 e2 g2 e2 c2 e2 g2 e2
+  def QE o4 e2 b2 o5 e2 o4 b2 e2 b2 o5 e2 o4 b2
+  v3 y2 @3
+  loop QA QF QC QE QA QF QC QE QA QF QC QE QA QF QC QE
+ch noi
+  def W1 k2 r2 h2 r2 t2 r2 h2 r2
+  def W2 k2 r2 h2 r2 t2 r2 t2 t2
+  loop W1 W1 W1 W2 W1 W1 W1 W2 W1 W1 W1 W2 W1 W1 W1 W2
+ch tri
+  def WA o2 a4 o3 e4 o2 a4 o3 e4
+  def WF o2 f4 o3 c4 o2 f4 o3 c4
+  def WC o2 c4 g4 o3 c4 o2 g4
+  def WE o2 e4 b4 o3 e4 o2 b4
+  loop WA WF WC WE WA WF WC WE WA WF WC WE WA WF WC WE
+
+; ---- BOSS (dungeons 1-9): E phrygian, driving; phase 3 plays it 3/4 faster ----
+song BOSS 3 7
+ch p1
+  def A1 o5 e2 e2 g2 e2 b4 a2 g2
+  def A2 o5 e2 e2 g2 e2 o6 d4 o5 b4
+  def A3 o5 f2 f2 a2 f2 o6 c4 o5 b2 a2
+  def A4 o5 g2 a2 b2 o6 c2 o5 b8
+  def A5 o5 b4 o6 e4 d4 o5 b4
+  def A6 o6 c4 o5 b4 g4 e4
+  def A7 o5 f2 a2 o6 c2 o5 a2 o6 f4 e4
+  def A8 o6 d4 c4 o5 b4 a4
+  def B1 o6 c2 o5 g2 e2 g2 o6 c2 o5 g2 e2 g2
+  def B2 o6 e4 d2 c2 o5 g4 e4
+  def B3 o6 d2 o5 a2 f2 a2 o6 d2 o5 a2 f2 a2
+  def B4 o6 f4 e2 d2 c4 o5 a4
+  def B5 o5 g2 o6 c2 e2 c2 g4 e4
+  def B6 o5 a2 o6 d2 f2 d2 a4 f4
+  def B7 o6 c2 f2 o5 a2 o6 c2 f4 d2 c2
+  def B8 o6 e6 o5 b2 g4 b4
+  v7 y2 @4
+  loop A1 A2 A3 A4 A5 A6 A7 A8 B1 B2 B3 B4 B5 B6 B7 B8
+ch p2
+  def QE [ o4 e1 g1 b1 g1 ]4
+  def QF [ o4 f1 a1 o5 c1 o4 a1 ]4
+  def QC [ o4 c1 e1 g1 e1 ]4
+  def QD [ o4 d1 f1 a1 f1 ]4
+  v4 y1 @2
+  loop QE QE QF QE QE QE QF QD QC QC QD QD QC QD QF QE
+ch noi
+  def D1 k2 h2 s2 h2 k2 k2 s2 h2
+  def F1 k2 h2 s2 h2 s1 s1 s1 s1 s1 s1 t1 t1
+  loop D1 D1 D1 D1 D1 D1 D1 F1 D1 D1 D1 D1 D1 D1 D1 F1
+ch tri
+  def TE o2 e2 e2 o3 e2 o2 e2 e2 e2 o3 e2 o2 e2
+  def TF o2 f2 f2 o3 f2 o2 f2 f2 f2 o3 f2 o2 f2
+  def TC o2 c2 c2 o3 c2 o2 c2 c2 c2 o3 c2 o2 c2
+  def TD o2 d2 d2 o3 d2 o2 d2 d2 d2 o3 d2 o2 d2
+  loop TE TE TF TE TE TE TF TD TC TC TD TD TC TD TF TE
+
+; ---- FINAL (dungeon 10): D phrygian dominant, galloping bass, 16th arpeggios ----
+song FINAL 4 6
+ch p1
+  def E1 o5 d2 d2 f+2 g2 a4 g2 f+2
+  def E2 o5 d2 d2 a2 o6 d2 c4 o5 a4
+  def E3 o5 e-2 e-2 g2 b-2 o6 e-4 c2 b-2
+  def E4 o6 d4 o5 a2 f+2 d8
+  def E5 o5 a2 a2 a2 o6 d2 f+4 d4
+  def E6 o6 d2 c2 o5 b-2 a2 g4 f+4
+  def E7 o5 g2 b-2 o6 e-2 g2 e-4 o5 b-4
+  def E8 o6 c2 e-2 g2 e-2 c8
+  def E9 o5 g2 b-2 o6 d2 g2 d2 o5 b-2 g2 b-2
+  def E10 o6 g4 a4 d4 o5 b-4
+  def E11 o5 b-2 o6 d2 f2 b-2 f2 d2 o5 b-2 o6 d2
+  def E12 o6 b-4 g4 f4 d4
+  def E13 o6 e-2 g2 b-2 g2 e-2 g2 b-2 g2
+  def E14 o6 e-4 g4 c4 o5 b-4
+  def E15 o5 a2 o6 c+2 e2 a2 e2 c+2 o5 a2 o6 c+2
+  def E16 o6 a8 e4 c+4
+  v7 y1 @3
+  loop E1 E2 E3 E4 E5 E6 E7 E8 E9 E10 E11 E12 E13 E14 E15 E16
+ch p2
+  def RD [ o4 d1 a1 o5 d1 o4 a1 ]4
+  def RE [ o4 e-1 b-1 o5 e-1 o4 b-1 ]4
+  def RC [ o4 c1 g1 o5 c1 o4 g1 ]4
+  def RG [ o4 g1 o5 d1 g1 d1 ]4
+  def RB [ o4 b-1 o5 f1 b-1 f1 ]4
+  def RA [ o4 a1 o5 e1 a1 e1 ]4
+  v4 y1 @2
+  loop RD RD RE RD RD RD RE RC RG RG RB RB RE RE RA RA
+ch noi
+  def D1 k2 h1 h1 s2 h1 h1 k2 k1 h1 s2 h1 h1
+  def F1 k1 k1 s1 s1 k1 k1 s1 s1 s1 s1 t1 t1 t1 t1 x2
+  loop D1 D1 D1 D1 D1 D1 D1 F1 D1 D1 D1 D1 D1 D1 D1 F1
+ch tri
+  def FD [ o2 d1 d1 o3 d1 o2 d1 ]4
+  def FE [ o2 e-1 e-1 o3 e-1 o2 e-1 ]4
+  def FC [ o2 c1 c1 o3 c1 o2 c1 ]4
+  def FG [ o2 g1 g1 o3 g1 o2 g1 ]4
+  def FB [ o2 b-1 b-1 o3 b-1 o2 b-1 ]4
+  def FA [ o2 a1 a1 o3 a1 o2 a1 ]4
+  loop FD FD FE FD FD FD FE FC FG FG FB FB FE FE FA FA
+
+; ---- VICTORY: fanfare, 28 rows = 112 frames, plays once. Starts with the same C-E-G-C arpeggio as SFX_VICTORY (pulse 2), see TECH ----
+song VICTORY 5 4
+ch p1
+  v7 y2 @4
+  o5 c1 e1 g1 o6 c1 c2 r1 c1 o5 a2 o6 c2 o5 b2 o6 d2 e12 end
+ch p2
+  v5 y1 @4
+  r4 o5 e2 r1 e1 f2 a2 g2 b2 g12 end
+ch noi
+  x4 k2 r2 s2 s2 t2 t2 x12 end
+ch tri
+  o3 c4 c4 f4 g4 c12 end
+
+; ---- ENDING: C major pentatonic, hopeful, dawn; loops (the ending screen only lasts 4 s) ----
+song ENDING 6 8
+ch p1
+  def N1 o4 g4 o5 c4 e4 g4
+  def N2 o5 a4 g4 e4 d4
+  def N3 o5 e4 g4 a4 g4
+  def N4 o5 a8 g4 e4
+  def N5 o6 c6 o5 g2 e4 g4
+  def N6 o6 d8 o5 b4 g4
+  def N7 o5 a4 o6 c4 o5 a4 f4
+  def N8 o5 e6 d2 c8
+  v6 y2 @6
+  loop N1 N2 N3 N4 N5 N6 N7 N8
+ch p2
+  def PC o5 c2 e2 g2 e2 c2 e2 g2 e2
+  def PG o4 g2 b2 o5 d2 o4 b2 g2 b2 o5 d2 o4 b2
+  def PA o4 a2 o5 c2 e2 c2 o4 a2 o5 c2 e2 c2
+  def PF o4 f2 a2 o5 c2 o4 a2 f2 a2 o5 c2 o4 a2
+  v4 y1 @3
+  loop PC PG PA PF PC PG PF PC
+ch noi
+  def G1 x4 r4 h2 r2 h2 r2
+  def G2 k2 r2 h2 r2 h2 r2 h2 r2
+  loop G1 G2 G2 G2 G1 G2 G2 G2
+ch tri
+  def EC o2 c4 g4 o3 c4 o2 g4
+  def EG o2 g4 o3 d4 o2 g4 o3 d4
+  def EA o2 a4 o3 e4 o2 a4 o3 e4
+  def EF o2 f4 o3 c4 o2 f4 o3 c4
+  loop EC EG EA EF EC EG EF EC

@@ -232,6 +232,7 @@ static void redraw_overworld(void)
         ppu_flush();
     }
     drawn_mask = dungeons_cleared;
+    music_play(MUS_OVERWORLD);         /* no-op while it plays (gate redraws), restarts after a dungeon, the ending or the victory fanfare */
     draw_player(0);
     demon_sprites();
     PPU_CTRL = 0;                      // ppu_flush left +32 per write
@@ -377,5 +378,6 @@ void main(void)
             start_game(a);
         }
         sfx_update();                  /* last: the vblank start belongs to the PPU writes above */
+        music_update();                /* after sfx_update: an effect that just ended hands its channel back this frame */
     }
 }

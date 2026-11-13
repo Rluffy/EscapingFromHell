@@ -11,6 +11,7 @@
 .export _oam
 
 BANK_NONE = 13          ; unused PRG bank mapped at $8000 after reset
+BANK_MUSIC = 11         ; music engine and songs, mapped at $A000
 
 .segment "OAM"
 _oam: .res 256         ; $0200, DMA source
@@ -45,8 +46,8 @@ reset:
     stx $2000           ; NMI off
     stx $2001           ; rendering off
     stx $4010           ; DMC IRQ off
-    lda #$0B
-    sta $4015           ; APU: pulse 1, pulse 2, noise on (src/sfx.s)
+    lda #$0F
+    sta $4015           ; APU: pulse 1, pulse 2, triangle, noise on (src/sfx.s, src/music.s)
     bit $2002
 :   bit $2002           ; PPU warm-up, 1st vblank
     bpl :-
@@ -58,7 +59,7 @@ reset:
     sta $8001
     lda #$07
     sta $8000
-    lda #1
+    lda #BANK_MUSIC     ; R7 = the music bank, forever
     sta $8001
     lda #0
     sta $A000

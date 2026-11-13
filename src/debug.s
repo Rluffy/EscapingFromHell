@@ -7,6 +7,7 @@
 .export _abilities, _dash_t, _dash_cd, _victory, _cur_bank, _boss_hide, _iair
 .export _pf_x, _pf_y, _pf_cd, _mcx, _mcur, _tlen, _shield, _slow
 .export _sfx_last, _sfx_id, _ui_page, _ui_t, _menu_conf
+.export _mus_song, _mus_loops, _mus_mute, _mus_rows, _mus_tempo
 .export _loops, _ftick, _ab_act, _ending_seen, _cheat, _menu_sel, _end_t, _boss_chr, _anim_bank
 
 .segment "DEBUG"
@@ -60,3 +61,8 @@ _menu_conf:       .res 1   ; $033F start menu: 1 = DELETE SAVE confirmation show
 _loops:          .res 2   ; $0340 main-loop iterations (frame budget test: frame_count - loops = frames the main loop missed)
 _ftick:          .res 1   ; $0342 fight clock: frames of the fight so far (not in the intro, not while paused)
 _ab_act:         .res 1   ; $0343 abilities active in this dungeon: those of demons 1..n-1 (same in normal and cheat mode; `abilities` is the saved progress)
+_mus_song:       .res 1   ; $0344 song id playing (0 = none)
+_mus_loops:      .res 1   ; $0345 loops of pulse 1 since the song started
+_mus_mute:       .res 1   ; $0346 channels the music leaves to a sound effect right now: bit 0 pulse 1, 1 pulse 2, 2 noise
+_mus_rows:       .res 2   ; $0347 rows played since the song started (keeps counting while an effect mutes a channel)
+_mus_tempo:      .res 1   ; $0349 frames per row now (phase 3: 3/4 of the song's tempo)

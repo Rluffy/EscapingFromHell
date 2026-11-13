@@ -92,6 +92,23 @@ extern unsigned char sfx_id[3];              /* $033A..$033C effect playing on p
 #define SFX_END 18
 void __fastcall__ sfx_play(unsigned char id);   /* sfx.s: start an effect (ignored while a higher-priority one plays on its channel) */
 void sfx_update(void);                      /* sfx.s: once per frame at the end of the main-loop iteration (not in the vblank start: PPU writes need it) */
+/* Music (src/music.s, PRG bank 11 at $A000, songs from assets/songs.txt): docs/TECH.md "Musik (v1.1)". */
+extern unsigned char mus_song;               /* $0344 song id playing (0 = none) */
+extern unsigned char mus_loops;              /* $0345 loops of pulse 1 */
+extern unsigned char mus_mute;               /* $0346 channels muted by effects (bit 0 pulse 1, 1 pulse 2, 2 noise) */
+extern unsigned int  mus_rows;               /* $0347 rows played */
+extern unsigned char mus_tempo;              /* $0349 frames per row */
+#define MUS_TITLE 1
+#define MUS_OVERWORLD 2
+#define MUS_BOSS 3
+#define MUS_FINAL 4
+#define MUS_VICTORY 5
+#define MUS_ENDING 6
+void __fastcall__ music_play(unsigned char id);     /* start a song from the top (no-op if it plays already) */
+void music_stop(void);                              /* silence */
+void __fastcall__ music_pause(unsigned char on);    /* 1 = silent but keeps its place, 0 = go on (music_play/music_stop clear it) */
+void music_fast(void);                              /* tempo x 3/4 until the next music_play */
+void music_update(void);                            /* once per frame after sfx_update */
 extern unsigned char pf_x, pf_y, pf_cd;      /* $0329..$032B player fireball: x (0 = none), y, cooldown frames left */
 
 extern const unsigned char ftile[26];       /* dungeon.c: BG tile of the letter A..Z (0 = none) */
