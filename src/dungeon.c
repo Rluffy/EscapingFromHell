@@ -19,7 +19,7 @@
 #define FIRE_CD    40                  /* player fireball cooldown (Up + B) */
 #define FIRE_VX    3                   /* player fireball px/frame */
 #define SLOW_T     90                  /* frames a web slows the player */
-#define WAVE_TILE  222                 /* sword wave sprite (the fireball is tile 29) */
+#define WAVE_TILE  16                  /* sword wave sprite (common sheet; the fireball is tile 29) */
 #define BOSS_KNOCK 16                  /* px the boss is pushed away from the player by a sword hit */
 
 /* One-way platforms, 48 px wide (6 tiles); x and y are multiples of 8. */
@@ -193,6 +193,8 @@ void dungeon_enter(void)
     bank_set(bs->bank);                 /* stays mapped for the whole fight */
     pal_ph = pal_bg = 0;
     screen_off();
+    boss_chr = CHR_BOSS(cur_dungeon);   /* the boss's sheet in R3..R5 = tile ids 0x40..0xFF (BT in boss.h) */
+    for (i = 0; i < 3; ++i) chr_set(3 + i, boss_chr + i);
     PPU_ADDR = 0x3F;
     PPU_ADDR = 0x00;
     for (i = 0; i < 4; ++i)

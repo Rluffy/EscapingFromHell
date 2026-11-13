@@ -144,7 +144,7 @@ co = coroutine.create(function()
   local name = {}
   for c = 11, 20 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
   check(table.concat(name, ",") == "29,13,37,28,34,0,34,31,37,26", "name GIANT TOAD on screen: " .. table.concat(name, ","))
-  check(rd(OAM_BODY) == rd(EY) - 1 + 0 and rd(OAM_BODY + 1) == 128, "toad body drawn already in the intro, tile " .. rd(OAM_BODY + 1))
+  check(rd(OAM_BODY) == rd(EY) - 1 + 0 and rd(OAM_BODY + 1) == 0x40, "toad body drawn already in the intro, tile " .. rd(OAM_BODY + 1))
   check(rd(OAM_BODY + 2) == 0x41, "faces left toward the player (flipped), attr=" .. rd(OAM_BODY + 2))
   for i = 0, 2 do check(rd(OAM_TONGUE + 4 * i) == 0xFF, "no tongue in the intro") end
   local x0 = rd(EX)
@@ -180,13 +180,13 @@ co = coroutine.create(function()
   check(until_state(TTELE, 600), "tongue telegraph")
   wr(EX, 100)
   frames(2)
-  check(rd(OAM_BODY + 4 * 7 + 1) == 166, "mouth open while telegraphing (tile 166)")
+  check(rd(OAM_BODY + 4 * 7 + 1) == 0x40 + 38, "mouth open while telegraphing (boss tile 38)")
   check(until_state(TONGUE, 40), "tongue follows")
   check(wait_until(function() park(); return rd(TLEN) == 3 end, 20), "tongue fully out")
   frames(1)
   local n = 0
   for i = 0, 2 do if rd(OAM_TONGUE + 4 * i) ~= 0xFF then n = n + 1 end end
-  check(n == 3 and rd(OAM_TONGUE + 1) == 164 and rd(OAM_TONGUE + 9) == 165, "3 tongue sprites, tip tile 165")
+  check(n == 3 and rd(OAM_TONGUE + 1) == 0x40 + 36 and rd(OAM_TONGUE + 9) == 0x40 + 37, "3 tongue sprites, tip boss tile 37")
   check(rd(OAM_TONGUE + 3) == rd(EX) and rd(OAM_TONGUE + 7) == rd(EX) - 8, "tongue starts at the mouth cell and goes left (toad faces left)")
   check(rd(OAM_BODY + 4 * 7) == 0xFF, "mouth cell hidden while the tongue is out")
   check(rd(HEARTS) == 3, "player far away: no damage")
@@ -259,14 +259,14 @@ co = coroutine.create(function()
   check(bar() == "FFFFFFF...", "bar 14 half steps at hp 11, bar=" .. bar())
   check(wait_until(function() return ppu(0x3F16) == 0x14 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  check(rd(OAM_BODY + 1) >= 140 and rd(OAM_BODY + 1) < 152, "phase 2 look (tiles 140..151)")
+  check(rd(OAM_BODY + 1) >= 0x40 + 12 and rd(OAM_BODY + 1) < 0x40 + 24, "phase 2 look (boss tiles 12..23)")
   -- slime: lobbed blob in an arc toward the player, boss palette and tile 167
   check(until_state(STELE, 900), "phase 2 spits")
   wr(EX, 140); wr(EY, 168)
   check(wait_until(function() park(); return nfb() > 0 end, 40), "a blob spawns")
   local k = 0
   for i = 0, 2 do if rd(FBX + i) ~= 0 then k = i end end
-  check(rd(OAM_FB + 4 * k + 1) == 167 and rd(OAM_FB + 4 * k + 2) == 1, "slime sprite: tile 167, palette 1")
+  check(rd(OAM_FB + 4 * k + 1) == 0x40 + 39 and rd(OAM_FB + 4 * k + 2) == 1, "slime sprite: boss tile 39, palette 1")
   local y0, ymin, lastx = rd(FBY + k), 255, 0
   check(y0 <= 160 and y0 >= 150, "blob starts above the toad's head (160, minus one flight step if the frame parity differs), y=" .. y0)
   local peakline = 0
@@ -294,7 +294,7 @@ co = coroutine.create(function()
   check(wait_until(function() return ppu(0x3F16) == 0x13 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   s = watch(1500)
-  check(rd(OAM_BODY + 1) >= 152 and rd(OAM_BODY + 1) < 164, "phase 3 look (tiles 152..163)")
+  check(rd(OAM_BODY + 1) >= 0x40 + 24 and rd(OAM_BODY + 1) < 0x40 + 36, "phase 3 look (boss tiles 24..35)")
   local chain, dbl = false, false
   for i = 1, #s.runs - 4 do
     local a, b, c, d, e = s.runs[i], s.runs[i + 1], s.runs[i + 2], s.runs[i + 3], s.runs[i + 4]

@@ -8,9 +8,9 @@
    wait = telegraph frames; rate = frames between attacks; shots = charges per attack (2 = back to back);
    fspd = charge px/frame. Phase 2/3 sometimes leap instead of charging (see hound_ai). */
 const struct phase hound_ph[3] = {
-    { 50, 1, 30, 180, 1, 4, { 0x38, 0x17, 0x2A } },
-    { 56, 1, 24, 150, 1, 5, { 0x38, 0x27, 0x16 } },
-    { 62, 2, 20, 120, 2, 5, { 0x30, 0x16, 0x28 } }
+    { BT + 0, 1, 30, 180, 1, 4, { 0x38, 0x17, 0x2A } },
+    { BT + 6, 1, 24, 150, 1, 5, { 0x38, 0x27, 0x16 } },
+    { BT + 12, 2, 20, 120, 2, 5, { 0x30, 0x16, 0x28 } }
 };
 
 /* iair = state. fb_t counts frames to the next attack, ig is the bite cooldown (90), ai_t the state timer. */

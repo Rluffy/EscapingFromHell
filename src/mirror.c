@@ -7,9 +7,9 @@
 /* tile = first of 6 (16x24); spd = walk speed in quarter px/frame; wait = frames walking between teleports;
    rate = frames between shots; shots = fireballs per shot; fspd = fireball px/frame. The copies count equals the phase. */
 const struct phase mirror_ph[3] = {
-    { 104, 2, 240, 150, 1, 1, { 0x31, 0x11, 0x16 } },
-    { 110, 3, 190, 120, 1, 1, { 0x34, 0x14, 0x28 } },
-    { 116, 4, 150, 100, 2, 1, { 0x16, 0x06, 0x38 } }
+    { BT + 0, 2, 240, 150, 1, 1, { 0x31, 0x11, 0x16 } },
+    { BT + 6, 3, 190, 120, 1, 1, { 0x34, 0x14, 0x28 } },
+    { BT + 12, 4, 150, 100, 2, 1, { 0x16, 0x06, 0x38 } }
 };
 
 /* iair = state. ig = frames of walking left, ai_t = fade / appear timer, fb_t = frames to the next shot. */
@@ -17,7 +17,7 @@ enum { INIT, WALK, OUT, IN };
 #define OUT_T   20                     /* fading out: flickers, untouchable */
 #define IN_T    24                     /* telegraph at the new spot: flickers, untouchable */
 #define WARN_T  20                     /* flicker before a shot (not drawn, still hittable) */
-#define CTILE   122                    /* copy head tiles (dull eyes): CTILE + 2 * (phase - 1) */
+#define CTILE   (BT + 18)                   /* copy head tiles (dull eyes): CTILE + 2 * (phase - 1) */
 #define O_COPY  140                    /* OAM byte offset of the copies: 3 x 6 sprites, up to byte 211 */
 
 /* Spots: 0 floor, 1/2 the side platforms, 3 the top platform; x range of the demon's left edge, and y. */

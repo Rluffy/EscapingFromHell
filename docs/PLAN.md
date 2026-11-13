@@ -93,7 +93,7 @@ Hinweis: fester Bereich nach v0.7 Paket 2 ca. 10,4 KB (10629 Byte) von 16 KB (na
 
 Ausgangslage: fester PRG-Bereich ca. 11,4 KB von 16 KB, Sprite-Pattern-Table voll (256 Kacheln).
 
-1. Platz schaffen: Menü/Ende/Text-Code in eine eigene PRG-Bank (UI-Bank, wird für Menü/Intro/Ende eingeblendet). CHR-Banking über MMC3-1-KB-Bänke: Spieler/HUD/Projektile gemeinsam, Boss-Grafik pro Dungeon in eigener CHR-Bank, beim Betreten umgeschaltet. Overworld-Animation per CHR-Bankwechsel vorbereiten. Sonnet.
+1. Platz schaffen: Menü/Ende/Text-Code in eine eigene PRG-Bank (UI-Bank, wird für Menü/Intro/Ende eingeblendet). CHR-Banking über MMC3-1-KB-Bänke: Spieler/HUD/Projektile gemeinsam, Boss-Grafik pro Dungeon in eigener CHR-Bank, beim Betreten umgeschaltet. Overworld-Animation per CHR-Bankwechsel vorbereiten. Sonnet. **Erledigt** (UI-Bank 10 mit `menu.c` und Overworld-Karte, fester Bereich 11413 → 9640 Byte; CHR: `common` fest, Boss-Blätter `boss01..10` in R3..R5 ab Kachel-ID `0x40`, Overworld-Animation über R1 (IDs 128..255, `anim_a`/`anim_b`); Details `TECH.md` „CHR-Layout (v0.9)"; `tests/chr.lua`).
 2. Art-Pass Hintergrund: Overworld (asiatische Höllen-Tempel, Laternen, Lava, Berge, Pflanzen im Stil von `Concept/DesignIdea1/2`), Idle-Animationen (Lava blubbert, Pflanzen wiegen sich) per CHR-Bankwechsel, Arena-Kacheln und Paletten pro Dungeon. Grafik-Quellen bleiben PNG in `assets/`. Sonnet.
 3. Art-Pass Sprites: Held, Projektile, Herzen, 10 Dämonen × 3 Phasen (jede Phase sichtbar schlimmer). Sonnet (ggf. in zwei Pakete geteilt).
 4. Soundeffekte: kleine APU-Engine (Pulse/Noise), Effekte für Sprung, Schwert, Treffer, Boss-Treffer, Phasenwechsel, Boss-Tod, Feuerball, Menü, Sieg. Sonnet.

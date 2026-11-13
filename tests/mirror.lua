@@ -192,8 +192,8 @@ co = coroutine.create(function()
 
   -- the original has other head tiles than the copy (copy: dull eyes)
   check(wait_until(function() safe(); wr16(PX, 48); wr(PY, FLOOR_Y); return rd(IAIR) == WALK end, 400), "walking")
-  check(rd(OAM_HEAD + 1) == 104 and rd(OAM_COPY + 1) == 122 and rd(OAM_COPY + 5) == 123, "original head tile 104, copy head tiles 122/123")
-  check(rd(OAM_COPY + 9) == 106, "copy body uses the demon's body tiles")
+  check(rd(OAM_HEAD + 1) == 0x40 and rd(OAM_COPY + 1) == 0x40 + 18 and rd(OAM_COPY + 5) == 0x40 + 19, "original head tile 0x40, copy head tiles 0x52/0x53")
+  check(rd(OAM_COPY + 9) == 0x40 + 2, "copy body uses the demon's body tiles")
 
   -- untouchable while fading: no damage to it, no contact damage from it
   check(wait_until(function() safe(); wr16(PX, 48); wr(PY, FLOOR_Y); return rd(IAIR) == OUT end, 400), "fading out")
@@ -279,7 +279,7 @@ co = coroutine.create(function()
   check(strike() == 9 and rd(PHASE) == 2, "hp 9 -> phase 2, phase=" .. rd(PHASE))
   frames(2)
   check(bar() == "FFFFFFH...", "bar 13 steps at hp 9, bar=" .. bar())
-  check(rd(OAM_HEAD + 1) == 110, "phase 2 look (tile 110)")
+  check(rd(OAM_HEAD + 1) == 0x40 + 6, "phase 2 look (boss tile 6)")
   check(wait_until(function() return ppu(0x3F15) == 0x34 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   local lost2 = bot(1200)
@@ -291,7 +291,7 @@ co = coroutine.create(function()
   local sp = s.walkd / s.walkn
   check(sp > sp1 * 1.2 and sp < 0.8, "phase 2 walks faster (0.75 px/frame max), got " .. sp .. " vs " .. sp1)
   check(s.spawns >= 3 and s.volley == 1, "phase 2 shoots single shots, spawns " .. s.spawns)
-  check(rd(OAM_COPY + 1) == 124 and rd(OAM_HEAD + 1) == 110, "phase 2: copy head tile 124, original 110")
+  check(rd(OAM_COPY + 1) == 0x40 + 20 and rd(OAM_HEAD + 1) == 0x40 + 6, "phase 2: copy head boss tile 20, original 6")
   check(s.line <= 8, "phase 2: sprites per line " .. s.line)
 
   -- phase 3 at hp <= 7: look, palette, copies (3, or 2 when the original is on a side platform), double shots
@@ -299,7 +299,7 @@ co = coroutine.create(function()
   check(strike() == 7 and rd(PHASE) == 3, "hp 7 -> phase 3, phase=" .. rd(PHASE))
   frames(2)
   check(bar() == "FFFFF.....", "bar half at hp 7, bar=" .. bar())
-  check(rd(OAM_HEAD + 1) == 116, "phase 3 look (tile 116)")
+  check(rd(OAM_HEAD + 1) == 0x40 + 12, "phase 3 look (boss tile 12)")
   check(wait_until(function() return ppu(0x3F15) == 0x16 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   local lost3 = bot(1200)
@@ -315,7 +315,7 @@ co = coroutine.create(function()
   check(longest(s, WALK) >= 148 and longest(s, WALK) <= 152, "phase 3 walks ~150 frames, got " .. longest(s, WALK))
   check(s.volley == 2 and s.maxfb == 2, "phase 3 shoots 2 fireballs at once, volley " .. s.volley)
   check(s.line <= 8, "phase 3: sprites per line " .. s.line)
-  check(rd(OAM_COPY + 1) == 126 and rd(OAM_HEAD + 1) == 116, "phase 3: copy head tile 126, original 116")
+  check(rd(OAM_COPY + 1) == 0x40 + 22 and rd(OAM_HEAD + 1) == 0x40 + 12, "phase 3: copy head boss tile 22, original 12")
   -- worst case for the scanline budget: player standing on a platform, swinging all the time
   local m = 0
   for i = 1, 700 do

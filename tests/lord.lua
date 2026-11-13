@@ -19,7 +19,7 @@ local BANK, HIDE, IAIR, SHIELD = 0x326, 0x327, 0x328, 0x331
 local IDLE, FTELE, FADE, GONE, APPEAR, RISE, HOVER, STELE, DIVE, REST = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 local FLOOR_Y, GROUND = 176, 160
 local OAM_FB, OAM_E, OAM_BODY = 0x200 + 52, 0x200 + 24, 0x200 + 72
-local FIREBALL, SHOCK = 28, 189
+local FIREBALL, SHOCK = 28, 17          -- SHOCK: common sheet
 
 local co
 local function frames(n) for _ = 1, n do coroutine.yield() end end
@@ -162,7 +162,7 @@ co = coroutine.create(function()
   local name = {}
   for c = 11, 19 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
   check(table.concat(name, ",") == "39,30,44,44,0,44,31,35,26", "name HELL LORD on screen: " .. table.concat(name, ","))
-  check(body_drawn() == 12 and rd(OAM_BODY + 1) == 223 and rd(OAM_BODY + 2) == 1 and rd(OAM_BODY + 6) == 0x41, "lord drawn in the intro: 12 sprites, mirrored halves, tile 223")
+  check(body_drawn() == 12 and rd(OAM_BODY + 1) == 0x40 and rd(OAM_BODY + 2) == 1 and rd(OAM_BODY + 6) == 0x41, "lord drawn in the intro: 12 sprites, mirrored halves, boss tile 0")
   check(rd(OAM_E) == 0xFF, "no default boss sprites (own drawing)")
   local x0 = rd(EX)
   frames(10)
@@ -245,7 +245,7 @@ co = coroutine.create(function()
   check(wait_until(function() return ppu(0x3F15) == 0x27 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(bar() == "FFFFFFF..." or bar():sub(1, 7) == "FFFFFFF", "phase 2 bar (14/20) " .. bar())
-  check(rd(OAM_BODY + 1) == 229, "phase 2 look (tile 229)")
+  check(rd(OAM_BODY + 1) == 0x46, "phase 2 look (boss tile 6)")
   s = watch(1200, true)
   local lost2 = s.lost
   print("phase 2 states: " .. states(s))
@@ -290,7 +290,7 @@ co = coroutine.create(function()
   check(strike() == 10 and rd(PHASE) == 3, "hp 10 -> phase 3, phase=" .. rd(PHASE))
   check(wait_until(function() return ppu(0x3F15) == 0x30 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  check(rd(OAM_BODY + 1) == 235, "phase 3 look (tile 235)")
+  check(rd(OAM_BODY + 1) == 0x4C, "phase 3 look (boss tile 12)")
   s = watch(1200, true)
   local lost3 = s.lost
   print("phase 3 states: " .. states(s))

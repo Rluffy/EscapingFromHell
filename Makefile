@@ -22,13 +22,18 @@ build/%.s: src/%.c src/nes.h src/boss.h | build
 build/%.o: src/%.s | build
 	ca65 --cpu 6502 -o $@ $<
 
+# CHR sheets are padded to their slot in the CHR-ROM (docs/TECH.md "CHR-Layout"): 2 KB for tiles/anim/common, 4 KB per boss.
+PAD_tiles := 2048
+PAD_anim_a := 2048
+PAD_anim_b := 2048
+PAD_common := 2048
 build/%.chr: assets/sprites/%.png tools/png2chr.py | build
-	python3 tools/png2chr.py $< $@ --pad 4096
+	python3 tools/png2chr.py $< $@ --pad $(or $(PAD_$*),4096)
 
 build/overworld.bin: assets/overworld.txt tools/mapconv.py | build
 	python3 tools/mapconv.py $< $@
 
-build/chr.o: build/tiles.chr build/player.chr
+build/chr.o: $(patsubst assets/sprites/%.png,build/%.chr,$(wildcard assets/sprites/*.png))
 build/map.o: build/overworld.bin
 
 build:

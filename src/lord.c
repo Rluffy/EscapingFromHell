@@ -8,9 +8,9 @@
    spd = dive px/frame; wait = idle frames (hit window) after every action; rate = frames invisible (0 = never);
    shots = 1: shockwaves on landing; fspd = fireball and shockwave px/frame. */
 const struct phase lord_ph[3] = {
-    { 223, 0, 100,  0, 0, 2, { 0x16, 0x0F, 0x28 } },
-    { 229, 5, 100,  0, 0, 2, { 0x27, 0x06, 0x38 } },
-    { 235, 6,  80, 90, 1, 3, { 0x30, 0x16, 0x28 } }
+    { BT + 0, 0, 100,  0, 0, 2, { 0x16, 0x0F, 0x28 } },
+    { BT + 6, 5, 100,  0, 0, 2, { 0x27, 0x06, 0x38 } },
+    { BT + 12, 6,  80, 90, 1, 3, { 0x30, 0x16, 0x28 } }
 };
 /* Action cycle per phase: F aimed fireball, P 3-way spread, T teleport, S flying swoop, I invisible teleport (fires while unseen). */
 static const char seq[3][6] = { "FTT", "SPTT", "ISTPT" };
@@ -29,7 +29,6 @@ enum { INIT, IDLE, FTELE, FADE, GONE, APPEAR, RISE, HOVER, STELE, DIVE, REST };
 #define MIN_GAP  56                    /* a teleport never lands closer than this to the player */
 #define O_LORD   72                    /* OAM byte offset: 12 body sprites (up to byte 119) */
 #define O_FB     52                    /* the boss fireball sprites (dungeon.c) */
-#define SHOCK    189                   /* shockwave tile */
 #define FIREBALL 28
 
 static unsigned char ph, par, act, tx; /* phase seen, index in the cycle, current action, swoop target x (stale values are harmless: INIT sets them) */

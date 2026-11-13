@@ -1,5 +1,5 @@
 -- Sword wave ability test (bit 4, dungeon 9 reward): with the ability and all 3 hearts a sword swing (B) also throws a wave
--- (player projectile pf_*, tile 222, 3 px/frame, 1 damage once, gone at the wall). Without the ability, with fewer hearts, or
+-- (player projectile pf_*, tile 16, 3 px/frame, 1 damage once, gone at the wall). Without the ability, with fewer hearts, or
 -- while another projectile flies: sword only. Up + B stays the fireball (tile 29). Uses the Imp (dungeon 1, pinned).
 -- Addresses: docs/TECH.md "Debug-Adressen".
 local M = emu.memType.nesMemory
@@ -15,7 +15,7 @@ local INTRO, ABIL = 0x31A, 0x322
 local PFX, PFY, PFCD = 0x329, 0x32A, 0x32B
 local FLOOR_Y = 176
 local OAM_PF = 0x200 + 136
-local WAVE, FIRE = 222, 29
+local WAVE, FIRE = 16, 29          -- WAVE: common sheet
 
 local co
 local function frames(n) for _ = 1, n do coroutine.yield() end end
@@ -62,7 +62,7 @@ co = coroutine.create(function()
   check(rd(PFX) ~= 0, "ability + 3 hearts: a wave is thrown, pf_x=" .. rd(PFX))
   check(rd(SWORD) > 0, "the sword swings as well")
   check(rd(PFX) >= 112 and rd(PFX) <= 118 and rd(PFY) == FLOOR_Y + 8, "wave starts in front of the player (x " .. rd(PFX) .. ", y " .. rd(PFY) .. ")")
-  check(rd(OAM_PF + 1) == WAVE and rd(OAM_PF + 2) == 3 and rd(OAM_PF) == rd(PFY) - 1, "wave sprite: tile 222, palette 3, at pf_y")
+  check(rd(OAM_PF + 1) == WAVE and rd(OAM_PF + 2) == 3 and rd(OAM_PF) == rd(PFY) - 1, "wave sprite: tile 16, palette 3, at pf_y")
   check(rd(PFCD) == 0, "no fireball cooldown from a wave")
   local x0 = rd(PFX)
   place(100); frames(1)
@@ -106,7 +106,7 @@ co = coroutine.create(function()
   check(wait_until(function() place(100); return rd(PFX) == 0 end, 100), "fireball gone")
   frames(20); place(100)
   swing(); place(100); frames(1)
-  check(rd(PFX) ~= 0 and rd(OAM_PF + 1) == WAVE, "after the fireball a swing throws the wave again (tile back to 222)")
+  check(rd(PFX) ~= 0 and rd(OAM_PF + 1) == WAVE, "after the fireball a swing throws the wave again (tile back to 16)")
   check(wait_until(function() place(100); return rd(PFX) == 0 end, 100), "wave gone")
 
   -- a wave hits the boss: exactly 1 hp, wave consumed, hit blink (shared hit path)

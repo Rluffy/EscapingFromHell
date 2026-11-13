@@ -12,6 +12,11 @@
 #define ST_MENU 1                           /* game_state values the menu/ending code sets (menu.c, main.c) */
 #define ST_END  4
 
+#define BANK_NONE 13                        /* empty PRG bank, mapped only until main() maps BANK_UI */
+#define BANK_UI   10                        /* menu.c + overworld map: mapped in menu, overworld and ending; a dungeon maps its boss bank */
+void __fastcall__ bank_set(unsigned char b);        /* crt0.s: map PRG bank b at $8000, remember it in cur_bank */
+void __fastcall__ chr_set(unsigned char r, unsigned char b);   /* crt0.s: MMC3 CHR register r (0..5) = 1 KB bank number b; main loop only */
+
 #define PAD_A      0x80
 #define PAD_B      0x40
 #define PAD_SELECT 0x20
@@ -54,6 +59,11 @@ extern unsigned char ending_seen;            /* $0333 1 = the ending was seen (s
 extern unsigned char cheat;                  /* $0334 1 = cheat mode: all gates open, no heart loss, no saving */
 extern unsigned char menu_sel;               /* $0335 start menu cursor (0 NORMAL, 1 CHEAT) */
 extern unsigned char end_t;                  /* $0336 ending screen frames left */
+extern unsigned char boss_chr;               /* $0337 CHR bank in R3 (R4, R5 = +1, +2): sheet of the current boss */
+extern unsigned char anim_bank;              /* $0338 CHR bank in R1: overworld animation frame (CHR_ANIM_A / CHR_ANIM_B) */
+#define CHR_ANIM_A 2                         /* CHR layout: docs/TECH.md "CHR-Layout" */
+#define CHR_ANIM_B 4
+#define CHR_BOSS(n) (8 + 4 * ((n) - 1))      /* first 1 KB bank of the boss of dungeon n */
 extern unsigned char pf_x, pf_y, pf_cd;      /* $0329..$032B player fireball: x (0 = none), y, cooldown frames left */
 
 extern const unsigned char ftile[26];       /* dungeon.c: BG tile of the letter A..Z (0 = none) */

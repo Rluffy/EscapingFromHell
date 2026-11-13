@@ -7,9 +7,9 @@
 /* tile = first of 6 (24x16, like the hound); spd = descent px/frame; wait = frames hanging low; rate = frames crawling on the
    ceiling between descents; shots = webs per volley; fspd = crawl px/frame. */
 const struct phase spider_ph[3] = {
-    { 168, 2, 55, 200, 1, 1, { 0x13, 0x03, 0x2A } },
-    { 174, 3, 45, 150, 2, 1, { 0x2A, 0x1A, 0x38 } },
-    { 180, 4, 40, 110, 3, 2, { 0x16, 0x06, 0x38 } }
+    { BT + 0, 2, 55, 200, 1, 1, { 0x13, 0x03, 0x2A } },
+    { BT + 6, 3, 45, 150, 2, 1, { 0x2A, 0x1A, 0x38 } },
+    { BT + 12, 4, 40, 110, 3, 2, { 0x16, 0x06, 0x38 } }
 };
 static const unsigned char wint[3] = { 120, 80, 70 };      /* frames between web volleys while crawling */
 
@@ -21,7 +21,7 @@ enum { INIT, CRAWL, TELE, DESC, HANG, CLIMB };
 #define TELE_T  30                     /* flicker before a descent */
 #define WARN_T  15                     /* flicker before a volley */
 #define CLIMB_V 2
-#define SPIDERLING 188                 /* sprite tile of a dropped spiderling (web ball: WEB_TILE in boss.h) */
+#define SPIDERLING (BT + 20)                /* sprite tile of a dropped spiderling (web ball: WEB_TILE in boss.h) */
 #define O_THREAD 72                    /* OAM byte offset: 14 thread sprites (up to byte 127) */
 #define NTHREAD  14
 #define O_FB    52                     /* the boss fireball sprites (dungeon.c) */
@@ -37,7 +37,7 @@ static void thread(void)
     for (i = 0; i < NTHREAD; ++i) {
         y -= 8;
         *o++ = hide || i >= n ? 0xFF : y - 1;
-        *o++ = 186;
+        *o++ = BT + 18;
         *o++ = 1;
         *o++ = en.x + 8;
     }

@@ -9,9 +9,9 @@
    attack; fspd = shockwave px/frame. Phase 2 sends shockwaves both ways and charges faster, phase 3 adds the double smash
    (forward waves) and the leap (waves both ways on landing). */
 const struct phase oni_ph[3] = {
-    { 190, 1, 30, 330, 1, 2, { 0x16, 0x06, 0x38 } },
-    { 200, 2, 28, 300, 1, 2, { 0x26, 0x16, 0x30 } },
-    { 210, 2, 26, 280, 2, 3, { 0x06, 0x0F, 0x28 } }
+    { BT + 0, 1, 30, 330, 1, 2, { 0x16, 0x06, 0x38 } },
+    { BT + 10, 2, 28, 300, 1, 2, { 0x26, 0x16, 0x30 } },
+    { BT + 20, 2, 26, 280, 2, 3, { 0x06, 0x0F, 0x28 } }
 };
 static const unsigned char cspd[3] = { 3, 4, 5 };      /* charge px/frame */
 
@@ -26,8 +26,7 @@ enum { INIT, WALK, STELE, SMASH, REST, CTELE, CHARGE, LTELE, LEAP };
 #define REST_T  40                     /* recovery after a smash, a charge or a leap: the window to hit it */
 #define O_ONI   72                     /* OAM byte offset: 10 body sprites, then 2 club sprites (up to byte 119) */
 #define O_FB    52                     /* the boss fireball sprites (dungeon.c): shockwaves here */
-#define SHOCK   189                    /* shockwave tile */
-#define CLUB    220                    /* club head tile, handle = +1 */
+#define CLUB    (BT + 30)                   /* club head tile, handle = +1 */
 
 static unsigned char ph, left, cool;   /* phase seen, smashes left in this attack, reaction cooldown */
 

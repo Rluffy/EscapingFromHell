@@ -3,7 +3,9 @@
 .import __CSTACK_START__, __CSTACK_SIZE__
 .importzp sp
 .import _frame_count, _cur_bank
-.export _wait_vblank, _ppu_flush, _bank_set, __STARTUP__: absolute = 1
+.import popa
+.importzp tmp1
+.export _wait_vblank, _ppu_flush, _bank_set, _chr_set, __STARTUP__: absolute = 1
 .export _colbuf, _attrbuf, _col_pending, _col_addr, _attr_addr, _ppu_ctrl, _scroll_x
 
 .export _oam
@@ -61,7 +63,8 @@ reset:
     lda #$80
     sta $A001
     sta $E000           ; IRQ disable (value irrelevant)
-    ; CHR: R0..R5 = linear 8 KB (2 KB banks at $0000/$0800, 1 KB banks at $1000-$1FFF)
+    ; CHR (bit 7 of $8000 = 0, no A12 inversion): R0/R1 = 2 KB banks at $0000/$0800 (background),
+    ; R2..R5 = 1 KB banks at $1000..$1FFF (sprites). Start: tiles, anim frame A, common, boss 1 (docs/TECH.md "CHR-Layout")
     ldx #0
 :   stx $8000
     lda chr_banks,x
@@ -176,7 +179,7 @@ _ppu_flush:
     bne :-
     rts
 
-chr_banks: .byte 0, 2, 4, 5, 6, 7
+chr_banks: .byte 0, 2, 6, 8, 9, 10
 
 ; void bank_set(unsigned char b): map PRG bank b at $8000 (MMC3 R6), remember it in cur_bank.
 ; Main loop only: NMI never touches $8000, so no select-register race and no banked code in NMI.
@@ -184,6 +187,16 @@ _bank_set:
     sta _cur_bank
     ldx #$06
     stx $8000
+    sta $8001
+    rts
+
+; void chr_set(unsigned char r, unsigned char b): MMC3 CHR register r (0..5) = bank b (1 KB units; R0/R1 ignore bit 0).
+; Main loop only (like bank_set), rendering off or vblank.
+_chr_set:
+    sta tmp1
+    jsr popa
+    sta $8000
+    lda tmp1
     sta $8001
     rts
 

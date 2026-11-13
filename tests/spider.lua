@@ -18,7 +18,7 @@ local BANK, HIDE, IAIR, SLOW = 0x326, 0x327, 0x328, 0x332
 local CRAWL, TELE, DESC, HANG, CLIMB = 1, 2, 3, 4, 5
 local FLOOR_Y, CEIL, HANGY = 176, 32, 144
 local OAM_THREAD, OAM_FB, OAM_E = 0x200 + 72, 0x200 + 52, 0x200 + 24
-local WEB, LING, THREAD = 187, 188, 186
+local WEB, LING, THREAD = 0x40 + 19, 0x40 + 20, 0x40 + 18   -- boss tiles 19, 20, 18
 
 local co
 local function frames(n) for _ = 1, n do coroutine.yield() end end
@@ -127,7 +127,7 @@ end
 local function until_state(st, max)
   return wait_until(function() park(); return rd(IAIR) == st and rd(FX) == 0 end, max)
 end
--- wait for a web (tile 187) to exist, return its slot
+-- wait for a web (boss tile 19) to exist, return its slot
 local function wait_web(max)
   local k
   wait_until(function()
@@ -158,7 +158,7 @@ co = coroutine.create(function()
   check(table.concat(name, ",") == "38,15,13,26,30,35,0,49,27,30,30,28", "name SPIDER QUEEN on screen: " .. table.concat(name, ","))
   check(ppu(0x2000 + 3 * 32 + 2) == 10 and ppu(0x2000 + 3 * 32 + 29) == 10 and ppu(0x2000 + 3 * 32 + 1) == 10 and ppu(0x2000 + 3 * 32 + 30) == 10,
         "ceiling row 3 drawn")
-  check(rd(OAM_E + 1) == 168, "phase 1 look (tile 168)")
+  check(rd(OAM_E + 1) == 0x40, "phase 1 look (boss tile 0)")
   local x0 = rd(EX)
   frames(10)
   check(rd(EX) == x0 and rd(IAIR) == 0, "spider frozen during the intro")
@@ -188,7 +188,7 @@ co = coroutine.create(function()
   check(not s.webst[TELE] and not s.webst[DESC] and not s.webst[HANG] and not s.webst[CLIMB] and s.webst[CRAWL], "webs are shot while crawling only")
   check(s.maxfb == 1 and s.ling == 0, "phase 1: one web at a time, no spiderlings, max " .. s.maxfb)
   check(s.webdx <= 1 and s.webdy <= 4, "web is slow (1 px/frame sideways, at most 2 px/frame down), dx " .. s.webdx .. " dy " .. s.webdy)
-  check(s.thr_bad == 0, "thread sprites match the body position (tile 186, x + 8), mismatches " .. s.thr_bad)
+  check(s.thr_bad == 0, "thread sprites match the body position (boss tile 18, x + 8), mismatches " .. s.thr_bad)
   check(s.line <= 8, "phase 1: max 8 sprites per scanline, got " .. s.line)
   local lost1 = bot(1200)
   check(lost1 <= 3, "phase 1 standing bot loses <= 3 hearts, lost " .. lost1)
@@ -200,7 +200,7 @@ co = coroutine.create(function()
   -- webs: a web on the player slows (1 px/frame, no dash, no heart), then it wears off
   local k = wait_web(900)
   check(k ~= nil, "a web was shot")
-  check(rd(OAM_FB + 4 * k + 1) == WEB and rd(OAM_FB + 4 * k + 2) == 1, "web sprite: tile 187, palette 1")
+  check(rd(OAM_FB + 4 * k + 1) == WEB and rd(OAM_FB + 4 * k + 2) == 1, "web sprite: boss tile 19, palette 1")
   wr(ABIL, 1); wr(HEARTS, 3); wr(INV, 0); wr16(PX, 48); wr(PY, FLOOR_Y)
   wr(FBX + k, 52); wr(FBY + k, FLOOR_Y + 4)
   frames(1)
@@ -281,7 +281,7 @@ co = coroutine.create(function()
   check(bar() == "FFFFFFF...", "bar 14 half steps at hp 11, bar=" .. bar())
   check(wait_until(function() return ppu(0x3F15) == 0x2A end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  check(rd(OAM_E + 1) == 174, "phase 2 look (tile 174)")
+  check(rd(OAM_E + 1) == 0x40 + 6, "phase 2 look (boss tile 6)")
   s = watch(1300)
   local d2, h2 = runs_of(s, DESC)[2], runs_of(s, HANG)[2]
   check(d2.dy == 3 and d2.dx == 0, "phase 2 descends 3 px/frame, dy=" .. d2.dy)
@@ -300,7 +300,7 @@ co = coroutine.create(function()
   check(bar() == "FFFFF.....", "bar half at hp 8, bar=" .. bar())
   check(wait_until(function() return ppu(0x3F15) == 0x16 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  check(rd(OAM_E + 1) == 180, "phase 3 look (tile 180)")
+  check(rd(OAM_E + 1) == 0x40 + 12, "phase 3 look (boss tile 12)")
   s = watch(1300)
   local d3, h3 = runs_of(s, DESC)[2], runs_of(s, HANG)[2]
   check(d3.dy == 4 and d3.dx == 0, "phase 3 descends 4 px/frame, dy=" .. d3.dy)

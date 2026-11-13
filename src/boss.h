@@ -6,7 +6,9 @@
 #define FLOOR_Y 192                    /* top of the floor = feet position of a standing player */
 #define WALL    16                     /* wall width in px */
 #define FB_MAX  3
-#define WEB_TILE 187                   /* fireball sprite tile of a web ball: slows the player instead of costing a heart */
+#define BT 0x40                        /* tile id of tile 0 of a boss sheet (R3 = $1400; docs/TECH.md "CHR-Layout"): boss tiles are BT + n */
+#define WEB_TILE (BT + 19)             /* fireball sprite tile of a web ball (spider sheet): slows the player instead of costing a heart */
+#define SHOCK    17                    /* shockwave tile (common sheet, shared by oni and lord) */
 
 struct phase {
     unsigned char tile;                /* first of 4 sprite tiles (TL, TR, BL, BR) */
@@ -28,8 +30,6 @@ extern const struct boss *bs;          /* current boss */
 extern signed char   ivx, ivy, fb_vx[3], fb_vy[3];
 extern unsigned char ig, iair, ai_t, rng, facing;   /* iair = boss state, debug byte $0328; facing: player, 0 right / 1 left */
 extern unsigned      fb_t;
-
-void __fastcall__ bank_set(unsigned char b);        /* crt0.s: map PRG bank b at $8000, remember it in cur_bank */
 
 unsigned char overlap(unsigned char ax, unsigned char ay, unsigned char aw, unsigned char ah,
                       unsigned char bx, unsigned char by, unsigned char bw, unsigned char bh);   /* dungeon.c */

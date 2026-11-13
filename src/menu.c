@@ -1,4 +1,6 @@
 /* Start menu and ending screen: plain text screens drawn with rendering off. Docs: docs/TECH.md "Startmenü und Ende (v0.8)". */
+#pragma code-name("BANK10")
+#pragma rodata-name("BANK10")
 #include "nes.h"
 
 #define END_LEN 240                    /* ending screen: 4 s, Start leaves after 1 s */

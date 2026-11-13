@@ -8,9 +8,9 @@
    wait = frames submerged; rate = frames between spits while up; shots = fireballs per spit (3 = spread);
    fspd = fireball px/frame. Phase 2 spits twice per visit (short rate), phase 3 spreads and hides shorter. */
 const struct phase snake_ph[3] = {
-    { 68, 1, 100, 120, 1, 1, { 0x27, 0x17, 0x30 } },
-    { 74, 2,  70,  70, 1, 1, { 0x16, 0x06, 0x28 } },
-    { 80, 2,  40,  80, 3, 1, { 0x28, 0x16, 0x30 } }
+    { BT + 0, 1, 100, 120, 1, 1, { 0x27, 0x17, 0x30 } },
+    { BT + 6, 2,  70,  70, 1, 1, { 0x16, 0x06, 0x28 } },
+    { BT + 12, 2,  40,  80, 3, 1, { 0x28, 0x16, 0x30 } }
 };
 
 /* iair = state. ai_t = state timer (also the time left up), fb_t = frames to the next spit. */

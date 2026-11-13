@@ -6,7 +6,7 @@
 .export _boss_phase, _boss_dead, _intro, _fb_x, _fb_y, _boss_fx
 .export _abilities, _dash_t, _dash_cd, _victory, _cur_bank, _boss_hide, _iair
 .export _pf_x, _pf_y, _pf_cd, _mcx, _mcur, _tlen, _shield, _slow
-.export _ending_seen, _cheat, _menu_sel, _end_t
+.export _ending_seen, _cheat, _menu_sel, _end_t, _boss_chr, _anim_bank
 
 .segment "DEBUG"
 _frame_count:      .res 2   ; $0300
@@ -49,3 +49,5 @@ _ending_seen:     .res 1   ; $0333 1 = the ending was seen (saved as bit 7 of $6
 _cheat:           .res 1   ; $0334 1 = cheat mode (all gates open, no heart loss, no saving)
 _menu_sel:        .res 1   ; $0335 start menu cursor (0 NORMAL, 1 CHEAT)
 _end_t:           .res 1   ; $0336 ending screen frames left
+_boss_chr:        .res 1   ; $0337 CHR bank (1 KB number) in R3 = base of the current boss sheet (8 + 4 * (dungeon - 1))
+_anim_bank:       .res 1   ; $0338 CHR bank in R1 (overworld animation frame: 2 = A, 4 = B)

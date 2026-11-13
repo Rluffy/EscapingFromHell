@@ -178,8 +178,22 @@ static void leave_dungeon(void)
     player_y = (n & 1) ? 80 : 48;
     cur_dungeon = 0;
     game_state = ST_OVERWORLD;
+    bank_set(BANK_UI);                 /* the overworld map lives in the UI bank, the boss bank goes */
     init_player_oam();
     redraw_overworld();
+}
+
+/* Overworld idle animation hook (docs/TECH.md "Overworld-Animation"): every ANIM_N frames R1 ($0800, tile ids 128..255)
+   flips between two copies of the same 2 KB of CHR. Called right after wait_vblank (the swap must happen in vblank). */
+#define ANIM_N 32
+static unsigned char anim_t = ANIM_N;
+
+static void anim_tick(void)
+{
+    if (--anim_t) return;
+    anim_t = ANIM_N;
+    anim_bank = anim_bank == CHR_ANIM_A ? CHR_ANIM_B : CHR_ANIM_A;
+    chr_set(1, anim_bank);
 }
 
 static void read_pad(void)
@@ -244,6 +258,9 @@ static void start_game(void)
 
 void main(void)
 {
+    bank_set(BANK_UI);
+    anim_bank = CHR_ANIM_A;            /* what crt0 loaded into R1 / R3 */
+    boss_chr = CHR_BOSS(1);
     init_player_oam();
     player_x = 32;
     player_y = 144;
@@ -253,12 +270,13 @@ void main(void)
 
     for (;;) {
         wait_vblank();
+        if (game_state == ST_OVERWORLD) anim_tick();
         read_pad();
         if (game_state == ST_OVERWORLD) {
             overworld_frame();
         } else if (game_state == ST_DUNGEON) {
             if (dungeon_frame()) {
-                if (cur_dungeon == 10 && boss_dead) end_enter();    /* victory over the last demon, not giving up */
+                if (cur_dungeon == 10 && boss_dead) { bank_set(BANK_UI); end_enter(); }    /* victory over the last demon, not giving up */
                 else leave_dungeon();
             }
         } else if (game_state == ST_END) {

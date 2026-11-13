@@ -20,7 +20,7 @@ local BANK, HIDE, IAIR, SHIELD = 0x326, 0x327, 0x328, 0x331
 local WALK, STELE, SMASH, REST, CTELE, CHARGE, LTELE, LEAP = 1, 2, 3, 4, 5, 6, 7, 8
 local FLOOR_Y, GROUND = 176, 160
 local OAM_FB, OAM_E, OAM_BODY, OAM_CLUB = 0x200 + 52, 0x200 + 24, 0x200 + 72, 0x200 + 112
-local SHOCK = 189
+local SHOCK = 17                    -- common sheet
 
 local co
 local function frames(n) for _ = 1, n do coroutine.yield() end end
@@ -161,7 +161,7 @@ co = coroutine.create(function()
   local name = {}
   for c = 10, 20 do name[#name + 1] = ppu(0x2000 + 10 * 32 + c) end
   check(table.concat(name, ",") == "31,28,13,0,47,37,35,44,31,35,26", "name ONI WARLORD on screen: " .. table.concat(name, ","))
-  check(rd(OAM_BODY + 1) == 190 and rd(OAM_BODY) < 0xEF, "oni drawn in the intro, phase 1 look (tile 190)")
+  check(rd(OAM_BODY + 1) == 0x40 and rd(OAM_BODY) < 0xEF, "oni drawn in the intro, phase 1 look (boss tile 0)")
   local x0 = rd(EX)
   frames(10)
   check(rd(EX) == x0 and rd(IAIR) == 0, "oni frozen during the intro")
@@ -184,7 +184,7 @@ co = coroutine.create(function()
   for y in pairs(s.wave_y) do check(y == 183, "shockwave on the floor (8 px above the floor line 192), y " .. y) end
   for v in pairs(s.wave_v) do check(v == -2, "phase 1 shockwave 2 px/frame toward the player, v " .. v) end
   check(s.line <= 8, "phase 1: max 8 sprites per scanline, got " .. s.line)
-  check(s.tile == 190, "phase 1 body tiles")
+  check(s.tile == 0x40, "phase 1 body tiles")
   local t1 = full(s, STELE)
   -- (which attack comes first depends on the random seed, which depends on the frame the fight starts; the provoked smash below checks it too)
   check(t1 == nil or (t1.n >= 28 and t1.n <= 32 and t1.hide[0] and t1.hide[2]), "club telegraph ~30 frames, flickering, got " .. tostring(t1 and t1.n))
@@ -203,7 +203,7 @@ co = coroutine.create(function()
   check(re.hide[0] and re.hide[2], "recovery blinks slowly (boss_hide 0 and 2)")
   check(s.club[STELE] and s.club[SMASH] and not s.club[WALK], "club sprites only while raised / smashing")
   local sw = s.waves[1]
-  check(sw ~= nil and sw.tile == SHOCK and sw.attr == 1 and sw.st == SMASH, "shockwave spawns in SMASH (tile 189, palette 1)")
+  check(sw ~= nil and sw.tile == SHOCK and sw.attr == 1 and sw.st == SMASH, "shockwave spawns in SMASH (tile 17, palette 1)")
   check(s.maxwave == 1, "one wave in phase 1")
 
   -- shockwave: standing player is hit once, a jumper is not. (bait puts the oni at x 120, wave starts at x 112 going left)
@@ -280,7 +280,7 @@ co = coroutine.create(function()
   check(wait_until(function() return ppu(0x3F15) == 0x26 end, 80), "phase 2 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
   check(bar() == "FFFFFFH...." or bar() == "FFFFFFH.." or bar():sub(1, 6) == "FFFFFF", "phase 2 bar " .. bar())
-  check(rd(OAM_BODY + 1) == 200, "phase 2 look (tile 200)")
+  check(rd(OAM_BODY + 1) == 0x40 + 10, "phase 2 look (boss tile 10)")
   wr(EX, 160)
   s = watch(1200, true)
   local lost2 = s.lost
@@ -297,7 +297,7 @@ co = coroutine.create(function()
   check(sm2.both and sm2.maxwave == 2, "phase 2: shockwaves in both directions, max " .. sm2.maxwave)
   for v in pairs(sm2.wave_v) do check(v == -2 or v == 2, "phase 2 shockwave 2 px/frame, v " .. v) end
   peak = math.max(peak, sm2.line)
-  check(s.tile == 200, "phase 2 body tiles")
+  check(s.tile == 0x40 + 10, "phase 2 body tiles")
   check(lost2 <= 3, "phase 2 standing bot loses <= 3 hearts, lost " .. lost2)
   local ct = full(s, CTELE)
   if ct then
@@ -311,12 +311,12 @@ co = coroutine.create(function()
   check(strike() == 9 and rd(PHASE) == 3, "hp 9 -> phase 3, phase=" .. rd(PHASE))
   check(wait_until(function() return ppu(0x3F15) == 0x06 end, 80), "phase 3 palette")
   check(wait_until(function() return rd(FX) == 0 end, 60), "phase effect ends")
-  check(rd(OAM_BODY + 1) == 210, "phase 3 look (tile 210)")
+  check(rd(OAM_BODY + 1) == 0x40 + 20, "phase 3 look (boss tile 20)")
   wr(EX, 160)
   s = watch(1200, true)
   local lost3 = s.lost
   do local t = {}; for _, r in ipairs(s.runs) do t[#t + 1] = r.st end; print("phase 3 states: " .. table.concat(t, ",")) end
-  check(s.tile == 210 and s.line <= 8, "phase 3 body tiles, max 8 sprites per scanline, got " .. s.line)
+  check(s.tile == 0x40 + 20 and s.line <= 8, "phase 3 body tiles, max 8 sprites per scanline, got " .. s.line)
   check(lost3 <= 4, "phase 3 standing bot loses <= 4 hearts (a leap landing on it can cost two), lost " .. lost3)
   for v in pairs(s.wave_v) do check(v == -3 or v == 3, "phase 3 shockwave 3 px/frame, v " .. v) end
 

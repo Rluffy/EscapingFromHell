@@ -8,9 +8,9 @@
    player's center after a hop; wait = crouch frames before a hop; rate = frames sitting between actions; shots = slime blobs
    per spit; fspd = blob px/frame. */
 const struct phase toad_ph[3] = {
-    { 128, 24, 30, 70, 0, 1, { 0x2A, 0x1A, 0x27 } },
-    { 140, 12, 30, 60, 1, 1, { 0x2A, 0x14, 0x26 } },
-    { 152, 12, 30, 50, 2, 1, { 0x24, 0x13, 0x16 } }
+    { BT + 0, 24, 30, 70, 0, 1, { 0x2A, 0x1A, 0x27 } },
+    { BT + 12, 12, 30, 60, 1, 1, { 0x2A, 0x14, 0x26 } },
+    { BT + 24, 12, 30, 50, 2, 1, { 0x24, 0x13, 0x16 } }
 };
 /* Action cycle per phase: H hop, T tongue, S spit. In phase 3 an action followed by the same one runs back to back. */
 static const char seq[3][6] = { "HHT", "HSHT", "HHTTS" };
@@ -54,14 +54,14 @@ static void sprites(void)
     x = en.x + (iair == CROUCH && (frame_count & 2) ? 1 : 0);
     for (j = 0; j < 3; ++j) {
         *o++ = j < n ? en.y + 7 : 0xFF;
-        *o++ = j + 1 == n ? 165 : 164;
+        *o++ = BT + (j + 1 == n ? 37 : 36);
         *o++ = fl;
         *o++ = en.dir > 0 ? en.x + 24 + j * 8 : en.x - j * 8;
     }
     for (r = 0; r < 3; ++r)
         for (c = 0; c < 4; ++c) {
             *o++ = hide || (r == 1 && c == 3 && n) ? 0xFF : en.y + r * 8 + yo;
-            *o++ = r == 1 && c == 3 && open ? 166 : t + r * 4 + c;
+            *o++ = r == 1 && c == 3 && open ? BT + 38 : t + r * 4 + c;
             *o++ = fl;
             *o++ = x + (en.dir > 0 ? c : 3 - c) * 8;
         }
@@ -97,7 +97,7 @@ void toad_ai(void)
         for (k = 0; k < FB_MAX; ++k) if (fb_x[k] && fb_vy[k] < 7) ++fb_vy[k];
     if (iair == INIT) {
         ph = boss_phase; par = ch = shk = tlen = 0; lc = 0;
-        for (k = 0; k < FB_MAX; ++k) { oam[O_FB + k * 4 + 1] = 167; oam[O_FB + k * 4 + 2] = 1; }   /* slime tile, boss palette */
+        for (k = 0; k < FB_MAX; ++k) { oam[O_FB + k * 4 + 1] = BT + 39; oam[O_FB + k * 4 + 2] = 1; }   /* slime tile, boss palette */
         iair = SIT; ai_t = 50;
     } else if (ph != boss_phase) { ph = boss_phase; par = 0; }
     switch (iair) {

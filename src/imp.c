@@ -5,9 +5,9 @@
 #include "boss.h"
 
 const struct phase imp_ph[3] = {
-    { 16, 1, 120, 300, 1, 1, { 0x2A, 0x1A, 0x30 } },
-    { 20, 1, 80, 200, 1, 1, { 0x27, 0x17, 0x30 } },
-    { 24, 2, 56, 240, 3, 1, { 0x16, 0x06, 0x28 } }
+    { BT + 0, 1, 120, 300, 1, 1, { 0x2A, 0x1A, 0x30 } },
+    { BT + 4, 1, 80, 200, 1, 1, { 0x27, 0x17, 0x30 } },
+    { BT + 8, 2, 56, 240, 3, 1, { 0x16, 0x06, 0x28 } }
 };
 
 /* Imp: hops (floor only) toward the player (1 in 4 away), spits fireballs at him. */
